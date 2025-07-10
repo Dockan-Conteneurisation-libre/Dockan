@@ -1,6 +1,20 @@
+<!-- logo Dockan centré -->
+<p align="center">
+  <img src="docs/dockan-logo.svg" alt="Dockan logo" width="120" height="120">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan/actions">
+    <img src="https://github.com/Dockan-Conteneurisation-libre/Dockan/actions/workflows/ci.yml/badge.svg" alt="Build Status">
+  </a>
+  <a href="https://www.gnu.org/licenses/agpl-3.0.html">
+    <img src="https://img.shields.io/badge/Licence-AGPL--3.0-green.svg" alt="Licence: AGPL-3.0">
+  </a>
+</p>
+
 # Dockan
 
-Dockan est une alternative libre, décentralisée et sans daemon à Docker, conçue pour l’auto-hébergement, l’expérimentation et la simplicité.
+Dockan est une alternative **libre**, **décentralisée** et **sans daemon** à Docker, conçue pour l’auto-hébergement, l’expérimentation et la simplicité.
 
 ## Objectifs
 - Isolation légère (firejail, chroot, systemd-nspawn, bubblewrap)
@@ -137,6 +151,9 @@ dockan import monapp.tar.gz monapp.dockan
 Forkez, proposez vos idées, partagez vos images Dockan !
 
 ---
+
+## Licence
+AGPL-3.0 ou ultérieure
 
 ## Licence
 AGPL-3.0 ou ultérieure
