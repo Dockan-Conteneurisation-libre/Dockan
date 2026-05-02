@@ -87,7 +87,7 @@ export PATH="$HOME/.local/bin:$PATH"
 System-wide install:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
 ```
 
 From a local checkout:
@@ -99,6 +99,7 @@ sudo INSTALL_SOURCE=source sh scripts/install.sh
 Check the machine:
 
 ```bash
+dockan version
 dockan doctor
 ```
 

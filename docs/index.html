@@ -406,6 +406,17 @@ dockan run hello:latest</code></pre>
             </div>
             <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
           </div>
+          <p>If Dockan installs into <code>~/.local/bin</code>, add it to your shell path and verify the CLI:</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='export PATH="$HOME/.local/bin:$PATH"
+dockan version
+dockan doctor'>Copy</button>
+            </div>
+            <pre><code>export PATH="$HOME/.local/bin:$PATH"
+dockan version
+dockan doctor</code></pre>
+          </div>
         </div>
         <div class="card">
           <span class="badge blue">System</span>

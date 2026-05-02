@@ -66,6 +66,7 @@ sudo INSTALL_SOURCE=source sh scripts/install.sh
 Check the machine:
 
 ```bash
+dockan version
 dockan doctor
 ```
 
