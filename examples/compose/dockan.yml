@@ -1,0 +1,8 @@
+name: demo
+services:
+  hello:
+    build: ../hello
+    image: hello:latest
+    env:
+      - MODE=compose
+    network: host

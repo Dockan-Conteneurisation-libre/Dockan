@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dockan Developer Guide</title>
+  <meta name="description" content="Developer guide for Dockan apps: package an app, share it with admins, and run it locally as a Linux service.">
+  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #17201b;
+      --muted: #56635c;
+      --line: #dfe5df;
+      --green: #176b48;
+      --green-dark: #0e4932;
+      --blue: #1d5f89;
+      --amber: #a56110;
+      --code: #eef2ee;
+      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--green);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 1.08rem;
+    }
+
+    .brand img {
+      width: 40px;
+      height: 40px;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+    }
+
+    main {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.1rem, 5vw, 3.8rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 1.7rem;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .lead {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 1.12rem;
+      max-width: 820px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 26px 0 34px;
+    }
+
+    .step,
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      padding: 18px;
+    }
+
+    .step strong {
+      display: block;
+      color: var(--green-dark);
+      margin-bottom: 6px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    section {
+      padding: 22px;
+      margin: 16px 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: #eef6f1;
+      color: var(--green-dark);
+      font-weight: 800;
+      font-size: 0.86rem;
+      margin-bottom: 12px;
+    }
+
+    .badge.blue {
+      background: #edf5fa;
+      color: var(--blue);
+    }
+
+    .badge.amber {
+      background: #fff4e4;
+      color: var(--amber);
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0 0 14px;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+
+    pre {
+      margin: 12px 0;
+      padding: 16px;
+      overflow-x: auto;
+      background: #101812;
+      color: #eaf6ef;
+      border-radius: 8px;
+      border: 1px solid #24342a;
+      font-size: 0.94rem;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    p code,
+    li code {
+      background: var(--code);
+      border-radius: 6px;
+      padding: 2px 6px;
+      color: var(--ink);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    footer {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 28px 24px 46px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .flow,
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <a class="brand" href="./index.html" aria-label="Dockan home">
+        <img src="./dockan-logo.svg" alt="">
+        <span>Dockan</span>
+      </a>
+      <nav aria-label="Navigation">
+        <a href="./index.html#install">Install</a>
+        <a href="./index.html#usage">Usage</a>
+        <a href="./developer.html">Developer</a>
+        <a href="./faq.html">FAQ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Developer Guide</h1>
+    <p class="lead">Prepare a Dockan app so an admin can install Dockan, build the app locally, and run it as a Linux service.</p>
+
+    <div class="flow">
+      <div class="step">
+        <strong>1. Developer</strong>
+        <p>Prepare `Dockanfile`, `dockan.yml`, code, and README.</p>
+      </div>
+      <div class="step">
+        <strong>2. Share</strong>
+        <p>Publish through Git, a `.tar.gz` archive, an internal server, or offline media.</p>
+      </div>
+      <div class="step">
+        <strong>3. Admin</strong>
+        <p>Install Dockan, build locally, run the app, and create the service.</p>
+      </div>
+    </div>
+
+    <section>
+      <span class="badge">Developer</span>
+      <h2>Prepare The Project</h2>
+      <p>Recommended structure:</p>
+      <pre><code>myapp/
+  Dockanfile
+  dockan.yml
+  README.md
+  app.sh
+  src/</code></pre>
+      <div class="split">
+        <div>
+          <h3>Dockanfile</h3>
+          <pre><code>FROM scratch
+LABEL org.opencontainers.image.title=MyApp
+COPY app.sh /app.sh
+RUN chmod +x /app.sh
+CMD ./app.sh</code></pre>
+        </div>
+        <div>
+          <h3>dockan.yml</h3>
+          <pre><code>name: myapp
+services:
+  web:
+    build: .
+    image: myapp:latest
+    ports:
+      - 8080:8080
+    volumes:
+      - data:/data
+    restart: always</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <span class="badge blue">Admin</span>
+      <h2>Install And Run Locally</h2>
+      <p>Install Dockan on the Linux machine:</p>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+dockan doctor</code></pre>
+      <p>Fetch the app, build it, and run it:</p>
+      <pre><code>tar -xzf myapp-dockan-v1.tar.gz
+cd myapp
+dockan build -t myapp:v1 .
+dockan compose up</code></pre>
+      <p>Check status and logs:</p>
+      <pre><code>dockan ps -a
+dockan logs myapp-web</code></pre>
+    </section>
+
+    <section>
+      <span class="badge blue">Service</span>
+      <h2>Start On Boot</h2>
+      <p>System service:</p>
+      <pre><code>sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
+sudo systemctl daemon-reload
+sudo systemctl enable --now dockan-myapp.service</code></pre>
+      <p>User service:</p>
+      <pre><code>dockan service install --user -f ~/myapp/dockan.yml --name myapp
+systemctl --user daemon-reload
+systemctl --user enable --now dockan-myapp.service</code></pre>
+    </section>
+
+    <section>
+      <span class="badge amber">Local Bases</span>
+      <h2>Share A Full Base</h2>
+      <p>If the app needs an Ubuntu, Alpine, or Python base, the developer can provide a rootfs archive.</p>
+      <pre><code>dockan base import ubuntu:local ./ubuntu-rootfs.tar.gz
+dockan build -t myapp:v1 .</code></pre>
+      <p>The `Dockanfile` can then use the local base:</p>
+      <pre><code>FROM ubuntu:local
+COPY app.sh /app.sh
+CMD ./app.sh</code></pre>
+    </section>
+
+    <section>
+      <span class="badge">Network</span>
+      <h2>Ports And Network</h2>
+      <p>Simple network:</p>
+      <pre><code>dockan network create appnet
+dockan run -d --name web --network appnet myapp:v1</code></pre>
+      <p>Bridge/NAT with port publishing:</p>
+      <pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
+sudo dockan network enable appnet
+sudo dockan run -d --name web --network appnet -p 8080:80 myapp:v1</code></pre>
+    </section>
+
+    <section>
+      <span class="badge blue">Summary</span>
+      <h2>What To Remember</h2>
+      <ul>
+        <li>The developer shares the app: `Dockanfile`, `dockan.yml`, code, and README.</li>
+        <li>The admin installs Dockan, builds locally, and runs locally.</li>
+        <li>For automatic startup, Dockan creates a systemd service.</li>
+        <li>GitHub Actions release packages build Dockan itself, not user apps.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    Dockan - AGPL-3.0 or later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+</body>
+</html>

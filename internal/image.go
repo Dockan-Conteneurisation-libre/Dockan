@@ -6,16 +6,38 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 )
 
-// Image représente une image Dockan (manifest, rootfs, etc.)
 type Image struct {
-	Path      string
-	Meta      map[string]string
-	RootfsDir string
+	Path        string
+	Meta        map[string]string
+	RootfsDir   string
+	StartScript string
 }
 
-// LoadImage charge une image Dockan depuis un dossier
+type RunOptions struct {
+	Isolation  string
+	Detach     bool
+	Name       string
+	Env        []string
+	Ports      []string
+	Network    string
+	Aliases    []string
+	Volumes    []string
+	GUI        bool
+	Command    []string
+	Entrypoint string
+	Restart    string
+	Memory     string
+	CPUs       string
+}
+
+func DefaultRunOptions() RunOptions {
+	return RunOptions{Isolation: IsolationAuto}
+}
+
 func LoadImage(path string) (*Image, error) {
 	meta, err := ParseMeta(filepath.Join(path, "meta.conf"))
 	if err != nil {
@@ -25,50 +47,52 @@ func LoadImage(path string) (*Image, error) {
 	if _, err := os.Stat(rootfs); err != nil {
 		return nil, fmt.Errorf("rootfs/ manquant dans %s", path)
 	}
+	startScript := filepath.Join(path, "start.sh")
+	if _, err := os.Stat(startScript); err != nil {
+		return nil, fmt.Errorf("start.sh manquant dans %s", path)
+	}
 	return &Image{
-		Path:      path,
-		Meta:      meta,
-		RootfsDir: rootfs,
+		Path:        path,
+		Meta:        meta,
+		RootfsDir:   rootfs,
+		StartScript: startScript,
 	}, nil
 }
 
-func RunImage(path string) error {
+func RunImage(path string, opts RunOptions) error {
 	img, err := LoadImage(path)
 	if err != nil {
 		return err
 	}
-	isolation := DetectIsolation()
-	if isolation == "" {
-		return fmt.Errorf("Aucune méthode d'isolation disponible (firejail, systemd-nspawn, chroot)")
+	isolation, err := ResolveIsolation(opts.Isolation)
+	if err != nil {
+		return err
 	}
 	fmt.Printf("[dockan] Isolation utilisée : %s\n", isolation)
-	// Utilise les infos de l'image Dockan pour lancer le conteneur
-	startScript := filepath.Join(img.Path, "start.sh")
-	rootfs := img.RootfsDir
+	if isolation == IsolationNone {
+		fmt.Println("[dockan] Avertissement : exécution sans isolation forte")
+	}
 	stdout, stderr, closeLog, err := LogWriters(img.Path)
 	if err != nil {
 		return err
 	}
 	defer closeLog()
-	return RunWithIsolationWithLogs(isolation, rootfs, startScript, stdout, stderr)
+	return RunWithIsolationWithLogs(isolation, img, opts, stdout, stderr)
 }
 
-// RunWithIsolationWithLogs exécute le conteneur avec redirection des logs
-func RunWithIsolationWithLogs(isolation, rootfs, startScript string, stdout, stderr io.Writer) error {
-	var cmd *exec.Cmd
-	switch isolation {
-	case IsolationFirejail:
-		cmd = exec.Command("firejail", "--quiet", "--private="+rootfs, "--shell="+startScript)
-	case IsolationSystemdNspawn:
-		cmd = exec.Command("systemd-nspawn", "-D", rootfs, "/start.sh")
-	case IsolationChroot:
-		cmd = exec.Command("sudo", "chroot", rootfs, "/start.sh")
-	default:
-		return fmt.Errorf("Aucune méthode d'isolation valide")
+func RunWithIsolationWithLogs(isolation string, img *Image, opts RunOptions, stdout, stderr io.Writer) error {
+	cmd, err := isolationCommand(isolation, img)
+	if err != nil {
+		return err
+	}
+	cmd, err = ApplyRunLimits(cmd, opts)
+	if err != nil {
+		return err
 	}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Stdin = os.Stdin
+	cmd.Env = imageEnv(img, opts)
 	return cmd.Run()
 }
 
@@ -77,10 +101,15 @@ func BuildImage(path string) error {
 	if _, err := os.Stat(buildScript); err != nil {
 		return fmt.Errorf("build.sh manquant dans %s", path)
 	}
-	cmd := exec.Command("bash", buildScript)
-	cmd.Dir = path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command("bash", "./build.sh")
+	cmd.Dir = absPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), "DOCKAN_IMAGE_PATH="+absPath, "DOCKAN_ROOTFS="+filepath.Join(absPath, "rootfs"))
 	return cmd.Run()
 }
 
@@ -105,16 +134,69 @@ func InitImage(dir string) error {
 	if _, err := os.Stat(dir); err == nil {
 		return fmt.Errorf("%s existe déjà", dir)
 	}
-	os.MkdirAll(filepath.Join(dir, "rootfs"), 0755)
-	os.MkdirAll(filepath.Join(dir, "hooks"), 0755)
-	os.MkdirAll(filepath.Join(dir, "volumes"), 0755)
-	write := func(p, c string) {
-		os.WriteFile(filepath.Join(dir, p), []byte(c), 0755)
+	for _, subdir := range []string{"rootfs", "hooks", "volumes"} {
+		if err := os.MkdirAll(filepath.Join(dir, subdir), 0755); err != nil {
+			return err
+		}
 	}
-	write("build.sh", "#!/bin/bash\necho '(build.sh) Ajoute tes instructions ici.'\n")
-	write("start.sh", "#!/bin/bash\necho '(start.sh) Hello depuis Dockan !'\n")
-	write("meta.conf", "# Métadonnées Dockan\nname=MonApp\nport=8080\nrequires=bash\n")
-	return nil
+	write := func(p, c string, mode os.FileMode) error {
+		return os.WriteFile(filepath.Join(dir, p), []byte(c), mode)
+	}
+	if err := write("build.sh", "#!/usr/bin/env bash\nset -euo pipefail\necho '(build.sh) Ajoute tes instructions ici.'\n", 0755); err != nil {
+		return err
+	}
+	if err := write("start.sh", "#!/usr/bin/env bash\nset -euo pipefail\necho '(start.sh) Hello depuis Dockan !'\necho \"rootfs: ${DOCKAN_ROOTFS:-rootfs}\"\n", 0755); err != nil {
+		return err
+	}
+	return write("meta.conf", "# Métadonnées Dockan\nname=MonApp\nport=8080\nrequires=bash\n", 0644)
+}
+
+func imageEnv(img *Image, opts RunOptions) []string {
+	env := append([]string{}, os.Environ()...)
+	absImage, _ := filepath.Abs(img.Path)
+	absRootfs, _ := filepath.Abs(img.RootfsDir)
+	env = append(env,
+		"DOCKAN_IMAGE_PATH="+absImage,
+		"DOCKAN_ROOTFS="+absRootfs,
+	)
+	for key, value := range img.Meta {
+		envKey := "DOCKAN_META_" + strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
+		env = append(env, envKey+"="+value)
+	}
+	for name, host := range VolumeEnv(img.Path, img.Meta, EffectiveRunVolumes(opts)) {
+		env = append(env, name+"="+host)
+	}
+	env = append(env, opts.Env...)
+	if len(opts.Command) > 0 {
+		env = append(env, "DOCKAN_RUN_COMMAND="+strings.Join(opts.Command, " "))
+	}
+	if opts.Entrypoint != "" {
+		env = append(env, "DOCKAN_ENTRYPOINT="+opts.Entrypoint)
+	}
+	if opts.Restart != "" {
+		env = append(env, "DOCKAN_RESTART="+opts.Restart)
+	}
+	if opts.Memory != "" {
+		env = append(env, "DOCKAN_MEMORY="+opts.Memory)
+	}
+	if opts.CPUs != "" {
+		env = append(env, "DOCKAN_CPUS="+opts.CPUs)
+	}
+	if opts.GUI {
+		env = append(env, "DOCKAN_GUI=1")
+		for _, key := range []string{"DISPLAY", "WAYLAND_DISPLAY", "XDG_RUNTIME_DIR", "PULSE_SERVER", "DBUS_SESSION_BUS_ADDRESS"} {
+			if value := os.Getenv(key); value != "" {
+				env = append(env, key+"="+value)
+			}
+		}
+	}
+	if opts.Network != "" {
+		env = append(env, "DOCKAN_NETWORK="+opts.Network)
+	}
+	if len(opts.Ports) > 0 {
+		env = append(env, "DOCKAN_PORTS="+strings.Join(opts.Ports, ","))
+	}
+	return env
 }
 
 func ParseMeta(path string) (map[string]string, error) {
@@ -123,18 +205,35 @@ func ParseMeta(path string) (map[string]string, error) {
 	if err != nil {
 		return meta, err
 	}
-	lines := string(data)
-	for _, l := range splitLines(lines) {
+	for _, l := range splitLines(string(data)) {
+		l = strings.TrimSpace(l)
 		if len(l) == 0 || l[0] == '#' {
 			continue
 		}
 		if i := indexOf(l, '='); i > 0 {
-			k := l[:i]
-			v := l[i+1:]
+			k := strings.TrimSpace(l[:i])
+			v := strings.TrimSpace(l[i+1:])
 			meta[k] = v
 		}
 	}
 	return meta, nil
+}
+
+func WriteMeta(path string, meta map[string]string) error {
+	var keys []string
+	for key := range meta {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	var b strings.Builder
+	b.WriteString("# Métadonnées Dockan\n")
+	for _, key := range keys {
+		b.WriteString(key)
+		b.WriteByte('=')
+		b.WriteString(meta[key])
+		b.WriteByte('\n')
+	}
+	return os.WriteFile(path, []byte(b.String()), 0644)
 }
 
 func splitLines(s string) []string {
@@ -160,5 +259,3 @@ func indexOf(s string, c byte) int {
 	}
 	return -1
 }
-
-// ...Isolation et autres fonctions déjà présentes...

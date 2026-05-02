@@ -1,26 +1,39 @@
-# GitHub Pages pour Dockan
+# Dockan Web Documentation
 
-Ce dossier `docs/` est prêt pour GitHub Pages !
+This folder contains the GitHub Pages documentation site.
 
-- La documentation principale est dans `index.md`.
-- Exemples et FAQ dans `docs/exemples/`, `docs/faq.md`, etc.
+Main pages:
 
-## Activer GitHub Pages
+- [Home](./index.md)
+- [Dockan Format HTML](./format.html)
+- [Dockan Format Markdown](./format.md)
+- [Developer Guide](./developer.html)
+- [Developer Guide Markdown](./developer.md)
+- [Production Guide](./production.html)
+- [Production Guide Markdown](./production.md)
+- [Run Any Language HTML](./languages.html)
+- [Run Any Language Markdown](./languages.md)
+- [Python Example HTML](./exemples/python.html)
+- [Python Example Markdown](./exemples/python.md)
+- [Export and Import HTML](./exemples/export.html)
+- [Export and Import Markdown](./exemples/export.md)
+- [FAQ HTML](./faq.html)
+- [FAQ Markdown](./faq.md)
+- [Static HTML home](./index.html)
 
-1. Poussez le projet sur GitHub.
-2. Dans les paramètres du dépôt, section "Pages" :
-   - Source : dossier `/docs` (branche main)
-   - Format : Markdown (par défaut)
-3. L’URL sera :
-   `https://<ton-utilisateur>.github.io/<ton-repo>/`
+## Enable GitHub Pages
 
-## Navigation
-- [Accueil](./index.md)
-- [Exemple Python](./exemples/python.md)
-- [Exporter/Importer](./exemples/export.md)
-- [Format Dockan](./format.md)
-- [FAQ](./faq.md)
+1. Open the GitHub repository settings.
+2. Open the `Pages` section.
+3. Choose the `main` branch.
+4. Choose the `/docs` folder.
 
----
+GitHub will publish the site URL.
 
-Pour toute contribution, ouvrez une issue ou une pull request !
+## Update The Site
+
+Edit Markdown files for repository-readable documentation.
+
+Edit `index.html`, `developer.html`, and `faq.html` for the static website pages.
+
+Keep the documentation simple, direct, and honest.

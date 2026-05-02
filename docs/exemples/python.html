@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Example With Dockan</title>
+  <meta name="description" content="Build and run a small Python app with Dockan using a local Python base.">
+  <link rel="icon" type="image/svg+xml" href="../dockan-logo.svg">
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #17201b;
+      --muted: #56635c;
+      --line: #dfe5df;
+      --green: #176b48;
+      --green-dark: #0e4932;
+      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header { background: #fff; border-bottom: 1px solid var(--line); }
+    .topbar {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--ink);
+      font-weight: 800;
+    }
+    .brand img { width: 40px; height: 40px; }
+    nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.95rem; }
+    main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(2.1rem, 5vw, 3.6rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    h2 { margin: 0 0 14px; font-size: 1.55rem; letter-spacing: 0; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin: 16px 0;
+    }
+    p, li { color: var(--muted); }
+    pre {
+      margin: 12px 0;
+      padding: 16px;
+      overflow-x: auto;
+      background: #101812;
+      color: #eaf6ef;
+      border-radius: 8px;
+      border: 1px solid #24342a;
+      font-size: 0.94rem;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    p code {
+      background: #eef2ee;
+      border-radius: 6px;
+      padding: 2px 6px;
+      color: var(--ink);
+    }
+    footer {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 24px 46px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 720px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <a class="brand" href="../index.html" aria-label="Dockan home">
+        <img src="../dockan-logo.svg" alt="">
+        <span>Dockan</span>
+      </a>
+      <nav aria-label="Navigation">
+        <a href="../index.html#install">Install</a>
+        <a href="../developer.html">Developer</a>
+        <a href="../production.html">Production</a>
+        <a href="../faq.html">FAQ</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <h1>Python Example</h1>
+    <p class="lead">Build and run a small Python app with Dockan using a local Python base.</p>
+
+    <section>
+      <h2>Files</h2>
+      <pre><code>myapp/
+  Dockanfile
+  app.py</code></pre>
+    </section>
+
+    <section>
+      <h2>app.py</h2>
+      <pre><code>print("Hello from Python in Dockan")</code></pre>
+    </section>
+
+    <section>
+      <h2>Dockanfile</h2>
+      <pre><code>FROM python:3.12
+LABEL org.opencontainers.image.title=PythonExample
+WORKDIR /app
+COPY app.py ./app.py
+CMD python3 app.py</code></pre>
+      <p>Dockan does not download from Docker Hub. If no <code>python:3.12</code> Dockan base exists, Dockan uses the local <code>python3</code> command.</p>
+      <pre><code>dockan base import python:local ./python-rootfs</code></pre>
+    </section>
+
+    <section>
+      <h2>Build And Run</h2>
+      <pre><code>dockan build -t python-demo:latest .
+dockan run python-demo:latest</code></pre>
+    </section>
+
+    <section>
+      <h2>Quick Host-Python Variant</h2>
+      <p>If Python is already available on the machine and you only want a quick test:</p>
+      <pre><code>FROM scratch
+LABEL org.opencontainers.image.title=PythonHostDemo
+COPY app.py /app.py
+CMD python3 app.py</code></pre>
+      <p>This version depends on the local environment, so it is not as portable as a real <code>python:local</code> base.</p>
+    </section>
+  </main>
+  <footer>
+    Dockan - AGPL-3.0 or later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+</body>
+</html>

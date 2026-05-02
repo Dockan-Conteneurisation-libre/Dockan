@@ -1,32 +1,55 @@
-# Exemple : Image Python avec Dockan
+# Python Example With Dockan
 
-## Structure
-```
-monapp.dockan/
-  meta.conf
-  build.sh
-  start.sh
-  rootfs/
-    app.py
-```
+This example runs a small local Python application.
 
-## meta.conf
-```properties
-name=MonApp
-port=8080
-requires=python3
+## Files
+
+```text
+myapp/
+  Dockanfile
+  app.py
 ```
 
-## start.sh
+## app.py
+
+```python
+print("Hello from Python in Dockan")
+```
+
+## Dockanfile
+
+```dockerfile
+FROM python:3.12
+LABEL org.opencontainers.image.title=PythonExample
+WORKDIR /app
+COPY app.py ./app.py
+CMD python3 app.py
+```
+
+Dockan does not download from Docker Hub. If no `python:3.12` Dockan base exists, Dockan uses the local `python3` command.
+
+Import a local base:
+
 ```bash
-#!/bin/bash
-cd "$(dirname "$0")/rootfs"
-python3 app.py
+dockan base import python:local ./python-rootfs
 ```
 
-## Commandes
+## Build And Run
+
 ```bash
-dockan init monapp.dockan
-# Placez app.py dans rootfs/
-dockan run monapp.dockan
+dockan build -t python-demo:latest .
+dockan run python-demo:latest
 ```
+
+## Version Without A Python Base
+
+If Python is already available on the machine and you only want a quick test:
+
+```dockerfile
+FROM scratch
+LABEL org.opencontainers.image.title=PythonHostDemo
+COPY app.py /app.py
+CMD python3 app.py
+```
+
+This version depends on the local environment, so it is not as portable as a real `python:local` base.

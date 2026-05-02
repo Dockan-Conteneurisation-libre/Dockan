@@ -1,0 +1,5 @@
+/dist/
+/dockan
+*.tar.gz
+*.dockan/logs/
+example.dockan/rootfs/cache

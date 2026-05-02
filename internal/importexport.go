@@ -3,33 +3,41 @@ package internal
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// ExportImage archive une image Dockan en .tar.gz
 func ExportImage(imagePath, outFile string) error {
 	f, err := os.Create(outFile)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
 	gw := gzip.NewWriter(f)
 	defer gw.Close()
 	tw := tar.NewWriter(gw)
 	defer tw.Close()
+
 	return filepath.Walk(imagePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		rel, _ := filepath.Rel(filepath.Dir(imagePath), path)
+		rel, err := filepath.Rel(imagePath, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
 		hdr, err := tar.FileInfoHeader(info, "")
 		if err != nil {
 			return err
 		}
-		hdr.Name = rel
+		hdr.Name = filepath.ToSlash(rel)
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
@@ -46,18 +54,19 @@ func ExportImage(imagePath, outFile string) error {
 	})
 }
 
-// ImportImage extrait une archive .tar.gz dans un dossier Dockan
 func ImportImage(archivePath, destDir string) error {
 	f, err := os.Open(archivePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
 	gr, err := gzip.NewReader(f)
 	if err != nil {
 		return err
 	}
 	defer gr.Close()
+
 	tr := tar.NewReader(gr)
 	for {
 		hdr, err := tr.Next()
@@ -67,13 +76,27 @@ func ImportImage(archivePath, destDir string) error {
 		if err != nil {
 			return err
 		}
-		outPath := filepath.Join(destDir, hdr.Name)
-		if strings.HasSuffix(hdr.Name, "/") {
-			os.MkdirAll(outPath, 0755)
+		cleanName, err := cleanArchivePath(hdr.Name)
+		if err != nil {
+			return err
+		}
+		if cleanName == "." {
 			continue
 		}
-		os.MkdirAll(filepath.Dir(outPath), 0755)
-		f, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY, os.FileMode(hdr.Mode))
+		outPath := filepath.Join(destDir, cleanName)
+		if hdr.FileInfo().IsDir() || strings.HasSuffix(hdr.Name, "/") {
+			if err := os.MkdirAll(outPath, 0755); err != nil {
+				return err
+			}
+			continue
+		}
+		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA {
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+			return err
+		}
+		f, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
 		if err != nil {
 			return err
 		}
@@ -81,31 +104,23 @@ func ImportImage(archivePath, destDir string) error {
 			f.Close()
 			return err
 		}
-		f.Close()
+		if err := f.Close(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// Ajoute l'intégration CLI pour export/import
-// Dans cmd/dockan.go, ajoute :
-//
-// case "export":
-//   if len(os.Args) < 4 {
-//     fmt.Println("Usage: dockan export <image.dockan> <fichier.tar.gz>")
-//     os.Exit(1)
-//   }
-//   if err := internal.ExportImage(os.Args[2], os.Args[3]); err != nil {
-//     fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
-//     os.Exit(1)
-//   }
-// case "import":
-//   if len(os.Args) < 4 {
-//     fmt.Println("Usage: dockan import <fichier.tar.gz> <dossier.dockan>")
-//     os.Exit(1)
-//   }
-//   if err := internal.ImportImage(os.Args[2], os.Args[3]); err != nil {
-//     fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
-//     os.Exit(1)
-//   }
-//
-// Cela permet d'utiliser dockan export/import en ligne de commande.
+func cleanArchivePath(name string) (string, error) {
+	if filepath.IsAbs(name) {
+		return "", fmt.Errorf("chemin absolu interdit dans l'archive: %s", name)
+	}
+	clean := filepath.Clean(filepath.FromSlash(name))
+	if clean == "." {
+		return clean, nil
+	}
+	if clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("chemin hors destination interdit dans l'archive: %s", name)
+	}
+	return clean, nil
+}

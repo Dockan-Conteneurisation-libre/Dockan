@@ -1,19 +1,39 @@
-name: Dockan
+name: CI
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version-file: go.mod
+          cache: true
+
+      - name: Format check
+        run: test -z "$(gofmt -l cmd internal)"
+
+      - name: Test
+        run: make test
+
       - name: Build
-        run: |
-          cd dockan
-          go build ./cmd/...
+        run: make build
+
+      - name: Packages
+        run: make packages
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: dockan-packages
+          path: dist/packages/

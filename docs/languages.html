@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Any Language - Dockan</title>
+  <meta name="description" content="Run PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts, and static binaries with Dockan.">
+  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #17201b;
+      --muted: #56635c;
+      --line: #dfe5df;
+      --green: #176b48;
+      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    header { background: #fff; border-bottom: 1px solid var(--line); }
+    .topbar {
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); font-weight: 800; }
+    .brand img { width: 40px; height: 40px; }
+    nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.95rem; }
+    main { max-width: 1020px; margin: 0 auto; padding: 48px 24px; }
+    h1 { margin: 0 0 14px; font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1; letter-spacing: 0; }
+    h2 { margin: 0 0 14px; font-size: 1.45rem; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; font-size: 1.05rem; letter-spacing: 0; }
+    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    section, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin: 16px 0;
+    }
+    .card { margin: 0; }
+    p, li { color: var(--muted); }
+    pre {
+      margin: 12px 0;
+      padding: 16px;
+      overflow-x: auto;
+      background: #101812;
+      color: #eaf6ef;
+      border-radius: 8px;
+      border: 1px solid #24342a;
+      font-size: 0.94rem;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    footer { max-width: 1020px; margin: 0 auto; padding: 28px 24px 46px; color: var(--muted); border-top: 1px solid var(--line); }
+    @media (max-width: 760px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <a class="brand" href="./index.html" aria-label="Dockan home">
+        <img src="./dockan-logo.svg" alt="">
+        <span>Dockan</span>
+      </a>
+      <nav aria-label="Navigation">
+        <a href="./index.html#install">Install</a>
+        <a href="./developer.html">Developer</a>
+        <a href="./production.html">Production</a>
+        <a href="./faq.html">FAQ</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <h1>Run Any Language</h1>
+    <p class="lead">Dockan can run PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts, and static binaries when the runtime exists locally or the app ships as a Linux binary.</p>
+
+    <section>
+      <h2>Start A Project</h2>
+      <pre><code>dockan new python my-python-app
+dockan new node my-node-app
+dockan new php my-php-app
+dockan new go my-go-app
+dockan new rust my-rust-app
+dockan new java my-java-app
+dockan new ruby my-ruby-app
+dockan new binary my-binary-app</code></pre>
+      <pre><code>cd my-python-app
+dockan build -t my-python-app:latest .
+dockan run -d --name my-python-app -p 8080:8000 my-python-app:latest</code></pre>
+    </section>
+
+    <section>
+      <h2>The Rule</h2>
+      <p>The Docker-like rule is simple: the app must have what it needs to start. Dockan stays local, so it does not automatically pull <code>php:8</code>, <code>node:20</code>, or <code>python:3</code> from Docker Hub.</p>
+      <p>If you write <code>FROM php:8.3</code> and no Dockan base exists, Dockan checks the host for <code>php</code>. If it exists, the build uses that local runtime. If it is missing, Dockan stops with a clear error.</p>
+      <pre><code>dockan deps runtime php:8.3 --dry-run
+sudo dockan deps runtime php:8.3 -y
+sudo dockan deps runtime node:20 -y
+sudo dockan deps runtime python:3.12 -y</code></pre>
+      <pre><code>dockan base runtime php:8.3 --from ./php83-rootfs
+dockan base runtime node:20 --from ./node20-rootfs.tar.gz
+dockan base import php:local ./php-rootfs
+dockan base import node:local ./node-rootfs.tar.gz
+dockan base import python:local ./python-rootfs.tar.gz</code></pre>
+    </section>
+
+    <div class="grid">
+      <article class="card">
+        <h3>PHP</h3>
+        <pre><code>FROM php:8.3
+WORKDIR /app
+COPY . /app
+EXPOSE 8000
+CMD php -S 0.0.0.0:8000 -t public</code></pre>
+      </article>
+      <article class="card">
+        <h3>Node.js</h3>
+        <pre><code>FROM node:20
+WORKDIR /app
+COPY . /app
+EXPOSE 3000
+CMD node server.js</code></pre>
+      </article>
+      <article class="card">
+        <h3>Python</h3>
+        <pre><code>FROM python:3.12
+WORKDIR /app
+COPY . /app
+EXPOSE 8000
+CMD python3 app.py</code></pre>
+      </article>
+      <article class="card">
+        <h3>Static Binary</h3>
+        <pre><code>FROM scratch
+COPY app /app
+EXPOSE 8080
+CMD ./app</code></pre>
+      </article>
+    </div>
+
+    <section>
+      <h2>Important</h2>
+      <p>Dockan can run many languages, but it cannot magically run a language if the runtime is missing. For PHP you need PHP, for Node you need Node, for Java you need a JRE/JDK, and for Python you need Python.</p>
+    </section>
+  </main>
+  <footer>
+    Dockan - AGPL-3.0 or later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+</body>
+</html>

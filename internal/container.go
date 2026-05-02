@@ -1,0 +1,406 @@
+package internal
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+)
+
+type Container struct {
+	Name    string
+	Image   string
+	Path    string
+	PID     int
+	Status  string
+	Ports   string
+	Network string
+	Created string
+}
+
+func ContainersDir() string {
+	return filepath.Join(StoreRoot(), "containers")
+}
+
+func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
+	img, err := LoadImage(imagePath)
+	if err != nil {
+		return err
+	}
+	if opts.Name == "" {
+		opts.Name = generatedContainerName(img)
+	}
+	if err := ValidateRunOptions(opts); err != nil {
+		return err
+	}
+	containerDir := filepath.Join(ContainersDir(), opts.Name)
+	if _, err := os.Stat(containerDir); err == nil {
+		return fmt.Errorf("conteneur déjà existant: %s", opts.Name)
+	}
+	if err := os.MkdirAll(containerDir, 0755); err != nil {
+		return err
+	}
+	if _, err := PrepareVolumesForRun(imagePath, img.Meta, EffectiveRunVolumes(opts)); err != nil {
+		return err
+	}
+	networkMeta, bridgeNetwork, err := prepareDetachedNetwork(opts.Network)
+	if err != nil {
+		return err
+	}
+	isolation, err := ResolveIsolation(opts.Isolation)
+	if err != nil {
+		return err
+	}
+	cmd, err := isolationCommand(isolation, img)
+	if err != nil {
+		return err
+	}
+	cmd, err = ApplyRunLimits(cmd, opts)
+	if err != nil {
+		return err
+	}
+	logFile, err := os.OpenFile(filepath.Join(containerDir, "dockan.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer logFile.Close()
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	cmd.Stdin = nil
+	cmd.Env = imageEnv(img, opts)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if bridgeNetwork {
+		cmd.SysProcAttr.Cloneflags = syscall.CLONE_NEWNET
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	networkAttachment := NetworkAttachment{}
+	if bridgeNetwork {
+		networkAttachment, err = AttachBridgeNetwork(opts.Name, cmd.Process.Pid, networkMeta)
+		if err != nil {
+			_ = cmd.Process.Kill()
+			_ = os.RemoveAll(containerDir)
+			return err
+		}
+	}
+	var portProxyPIDs []int
+	if bridgeNetwork && networkAttachment.IP != "" && len(opts.Ports) > 0 {
+		portProxyPIDs, err = StartPortProxies(containerDir, opts.Ports, networkAttachment.IP)
+		if err != nil {
+			_ = cmd.Process.Kill()
+			_ = CleanupContainerNetwork(map[string]string{"vethHost": networkAttachment.HostInterface})
+			_ = os.RemoveAll(containerDir)
+			return err
+		}
+	}
+	meta := map[string]string{
+		"name":       opts.Name,
+		"image":      imageRef,
+		"imagePath":  imagePath,
+		"pid":        strconv.Itoa(cmd.Process.Pid),
+		"status":     "running",
+		"isolation":  isolation,
+		"ports":      strings.Join(opts.Ports, ","),
+		"network":    opts.Network,
+		"aliases":    strings.Join(opts.Aliases, ","),
+		"volumes":    strings.Join(opts.Volumes, ","),
+		"gui":        fmt.Sprint(opts.GUI),
+		"command":    strings.Join(opts.Command, " "),
+		"entrypoint": opts.Entrypoint,
+		"restart":    opts.Restart,
+		"memory":     opts.Memory,
+		"cpus":       opts.CPUs,
+		"created":    time.Now().Format(time.RFC3339),
+	}
+	if len(portProxyPIDs) > 0 {
+		meta["portProxyPids"] = joinInts(portProxyPIDs)
+	}
+	if networkAttachment.IP != "" {
+		meta["networkIP"] = networkAttachment.IP
+		meta["vethHost"] = networkAttachment.HostInterface
+		meta["vethContainer"] = networkAttachment.ContainerInterface
+	}
+	if err := WriteMeta(filepath.Join(containerDir, "meta.conf"), meta); err != nil {
+		_ = CleanupPIDs(portProxyPIDs)
+		_ = cmd.Process.Kill()
+		_ = CleanupContainerNetwork(meta)
+		return err
+	}
+	if opts.Network != "" && opts.Network != HostNetwork {
+		_ = WriteNetworkHosts(opts.Network)
+	}
+	_ = cmd.Process.Release()
+	fmt.Printf("%s\n", opts.Name)
+	return nil
+}
+
+func ListContainers(all bool) error {
+	containers, err := LoadContainers()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%-18s %-12s %-8s %-24s %s\n", "NAME", "STATUS", "PID", "IMAGE", "PORTS")
+	for _, c := range containers {
+		if !all && c.Status != "running" {
+			continue
+		}
+		fmt.Printf("%-18s %-12s %-8d %-24s %s\n", c.Name, c.Status, c.PID, c.Image, c.Ports)
+	}
+	return nil
+}
+
+func LoadContainers() ([]Container, error) {
+	dir := ContainersDir()
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var containers []Container
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		containerDir := filepath.Join(dir, entry.Name())
+		meta, err := ParseMeta(filepath.Join(containerDir, "meta.conf"))
+		if err != nil {
+			continue
+		}
+		pid, _ := strconv.Atoi(meta["pid"])
+		status := meta["status"]
+		if pid > 0 && !processRunning(pid) && status == "running" {
+			status = "exited"
+			meta["status"] = status
+			_ = CleanupPortProxies(meta)
+			_ = CleanupContainerNetwork(meta)
+			_ = WriteMeta(filepath.Join(containerDir, "meta.conf"), meta)
+		}
+		containers = append(containers, Container{
+			Name:    entry.Name(),
+			Image:   meta["image"],
+			Path:    containerDir,
+			PID:     pid,
+			Status:  status,
+			Ports:   meta["ports"],
+			Network: meta["network"],
+			Created: meta["created"],
+		})
+	}
+	sort.Slice(containers, func(i, j int) bool {
+		return containers[i].Name < containers[j].Name
+	})
+	return containers, nil
+}
+
+func StopContainer(name string) error {
+	c, meta, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	if c.PID <= 0 || !processRunning(c.PID) {
+		meta["status"] = "exited"
+		_ = CleanupPortProxies(meta)
+		_ = CleanupContainerNetwork(meta)
+		return WriteMeta(filepath.Join(c.Path, "meta.conf"), meta)
+	}
+	if err := signalContainerProcess(c.PID, syscall.SIGTERM); err != nil {
+		return err
+	}
+	for i := 0; i < 20 && processRunning(c.PID); i++ {
+		time.Sleep(100 * time.Millisecond)
+	}
+	if processRunning(c.PID) {
+		_ = signalContainerProcess(c.PID, syscall.SIGKILL)
+		for i := 0; i < 20 && processRunning(c.PID); i++ {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	meta["status"] = "stopped"
+	_ = CleanupPortProxies(meta)
+	_ = CleanupContainerNetwork(meta)
+	if err := WriteMeta(filepath.Join(c.Path, "meta.conf"), meta); err != nil {
+		return err
+	}
+	if c.Network != "" && c.Network != HostNetwork {
+		_ = WriteNetworkHosts(c.Network)
+	}
+	return nil
+}
+
+func RemoveContainer(name string) error {
+	c, _, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	if c.PID > 0 && processRunning(c.PID) {
+		return fmt.Errorf("conteneur en cours: stoppez-le d'abord")
+	}
+	meta, _ := ParseMeta(filepath.Join(c.Path, "meta.conf"))
+	_ = CleanupPortProxies(meta)
+	_ = CleanupContainerNetwork(meta)
+	if err := os.RemoveAll(c.Path); err != nil {
+		return err
+	}
+	if c.Network != "" && c.Network != HostNetwork {
+		_ = WriteNetworkHosts(c.Network)
+	}
+	return nil
+}
+
+func PrintContainerLogs(name string) error {
+	c, _, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	f, err := os.Open(filepath.Join(c.Path, "dockan.log"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(os.Stdout, f)
+	return err
+}
+
+func InspectContainer(name string) error {
+	c, meta, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	if c.PID > 0 && !processRunning(c.PID) && meta["status"] == "running" {
+		meta["status"] = "exited"
+	}
+	var keys []string
+	for key := range meta {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Printf("%s=%s\n", key, meta[key])
+	}
+	return nil
+}
+
+func ExecContainer(name string, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("Usage: dockan exec <conteneur> <commande> [args...]")
+	}
+	c, meta, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	if c.PID <= 0 || !processRunning(c.PID) {
+		return fmt.Errorf("conteneur non démarré: %s", name)
+	}
+	if commandExists("nsenter") {
+		cmdArgs := append([]string{"-t", strconv.Itoa(c.PID), "-m", "-u", "-i", "-n", "-p", "--"}, args...)
+		cmd := exec.Command("nsenter", cmdArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		if err := cmd.Run(); err == nil {
+			return nil
+		}
+		fmt.Fprintln(os.Stderr, "[dockan] nsenter impossible; exécution dans le contexte image")
+	}
+	imagePath := meta["imagePath"]
+	if imagePath == "" {
+		imagePath = c.Image
+	}
+	img, err := LoadImage(imagePath)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Dir = img.Path
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Env = imageEnv(img, RunOptions{Network: c.Network, Ports: splitComma(c.Ports), Volumes: splitComma(meta["volumes"]), GUI: meta["gui"] == "true"})
+	return cmd.Run()
+}
+
+func loadContainer(name string) (Container, map[string]string, error) {
+	containerDir := filepath.Join(ContainersDir(), name)
+	meta, err := ParseMeta(filepath.Join(containerDir, "meta.conf"))
+	if err != nil {
+		return Container{}, nil, fmt.Errorf("conteneur introuvable: %s", name)
+	}
+	pid, _ := strconv.Atoi(meta["pid"])
+	return Container{
+		Name:    name,
+		Image:   meta["image"],
+		Path:    containerDir,
+		PID:     pid,
+		Status:  meta["status"],
+		Ports:   meta["ports"],
+		Network: meta["network"],
+		Created: meta["created"],
+	}, meta, nil
+}
+
+func splitComma(value string) []string {
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	var out []string
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func processRunning(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+	err := syscall.Kill(pid, 0)
+	if err != nil {
+		return false
+	}
+	if data, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat")); err == nil {
+		fields := strings.Fields(string(data))
+		if len(fields) > 2 && fields[2] == "Z" {
+			return false
+		}
+	}
+	return true
+}
+
+func signalContainerProcess(pid int, sig syscall.Signal) error {
+	if pid <= 0 {
+		return nil
+	}
+	if err := syscall.Kill(-pid, sig); err == nil {
+		return nil
+	}
+	return syscall.Kill(pid, sig)
+}
+
+func generatedContainerName(img *Image) string {
+	base := img.Meta["name"]
+	if base == "" {
+		base = "dockan"
+	}
+	return safeTag(base) + "-" + strconv.FormatInt(time.Now().Unix(), 36)
+}
+
+func joinInts(values []int) string {
+	parts := make([]string, 0, len(values))
+	for _, value := range values {
+		parts = append(parts, strconv.Itoa(value))
+	}
+	return strings.Join(parts, ",")
+}
