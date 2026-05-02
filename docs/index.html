@@ -380,9 +380,9 @@
         </div>
         <div class="code-block">
           <div class="code-actions">
-            <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh">Copy</button>
+            <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
           </div>
-          <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+          <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 
 dockan doctor
 dockan build -t hello:latest examples/hello
@@ -398,23 +398,23 @@ dockan run hello:latest</code></pre>
       <p class="lead">Dockan installs from GitHub Releases. The installer downloads the right Linux package and verifies checksums when they are available.</p>
       <div class="split">
         <div class="card">
-          <span class="badge">System</span>
+          <span class="badge">User</span>
+          <h3>Install without sudo</h3>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
+            </div>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
+          </div>
+        </div>
+        <div class="card">
+          <span class="badge blue">System</span>
           <h3>System-wide install</h3>
           <div class="code-block">
             <div class="code-actions">
               <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh">Copy</button>
             </div>
             <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge blue">User</span>
-          <h3>Install without sudo</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | PREFIX="$HOME/.local" sh'>Copy</button>
-            </div>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | PREFIX="$HOME/.local" sh</code></pre>
           </div>
         </div>
       </div>
@@ -575,9 +575,9 @@ git push origin v0.1.0</code></pre>
           <p>Visitors can copy the install command directly from this page.</p>
           <div class="code-block">
             <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh">Copy</button>
+              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
             </div>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh</code></pre>
+            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
           </div>
         </div>
       </div>

@@ -72,16 +72,22 @@ Short version: Dockan is for people who want Docker-like app running with less m
 
 ## Install
 
-Quick install:
+User install, without sudo:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 ```
 
-Without sudo:
+If `~/.local/bin` is not in your `PATH`, add it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | PREFIX="$HOME/.local" sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+System-wide install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 ```
 
 From a local checkout:
@@ -569,7 +575,7 @@ The release workflow runs tests, builds Linux binaries, creates `.tar.gz` packag
 The installer downloads the right package for the current machine:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 ```
 
 ## What Dockan Already Does

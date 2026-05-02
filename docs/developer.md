@@ -52,7 +52,7 @@ The developer can share the app through GitHub, GitLab, a `.tar.gz` archive, an 
 Install Dockan:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 ```
 
 Fetch the app:

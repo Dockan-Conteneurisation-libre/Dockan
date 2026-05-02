@@ -3,6 +3,8 @@ set -eu
 
 REPO="${REPO:-Dockan-Conteneurisation-libre/Dockan}"
 VERSION="${VERSION:-latest}"
+PREFIX_WAS_SET="${PREFIX+x}"
+BINDIR_WAS_SET="${BINDIR+x}"
 PREFIX="${PREFIX:-/usr/local}"
 BINDIR="${BINDIR:-$PREFIX/bin}"
 INSTALL_SOURCE="${INSTALL_SOURCE:-auto}"
@@ -84,9 +86,35 @@ release_url() {
 
 install_file() {
   src="$1"
-  mkdir -p "$BINDIR"
-  cp "$src" "$BINDIR/dockan"
-  chmod 0755 "$BINDIR/dockan"
+  choose_bindir
+  mkdir -p "$BINDIR" || fail "impossible de créer $BINDIR"
+  cp "$src" "$BINDIR/dockan" || fail "impossible d'installer dans $BINDIR. Essayez: curl -fsSL https://raw.githubusercontent.com/$REPO/main/scripts/install.sh | sudo sh"
+  chmod 0755 "$BINDIR/dockan" || fail "impossible de rendre $BINDIR/dockan exécutable"
+}
+
+choose_bindir() {
+  if can_write_bindir "$BINDIR"; then
+    return 0
+  fi
+
+  if [ -z "$PREFIX_WAS_SET" ] && [ -z "$BINDIR_WAS_SET" ] && [ "$BINDIR" = "/usr/local/bin" ]; then
+    [ -n "${HOME:-}" ] || fail "/usr/local/bin non accessible et HOME est vide"
+    BINDIR="$HOME/.local/bin"
+    info "/usr/local/bin n'est pas accessible sans sudo; installation utilisateur dans $BINDIR."
+    return 0
+  fi
+
+  fail "$BINDIR n'est pas accessible en écriture"
+}
+
+can_write_bindir() {
+  dir="$1"
+  if [ -d "$dir" ]; then
+    [ -w "$dir" ]
+    return
+  fi
+  parent="$(dirname "$dir")"
+  [ -d "$parent" ] && [ -w "$parent" ]
 }
 
 install_from_release() {
@@ -146,4 +174,11 @@ case "$INSTALL_SOURCE" in
 esac
 
 info "Dockan installé dans $BINDIR/dockan"
+case ":$PATH:" in
+  *":$BINDIR:"*) ;;
+  *)
+    info "Note: $BINDIR n'est pas dans PATH."
+    info "Ajoutez-le avec: export PATH=\"$BINDIR:\$PATH\""
+    ;;
+esac
 info "Essayez: dockan doctor"

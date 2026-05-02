@@ -39,16 +39,22 @@ Dockan is simpler and more local. Docker is broader and more mature.
 
 ## Install
 
-Recommended Linux install:
+User install, without sudo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
+```
+
+If `~/.local/bin` is not in your `PATH`, add it:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+System-wide install:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
-```
-
-Install without sudo:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | PREFIX="$HOME/.local" sh
 ```
 
 From a local checkout:
@@ -263,7 +269,7 @@ myapp/
 The admin installs Dockan, fetches the app, builds locally, and runs locally:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh
+curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 tar -xzf myapp-dockan-v1.tar.gz
 cd myapp
 dockan build -t myapp:v1 .
