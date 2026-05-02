@@ -616,4 +616,6 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 
 ## License
 
-AGPL-3.0 or later
+Dockan is licensed under `AGPL-3.0-or-later`.
+
+See [LICENSE](LICENSE) for the full license text.

@@ -315,4 +315,4 @@ The release workflow builds Linux packages and publishes checksums.
 - [Export and Import](./exemples/export.html)
 - [FAQ](./faq.html)
 
-License: AGPL-3.0 or later.
+License: `AGPL-3.0-or-later`. See the repository `LICENSE` file for the full license text.
