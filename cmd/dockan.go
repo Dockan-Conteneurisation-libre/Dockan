@@ -29,6 +29,16 @@ func main() {
 		printHelp()
 	case "version", "--version", "-v":
 		fmt.Println("dockan " + version)
+	case "update", "upgrade":
+		opts, err := parseUpdateOptions(os.Args[2:])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
+			os.Exit(1)
+		}
+		if err := internal.UpdateCLI(opts); err != nil {
+			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
+			os.Exit(1)
+		}
 	case "run":
 		imageRef, opts, err := parseRunCommand(os.Args[2:])
 		if err != nil {
@@ -729,6 +739,31 @@ func parseServiceOptions(args []string) (internal.ServiceOptions, error) {
 	return opts, nil
 }
 
+func parseUpdateOptions(args []string) (internal.UpdateOptions, error) {
+	var opts internal.UpdateOptions
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--version":
+			if i+1 >= len(args) {
+				return opts, fmt.Errorf("--version attend une version, ex: v0.1.1")
+			}
+			opts.Version = args[i+1]
+			i++
+		case "--system":
+			opts.System = true
+		default:
+			if strings.HasPrefix(args[i], "-") {
+				return opts, fmt.Errorf("option inconnue: %s", args[i])
+			}
+			if opts.Version != "" {
+				return opts, fmt.Errorf("version déjà définie: %s", opts.Version)
+			}
+			opts.Version = args[i]
+		}
+	}
+	return opts, nil
+}
+
 func printHelp() {
 	fmt.Print(`Dockan - alternative libre à Docker
 Commandes :
@@ -767,6 +802,8 @@ Commandes :
   import <fichier.tar.gz> <dossier.dockan>  Importe une image depuis un fichier
   doctor               Vérifie les outils d'isolation disponibles
   version              Affiche la version
+  update [--version vX.Y.Z] [--system]
+                       Met à jour le binaire Dockan depuis GitHub Releases
   help                 Affiche cette aide
 
 Options run :

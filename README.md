@@ -104,6 +104,24 @@ dockan doctor
 dockan ps -a
 ```
 
+Update later:
+
+```bash
+dockan update
+```
+
+Update to a specific release:
+
+```bash
+dockan update --version v0.1.1
+```
+
+Update a system-wide installation:
+
+```bash
+dockan update --system
+```
+
 ## Quick Test
 
 Build the example:
