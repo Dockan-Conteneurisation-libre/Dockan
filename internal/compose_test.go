@@ -29,6 +29,7 @@ services:
     command: ./server --port 80
     entrypoint: /bin/sh -c
     restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:80
     gui: true
     memory: 256m
     cpus: 1.5
@@ -72,7 +73,7 @@ networks:
 	if len(service.DependsOn) != 1 || service.DependsOn[0] != "db" {
 		t.Fatalf("depends_on = %#v", service.DependsOn)
 	}
-	if strings.Join(service.Command, " ") != "./server --port 80" || service.Entrypoint != "/bin/sh -c" || service.Restart != "always" || !service.GUI || service.Memory != "256m" || service.CPUs != "1.5" {
+	if strings.Join(service.Command, " ") != "./server --port 80" || service.Entrypoint != "/bin/sh -c" || service.Restart != "always" || service.Healthcheck != "CMD-SHELL curl -f http://127.0.0.1:80" || !service.GUI || service.Memory != "256m" || service.CPUs != "1.5" {
 		t.Fatalf("service extended fields = %+v", service)
 	}
 	ordered, err := orderComposeServices(project.Services)

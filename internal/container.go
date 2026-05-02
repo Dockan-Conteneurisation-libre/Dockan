@@ -119,6 +119,11 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 		"cpus":       opts.CPUs,
 		"created":    time.Now().Format(time.RFC3339),
 	}
+	if healthcheck := strings.TrimSpace(opts.Healthcheck); healthcheck != "" {
+		meta["healthcheck"] = healthcheck
+	} else if healthcheck := strings.TrimSpace(img.Meta["healthcheck"]); healthcheck != "" {
+		meta["healthcheck"] = healthcheck
+	}
 	if len(portProxyPIDs) > 0 {
 		meta["portProxyPids"] = joinInts(portProxyPIDs)
 	}
@@ -326,6 +331,66 @@ func ExecContainer(name string, args []string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Env = imageEnv(img, RunOptions{Network: c.Network, Ports: splitComma(c.Ports), Volumes: splitComma(meta["volumes"]), GUI: meta["gui"] == "true"})
 	return cmd.Run()
+}
+
+func CheckContainerHealth(name string) error {
+	c, meta, err := loadContainer(name)
+	if err != nil {
+		return err
+	}
+	if c.PID <= 0 || !processRunning(c.PID) {
+		return fmt.Errorf("conteneur non démarré: %s", name)
+	}
+	check, err := healthcheckCommand(meta["healthcheck"])
+	if err != nil {
+		return err
+	}
+	if check == "" {
+		return fmt.Errorf("aucun healthcheck défini: %s", name)
+	}
+	if err := ExecContainer(name, []string{"sh", "-lc", check}); err != nil {
+		return fmt.Errorf("%s unhealthy: %w", name, err)
+	}
+	fmt.Printf("%s healthy\n", name)
+	return nil
+}
+
+func healthcheckCommand(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", nil
+	}
+	if strings.EqualFold(value, "NONE") {
+		return "", nil
+	}
+	fields := strings.Fields(value)
+	for len(fields) > 0 && strings.HasPrefix(fields[0], "--") {
+		fields = fields[1:]
+	}
+	if len(fields) == 0 {
+		return "", nil
+	}
+	kind := strings.ToUpper(fields[0])
+	rest := strings.TrimSpace(strings.TrimPrefix(valueAfterOptions(value), fields[0]))
+	switch kind {
+	case "CMD":
+		return normalizeDockerCommand(rest)
+	case "CMD-SHELL":
+		return rest, nil
+	default:
+		return normalizeDockerCommand(value)
+	}
+}
+
+func valueAfterOptions(value string) string {
+	value = strings.TrimSpace(value)
+	for {
+		fields := strings.Fields(value)
+		if len(fields) == 0 || !strings.HasPrefix(fields[0], "--") {
+			return value
+		}
+		value = strings.TrimSpace(strings.TrimPrefix(value, fields[0]))
+	}
 }
 
 func loadContainer(name string) (Container, map[string]string, error) {

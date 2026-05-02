@@ -530,12 +530,17 @@ dockan stop monapp</code></pre>
         <article class="card">
           <span class="badge">Volumes</span>
           <h3>Persistent data</h3>
-          <p>Named volumes and local folder mounts with `-v data:/data` or `-v ./data:/data`.</p>
+          <p>Named volumes, local folder mounts, and tar.gz backup/restore for app data.</p>
         </article>
         <article class="card">
           <span class="badge blue">Compose</span>
           <h3>Multiple services</h3>
-          <p>`dockan compose up` reads a `dockan.yml` with build, image, ports, env, volumes, aliases, depends_on, restart, memory, and cpus.</p>
+          <p>`dockan compose up` reads a `dockan.yml` with build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory, and cpus.</p>
+        </article>
+        <article class="card">
+          <span class="badge">Health</span>
+          <h3>Healthchecks</h3>
+          <p>Use `dockan health` or `dockan compose health` to run service readiness checks.</p>
         </article>
         <article class="card">
           <span class="badge blue">Service</span>
@@ -579,7 +584,7 @@ sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre
 
     <section id="prod">
       <h2>Production</h2>
-      <p class="lead">Dockan is usable as a simple local container tool. For serious production use, publish releases with checksums and test root-level features on a clean Linux machine.</p>
+      <p class="lead">Dockan is usable as a simple local container tool. For serious production use, publish releases with checksums, back up volumes, run healthchecks, and test root-level features on a clean Linux machine.</p>
       <div class="split">
         <div class="card">
           <span class="badge">Release</span>
@@ -590,6 +595,17 @@ sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre
             </div>
             <pre><code>git tag v0.1.0
 git push origin v0.1.0</code></pre>
+          </div>
+        </div>
+        <div class="card">
+          <span class="badge">Operate</span>
+          <h3>Health and backup</h3>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy="dockan compose health -f /srv/myapp/dockan.yml&#10;dockan volume backup data /srv/backups/data.tar.gz">Copy</button>
+            </div>
+            <pre><code>dockan compose health -f /srv/myapp/dockan.yml
+dockan volume backup data /srv/backups/data.tar.gz</code></pre>
           </div>
         </div>
         <div class="card">

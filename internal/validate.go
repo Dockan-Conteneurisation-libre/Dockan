@@ -45,6 +45,9 @@ func ValidateRunOptions(opts RunOptions) error {
 	if err := validateRestart(opts.Restart); err != nil {
 		return err
 	}
+	if _, err := healthcheckCommand(opts.Healthcheck); err != nil {
+		return err
+	}
 	if opts.Memory != "" {
 		if _, err := parseMemoryBytes(opts.Memory); err != nil {
 			return err

@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -234,6 +237,144 @@ func InspectVolume(name string) error {
 	}
 	fmt.Printf("name=%s\npath=%s\ncreated=%s\n", name, path, info.ModTime().Format("2006-01-02T15:04:05Z07:00"))
 	return nil
+}
+
+func BackupVolume(name, archivePath string) error {
+	if err := validateResourceName("nom de volume", name); err != nil {
+		return err
+	}
+	source := filepath.Join(VolumesDir(), name)
+	if info, err := os.Stat(source); err != nil || !info.IsDir() {
+		return fmt.Errorf("volume introuvable: %s", name)
+	}
+	if archivePath == "" {
+		archivePath = name + ".tar.gz"
+	}
+	file, err := os.Create(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	gz := gzip.NewWriter(file)
+	defer gz.Close()
+	tw := tar.NewWriter(gz)
+	defer tw.Close()
+
+	if err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(source, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+		if !info.IsDir() && !info.Mode().IsRegular() {
+			return fmt.Errorf("type volume non supporté: %s", rel)
+		}
+		header, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return err
+		}
+		header.Name = filepath.ToSlash(rel)
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		_, err = io.Copy(tw, src)
+		return err
+	}); err != nil {
+		return err
+	}
+	fmt.Printf("Backup volume %s -> %s\n", name, archivePath)
+	return nil
+}
+
+func RestoreVolume(name, archivePath string) error {
+	if err := validateResourceName("nom de volume", name); err != nil {
+		return err
+	}
+	if archivePath == "" {
+		return fmt.Errorf("archive requise")
+	}
+	target := filepath.Join(VolumesDir(), name)
+	if entries, err := os.ReadDir(target); err == nil && len(entries) > 0 {
+		return fmt.Errorf("volume non vide: %s", name)
+	}
+	if err := os.MkdirAll(target, 0755); err != nil {
+		return err
+	}
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	gz, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+	tr := tar.NewReader(gz)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		dest, err := cleanVolumeArchivePath(target, header.Name)
+		if err != nil {
+			return err
+		}
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(dest, os.FileMode(header.Mode)); err != nil {
+				return err
+			}
+		case tar.TypeReg, tar.TypeRegA:
+			if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+				return err
+			}
+			out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(out, tr); err != nil {
+				_ = out.Close()
+				return err
+			}
+			if err := out.Close(); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("type archive non supporté: %s", header.Name)
+		}
+	}
+	fmt.Printf("Restore volume %s <- %s\n", name, archivePath)
+	return nil
+}
+
+func cleanVolumeArchivePath(root, name string) (string, error) {
+	clean := filepath.Clean(name)
+	if filepath.IsAbs(clean) || clean == "." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) || clean == ".." {
+		return "", fmt.Errorf("chemin archive interdit: %s", name)
+	}
+	dest := filepath.Join(root, clean)
+	rel, err := filepath.Rel(root, dest)
+	if err != nil || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+		return "", fmt.Errorf("chemin archive interdit: %s", name)
+	}
+	return dest, nil
 }
 
 func imageVolumeSpecs(meta map[string]string) []string {

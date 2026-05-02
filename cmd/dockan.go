@@ -83,6 +83,15 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
 			os.Exit(1)
 		}
+	case "health":
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: dockan health <conteneur>")
+			os.Exit(1)
+		}
+		if err := internal.CheckContainerHealth(os.Args[2]); err != nil {
+			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
+			os.Exit(1)
+		}
 	case "stop":
 		if len(os.Args) != 3 {
 			fmt.Println("Usage: dockan stop <conteneur>")
@@ -358,6 +367,12 @@ func parseRunCommand(args []string) (string, internal.RunOptions, error) {
 			}
 			opts.Restart = args[i+1]
 			i++
+		case "--healthcheck":
+			if i+1 >= len(args) {
+				return image, opts, fmt.Errorf("--healthcheck attend une commande")
+			}
+			opts.Healthcheck = args[i+1]
+			i++
 		case "--memory", "-m":
 			if i+1 >= len(args) {
 				return image, opts, fmt.Errorf("%s attend une taille, ex: 512m", arg)
@@ -520,7 +535,7 @@ func runDeps(args []string) error {
 
 func runVolume(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("Usage: dockan volume <ls|create|rm|inspect>")
+		return fmt.Errorf("Usage: dockan volume <ls|create|rm|inspect|backup|restore>")
 	}
 	switch args[0] {
 	case "ls", "list":
@@ -540,6 +555,20 @@ func runVolume(args []string) error {
 			return fmt.Errorf("Usage: dockan volume inspect <nom>")
 		}
 		return internal.InspectVolume(args[1])
+	case "backup":
+		if len(args) < 2 || len(args) > 3 {
+			return fmt.Errorf("Usage: dockan volume backup <nom> [fichier.tar.gz]")
+		}
+		out := ""
+		if len(args) == 3 {
+			out = args[2]
+		}
+		return internal.BackupVolume(args[1], out)
+	case "restore":
+		if len(args) != 3 {
+			return fmt.Errorf("Usage: dockan volume restore <nom> <fichier.tar.gz>")
+		}
+		return internal.RestoreVolume(args[1], args[2])
 	default:
 		return fmt.Errorf("commande volume inconnue: %s", args[0])
 	}
@@ -631,7 +660,7 @@ func parseNetworkCreateOptions(args []string) (internal.NetworkOptions, error) {
 
 func runCompose(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("Usage: dockan compose <up|down|redeploy> [-f dockan.yml]")
+		return fmt.Errorf("Usage: dockan compose <up|down|redeploy|health> [-f dockan.yml]")
 	}
 	action := args[0]
 	file, err := parseFileFlag(args[1:])
@@ -645,6 +674,8 @@ func runCompose(args []string) error {
 		return internal.ComposeDown(file)
 	case "redeploy", "restart":
 		return internal.ComposeRedeploy(file)
+	case "health":
+		return internal.ComposeHealth(file)
 	default:
 		return fmt.Errorf("commande compose inconnue: %s", action)
 	}
@@ -772,6 +803,7 @@ Commandes :
   ps [-a]              Liste les conteneurs
   logs <conteneur>     Affiche les logs
   exec <conteneur> <commande>  Exécute une commande dans un conteneur
+  health <conteneur>   Exécute le healthcheck du conteneur
   stop <conteneur>     Stoppe un conteneur détaché
   rm <conteneur>       Supprime un conteneur stoppé
   inspect <conteneur>  Affiche les métadonnées d'un conteneur
@@ -788,11 +820,12 @@ Commandes :
   base runtime <tag> --from <rootfs>  Crée une base runtime complète locale
   deps check|install|runtime
                        Vérifie ou installe des dépendances avec apt/dnf/apk...
-  volume ls|create|rm|inspect
+  volume ls|create|rm|inspect|backup|restore
                        Gère les volumes locaux
   network ls|create|rm|enable|disable|hosts|refresh|doctor
                        Gère les réseaux Dockan
-  compose up|down|redeploy  Lance/stoppe/redéploie un projet dockan.yml
+  compose up|down|redeploy|health
+                       Lance, stoppe, redéploie ou vérifie un projet dockan.yml
   service install      Installe un projet dockan.yml comme service systemd
   service uninstall    Supprime le service systemd
   new <language> [dir] Crée une app Dockan: python,node,php,go,rust,java,ruby,binary
@@ -815,6 +848,7 @@ Options run :
   --gui                Monte les sockets GUI locaux si disponibles
   --entrypoint <cmd>   Remplace ENTRYPOINT
   --restart <mode>     no|always|on-failure
+  --healthcheck <cmd>  Définit une commande de santé
   -m, --memory <taille> Limite mémoire avec prlimit, ex: 512m
   --cpus <nombre>      Déclare une limite CPU, ex: 1.5
   --network <nom>      Associe un réseau Dockan

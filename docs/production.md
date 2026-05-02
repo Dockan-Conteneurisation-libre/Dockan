@@ -52,6 +52,89 @@ services:
       - data:/data
 ```
 
+Back up important volumes before a risky update:
+
+```bash
+dockan volume backup data /srv/backups/myapp-data-v1.2.0.tar.gz
+```
+
+Restore into a new empty volume when needed:
+
+```bash
+dockan volume restore data-restored /srv/backups/myapp-data-v1.2.0.tar.gz
+```
+
+## Healthchecks
+
+Put healthchecks in `Dockanfile` or `dockan.yml`:
+
+```yaml
+services:
+  web:
+    image: myapp:stable
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+```
+
+Check one container:
+
+```bash
+dockan health myapp-web
+```
+
+Check every service in a compose project:
+
+```bash
+dockan compose health -f /srv/myapp/dockan.yml
+```
+
+## App And Database Projects
+
+Dockan can run app plus database projects when the database is available as a local Dockan image or a local runtime base.
+
+Use compose with:
+
+- `depends_on` to start the database before the app
+- `aliases` so the app can refer to the database as `db`
+- `env` for standard names such as `DB_NAME`, `DB_USER`, and `DB_PASSWORD`
+- volumes for database state
+- healthchecks for app and DB readiness
+
+Example:
+
+```yaml
+name: myapp
+services:
+  web:
+    image: myapp:stable
+    depends_on:
+      - db
+    env:
+      - DB_HOST=db
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    network: appnet
+    aliases:
+      - web
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+  db:
+    image: db:stable
+    volumes:
+      - db-data:/var/lib/db
+    env:
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    network: appnet
+    aliases:
+      - db
+    healthcheck: CMD-SHELL test -d /var/lib/db
+networks:
+  - appnet
+```
+
+Database init scripts are not universal yet. For now, put init logic inside the DB image, a `hooks/prestart` script, or an app-specific setup command.
+
 ## Real Load With Multiple Containers
 
 Before trusting a server, test more than one container:
@@ -78,6 +161,7 @@ ab -n 5000 -c 50 http://127.0.0.1:8080/
 Check:
 
 - CPU and RAM usage
+- `dockan compose health`
 - logs under load
 - restart behavior
 - port publishing
@@ -178,6 +262,8 @@ Before calling a Dockan deployment production-ready on a server, verify:
 - app starts after reboot
 - `dockan compose redeploy` updates the app
 - rollback to the previous tag works
+- volume backup and restore works for important data
+- `dockan compose health` passes
 - `dockan push` and `dockan pull` work with the chosen local registry folder
 - logs are readable
 - volumes preserve data after redeploy

@@ -18,20 +18,21 @@ type Image struct {
 }
 
 type RunOptions struct {
-	Isolation  string
-	Detach     bool
-	Name       string
-	Env        []string
-	Ports      []string
-	Network    string
-	Aliases    []string
-	Volumes    []string
-	GUI        bool
-	Command    []string
-	Entrypoint string
-	Restart    string
-	Memory     string
-	CPUs       string
+	Isolation   string
+	Detach      bool
+	Name        string
+	Env         []string
+	Ports       []string
+	Network     string
+	Aliases     []string
+	Volumes     []string
+	GUI         bool
+	Command     []string
+	Entrypoint  string
+	Restart     string
+	Healthcheck string
+	Memory      string
+	CPUs        string
 }
 
 func DefaultRunOptions() RunOptions {

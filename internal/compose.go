@@ -15,22 +15,23 @@ type ComposeProject struct {
 }
 
 type ComposeService struct {
-	Name       string
-	Image      string
-	Build      string
-	Ports      []string
-	Env        []string
-	Network    string
-	Aliases    []string
-	Isolation  string
-	Volumes    []string
-	Command    []string
-	Entrypoint string
-	DependsOn  []string
-	Restart    string
-	GUI        bool
-	Memory     string
-	CPUs       string
+	Name        string
+	Image       string
+	Build       string
+	Ports       []string
+	Env         []string
+	Network     string
+	Aliases     []string
+	Isolation   string
+	Volumes     []string
+	Command     []string
+	Entrypoint  string
+	DependsOn   []string
+	Restart     string
+	Healthcheck string
+	GUI         bool
+	Memory      string
+	CPUs        string
 }
 
 func ComposeUp(file string) error {
@@ -70,20 +71,21 @@ func ComposeUp(file string) error {
 			return fmt.Errorf("service %s: %w", service.Name, err)
 		}
 		opts := RunOptions{
-			Isolation:  service.Isolation,
-			Detach:     true,
-			Name:       project.Name + "-" + service.Name,
-			Env:        service.Env,
-			Ports:      service.Ports,
-			Network:    service.Network,
-			Aliases:    service.Aliases,
-			Volumes:    service.Volumes,
-			Command:    service.Command,
-			Entrypoint: service.Entrypoint,
-			Restart:    service.Restart,
-			GUI:        service.GUI,
-			Memory:     service.Memory,
-			CPUs:       service.CPUs,
+			Isolation:   service.Isolation,
+			Detach:      true,
+			Name:        project.Name + "-" + service.Name,
+			Env:         service.Env,
+			Ports:       service.Ports,
+			Network:     service.Network,
+			Aliases:     service.Aliases,
+			Volumes:     service.Volumes,
+			Command:     service.Command,
+			Entrypoint:  service.Entrypoint,
+			Restart:     service.Restart,
+			Healthcheck: service.Healthcheck,
+			GUI:         service.GUI,
+			Memory:      service.Memory,
+			CPUs:        service.CPUs,
 		}
 		if opts.Isolation == "" {
 			opts.Isolation = IsolationAuto
@@ -166,6 +168,20 @@ func ComposeRedeploy(file string) error {
 	return ComposeUp(file)
 }
 
+func ComposeHealth(file string) error {
+	project, err := LoadComposeFile(file)
+	if err != nil {
+		return err
+	}
+	for _, service := range project.Services {
+		name := project.Name + "-" + service.Name
+		if err := CheckContainerHealth(name); err != nil {
+			return fmt.Errorf("service %s: %w", service.Name, err)
+		}
+	}
+	return nil
+}
+
 func LoadComposeFile(file string) (ComposeProject, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
@@ -241,6 +257,8 @@ func LoadComposeFile(file string) (ComposeProject, error) {
 					current.Entrypoint = cleanScalar(value)
 				case "restart":
 					current.Restart = cleanScalar(value)
+				case "healthcheck":
+					current.Healthcheck = cleanScalar(value)
 				case "gui":
 					current.GUI = cleanScalar(value) == "true"
 				case "memory":
@@ -308,19 +326,20 @@ func validateComposeProject(project ComposeProject) error {
 			return fmt.Errorf("service %s: image ou build requis", service.Name)
 		}
 		opts := RunOptions{
-			Name:       project.Name + "-" + service.Name,
-			Env:        service.Env,
-			Ports:      service.Ports,
-			Network:    service.Network,
-			Aliases:    service.Aliases,
-			Isolation:  service.Isolation,
-			Volumes:    service.Volumes,
-			Command:    service.Command,
-			Entrypoint: service.Entrypoint,
-			Restart:    service.Restart,
-			GUI:        service.GUI,
-			Memory:     service.Memory,
-			CPUs:       service.CPUs,
+			Name:        project.Name + "-" + service.Name,
+			Env:         service.Env,
+			Ports:       service.Ports,
+			Network:     service.Network,
+			Aliases:     service.Aliases,
+			Isolation:   service.Isolation,
+			Volumes:     service.Volumes,
+			Command:     service.Command,
+			Entrypoint:  service.Entrypoint,
+			Restart:     service.Restart,
+			Healthcheck: service.Healthcheck,
+			GUI:         service.GUI,
+			Memory:      service.Memory,
+			CPUs:        service.CPUs,
 		}
 		if service.Network != "" && service.Network != HostNetwork && !seen[service.Network] {
 			return fmt.Errorf("service %s: réseau %s non déclaré", service.Name, service.Network)
@@ -372,6 +391,9 @@ func ValidateRunOptionsForCompose(opts RunOptions, declaredNetworks map[string]b
 		return err
 	}
 	if err := validateRestart(opts.Restart); err != nil {
+		return err
+	}
+	if _, err := healthcheckCommand(opts.Healthcheck); err != nil {
 		return err
 	}
 	if opts.Memory != "" {

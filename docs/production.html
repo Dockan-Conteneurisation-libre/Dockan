@@ -213,6 +213,52 @@ dockan compose redeploy -f /srv/myapp/dockan.yml</code></pre>
       <p>Rollback:</p>
       <pre><code>dockan tag myapp:previous myapp:stable
 dockan compose redeploy -f /srv/myapp/dockan.yml</code></pre>
+      <p>Back up important volumes before risky updates:</p>
+      <pre><code>dockan volume backup data /srv/backups/myapp-data-v1.2.0.tar.gz
+dockan volume restore data-restored /srv/backups/myapp-data-v1.2.0.tar.gz</code></pre>
+    </section>
+
+    <section>
+      <span class="badge">Health</span>
+      <h2>Healthchecks</h2>
+      <pre><code>dockan health myapp-web
+dockan compose health -f /srv/myapp/dockan.yml</code></pre>
+      <p>Healthchecks can come from a Dockanfile or from `healthcheck:` in `dockan.yml`.</p>
+    </section>
+
+    <section>
+      <span class="badge blue">App + DB</span>
+      <h2>App And Database Projects</h2>
+      <p>Use `depends_on`, network aliases, environment variables, persistent volumes, and healthchecks. Database init scripts are still app-specific: put them inside the DB image, a `hooks/prestart` script, or an app setup command.</p>
+      <pre><code>name: myapp
+services:
+  web:
+    image: myapp:stable
+    depends_on:
+      - db
+    env:
+      - DB_HOST=db
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    network: appnet
+    aliases:
+      - web
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+  db:
+    image: db:stable
+    volumes:
+      - db-data:/var/lib/db
+    env:
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    network: appnet
+    aliases:
+      - db
+    healthcheck: CMD-SHELL test -d /var/lib/db
+networks:
+  - appnet</code></pre>
     </section>
 
     <section>
@@ -223,6 +269,7 @@ dockan ps -a
 dockan logs myapp-web
 wrk -t4 -c64 -d60s http://127.0.0.1:8080/</code></pre>
       <p>Check CPU, RAM, logs, restart behavior, published ports, volume writes, and cleanup.</p>
+      <pre><code>dockan compose health -f /srv/myapp/dockan.yml</code></pre>
     </section>
 
     <section>
@@ -265,6 +312,8 @@ sudo dockan network disable prodnet</code></pre>
         <li>The app starts after reboot.</li>
         <li>`dockan compose redeploy` updates the app.</li>
         <li>Rollback to the previous tag works.</li>
+        <li>Volume backup and restore works for important data.</li>
+        <li>`dockan compose health` passes.</li>
         <li>`dockan push` and `dockan pull` work with the chosen local registry folder.</li>
         <li>Volumes preserve data after redeploy.</li>
         <li>Multiple services run together.</li>

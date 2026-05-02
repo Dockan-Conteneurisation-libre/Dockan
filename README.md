@@ -401,6 +401,18 @@ List volumes:
 dockan volume ls
 ```
 
+Back up a volume:
+
+```bash
+dockan volume backup data data-backup.tar.gz
+```
+
+Restore into a new empty volume:
+
+```bash
+dockan volume restore data-restored data-backup.tar.gz
+```
+
 Remove a volume:
 
 ```bash
@@ -423,15 +435,29 @@ services:
       - PORT=8080
     volumes:
       - data:/data
+    network: appnet
     aliases:
       - web.local
     depends_on:
       - db
     restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
     memory: 512m
     cpus: 1.5
   db:
     image: db:latest
+    volumes:
+      - db-data:/var/lib/db
+    env:
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    aliases:
+      - db
+    network: appnet
+    healthcheck: CMD-SHELL test -d /var/lib/db
+networks:
+  - appnet
 ```
 
 Run:
@@ -446,11 +472,19 @@ Stop:
 dockan compose down
 ```
 
+Check all service healthchecks:
+
+```bash
+dockan compose health
+```
+
 Use another file:
 
 ```bash
 dockan compose up -f examples/compose/dockan.yml
 ```
+
+For app plus database projects, Dockan supports `depends_on`, shared networks, aliases, environment variables, and persistent volumes. Database init scripts and standard user/password variables must still be handled by the database image or by the app's own `hooks/prestart` script.
 
 ## Local Registry
 
@@ -546,14 +580,18 @@ dockan pull app:latest /srv/dockan-registry
 dockan ps -a
 dockan logs app
 dockan exec app sh
+dockan health app
 dockan inspect app
 dockan volume ls
+dockan volume backup data data-backup.tar.gz
+dockan volume restore data-restored data-backup.tar.gz
 dockan deps check
 dockan stop app
 dockan rm app
 dockan compose up
 dockan compose down
 dockan compose redeploy
+dockan compose health
 dockan doctor
 ```
 
@@ -624,7 +662,9 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - internal hosts file per network
 - simple GUI apps with `--gui`
 - `dockan exec`
-- `dockan compose` with volumes, depends_on, command, entrypoint, restart
+- healthchecks with `dockan health`, `--healthcheck`, and `dockan compose health`
+- volume backup and restore with `dockan volume backup` and `dockan volume restore`
+- `dockan compose` with volumes, depends_on, command, entrypoint, restart, healthcheck
 - cgroup limits through `systemd-run --scope` when available, with `prlimit` fallback for memory
 - tar.gz packages and `.deb` when `dpkg-deb` is available
 - explicit dependency installation through apt/dnf/apk/pacman/zypper
@@ -637,6 +677,7 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - full 100% Dockerfile compatibility
 - full dynamic internal DNS like Docker
 - complete CPU/RAM cgroups
+- fully automatic database init/user/password conventions for every DB image
 - advanced GUI isolation policies
 - Kubernetes
 

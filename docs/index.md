@@ -187,6 +187,13 @@ Mount a local folder:
 dockan run -d --name web -v ./data:/data web:latest
 ```
 
+Back up and restore volumes:
+
+```bash
+dockan volume backup data data-backup.tar.gz
+dockan volume restore data-restored data-backup.tar.gz
+```
+
 ## Network
 
 Simple local network:
@@ -229,11 +236,27 @@ services:
       - PORT=8080
     volumes:
       - data:/data
+    network: appnet
     aliases:
       - web.local
     restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
     memory: 512m
     cpus: 1.5
+  db:
+    image: db:latest
+    volumes:
+      - db-data:/var/lib/db
+    env:
+      - DB_NAME=myapp
+      - DB_USER=myapp
+      - DB_PASSWORD=change-me
+    aliases:
+      - db
+    network: appnet
+    healthcheck: CMD-SHELL test -d /var/lib/db
+networks:
+  - appnet
 ```
 
 Run:
@@ -241,7 +264,10 @@ Run:
 ```bash
 dockan compose up
 dockan compose down
+dockan compose health
 ```
+
+For app plus database projects, Dockan supports `depends_on`, network aliases, environment variables, persistent volumes, and healthchecks. Database init scripts and standard user/password behavior still need to be implemented by the database image or an app hook.
 
 ## Local Registry
 
@@ -322,8 +348,9 @@ The release workflow builds Linux packages and publishes checksums.
 - local bases imported from a folder or archive
 - detached containers
 - logs, `exec`, `stop`, `rm`, `inspect`
+- healthchecks with `dockan health` and `dockan compose health`
 - environment variables
-- named volumes and local folders
+- named volumes, local folders, backup, and restore
 - simple networks and bridge/NAT with sudo
 - port publishing with `-p`
 - `dockan compose`
