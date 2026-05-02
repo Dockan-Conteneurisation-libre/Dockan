@@ -486,6 +486,66 @@ dockan compose up -f examples/compose/dockan.yml
 
 For app plus database projects, Dockan supports `depends_on`, shared networks, aliases, environment variables, and persistent volumes. Database init scripts and standard user/password variables must still be handled by the database image or by the app's own `hooks/prestart` script.
 
+## Known App Example: WordPress-Style Stack
+
+Dockan can be used for well-known local-first apps such as a WordPress-style PHP site with a MariaDB/MySQL database, once the runtime images are prepared locally.
+
+Example `dockan.yml`:
+
+```yaml
+name: wordpress
+services:
+  web:
+    image: wordpress:local
+    ports:
+      - 8080:8080
+    env:
+      - DB_HOST=db
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+    volumes:
+      - wp-data:/var/www/html
+    network: wpnet
+    aliases:
+      - web
+    depends_on:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+  db:
+    image: mariadb:local
+    env:
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+      - DB_ROOT_PASSWORD=change-root
+    volumes:
+      - db-data:/var/lib/mysql
+    network: wpnet
+    aliases:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL test -d /var/lib/mysql
+networks:
+  - wpnet
+```
+
+Run it locally:
+
+```bash
+dockan compose up
+dockan compose health
+```
+
+Back up the database volume:
+
+```bash
+dockan volume backup db-data wordpress-db-backup.tar.gz
+```
+
+Important: Dockan does not pull `wordpress` or `mariadb` from Docker Hub automatically. A developer or admin must provide `wordpress:local` and `mariadb:local` as Dockan local images or runtime bases.
+
 ## Local Registry
 
 Dockan has a simple local registry alternative. It is just a folder containing image archives, checksums, and an index.

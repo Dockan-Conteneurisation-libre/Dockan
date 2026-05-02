@@ -555,6 +555,71 @@ dockan stop monapp</code></pre>
       </div>
     </section>
 
+    <section>
+      <h2>Known App Example</h2>
+      <p class="lead">A WordPress-style PHP app with a MariaDB/MySQL database shows the practical Dockan workflow: local images, compose, network aliases, volumes, healthchecks, and backup.</p>
+      <div class="split">
+        <div class="card">
+          <span class="badge">WordPress</span>
+          <h3>Local app + DB</h3>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy="name: wordpress&#10;services:&#10;  web:&#10;    image: wordpress:local&#10;    ports:&#10;      - 8080:8080&#10;    env:&#10;      - DB_HOST=db&#10;      - DB_NAME=wordpress&#10;      - DB_USER=wordpress&#10;      - DB_PASSWORD=change-me&#10;    volumes:&#10;      - wp-data:/var/www/html&#10;    network: wpnet&#10;    aliases:&#10;      - web&#10;    depends_on:&#10;      - db&#10;    restart: always&#10;    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/&#10;  db:&#10;    image: mariadb:local&#10;    env:&#10;      - DB_NAME=wordpress&#10;      - DB_USER=wordpress&#10;      - DB_PASSWORD=change-me&#10;      - DB_ROOT_PASSWORD=change-root&#10;    volumes:&#10;      - db-data:/var/lib/mysql&#10;    network: wpnet&#10;    aliases:&#10;      - db&#10;    restart: always&#10;    healthcheck: CMD-SHELL test -d /var/lib/mysql&#10;networks:&#10;  - wpnet">Copy</button>
+            </div>
+            <pre><code>name: wordpress
+services:
+  web:
+    image: wordpress:local
+    ports:
+      - 8080:8080
+    env:
+      - DB_HOST=db
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+    volumes:
+      - wp-data:/var/www/html
+    network: wpnet
+    aliases:
+      - web
+    depends_on:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+  db:
+    image: mariadb:local
+    env:
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+      - DB_ROOT_PASSWORD=change-root
+    volumes:
+      - db-data:/var/lib/mysql
+    network: wpnet
+    aliases:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL test -d /var/lib/mysql
+networks:
+  - wpnet</code></pre>
+          </div>
+        </div>
+        <div class="card">
+          <span class="badge blue">Run</span>
+          <h3>Operate locally</h3>
+          <p>Use prepared local images such as <code>wordpress:local</code> and <code>mariadb:local</code>. Dockan does not pull them from Docker Hub automatically.</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy="dockan compose up&#10;dockan compose health&#10;dockan volume backup db-data wordpress-db-backup.tar.gz">Copy</button>
+            </div>
+            <pre><code>dockan compose up
+dockan compose health
+dockan volume backup db-data wordpress-db-backup.tar.gz</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="network">
       <h2>Network</h2>
       <p class="lead">Dockan can create simple networks. Bridge/NAT with veth and published ports requires `sudo`.</p>

@@ -269,6 +269,57 @@ dockan compose health
 
 For app plus database projects, Dockan supports `depends_on`, network aliases, environment variables, persistent volumes, and healthchecks. Database init scripts and standard user/password behavior still need to be implemented by the database image or an app hook.
 
+## Known App Example: WordPress-Style Stack
+
+Dockan can run a WordPress-style PHP app with a MariaDB/MySQL database when the images are prepared locally:
+
+```yaml
+name: wordpress
+services:
+  web:
+    image: wordpress:local
+    ports:
+      - 8080:8080
+    env:
+      - DB_HOST=db
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+    volumes:
+      - wp-data:/var/www/html
+    network: wpnet
+    aliases:
+      - web
+    depends_on:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/
+  db:
+    image: mariadb:local
+    env:
+      - DB_NAME=wordpress
+      - DB_USER=wordpress
+      - DB_PASSWORD=change-me
+      - DB_ROOT_PASSWORD=change-root
+    volumes:
+      - db-data:/var/lib/mysql
+    network: wpnet
+    aliases:
+      - db
+    restart: always
+    healthcheck: CMD-SHELL test -d /var/lib/mysql
+networks:
+  - wpnet
+```
+
+```bash
+dockan compose up
+dockan compose health
+dockan volume backup db-data wordpress-db-backup.tar.gz
+```
+
+This keeps the app local. Dockan does not pull `wordpress` or `mariadb` from Docker Hub automatically; those images must be created, imported, or shared as local Dockan images.
+
 ## Local Registry
 
 Use a normal folder as a local registry:
