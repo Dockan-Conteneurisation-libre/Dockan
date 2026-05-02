@@ -195,8 +195,37 @@ func imageEnv(img *Image, opts RunOptions) []string {
 	}
 	if len(opts.Ports) > 0 {
 		env = append(env, "DOCKAN_PORTS="+strings.Join(opts.Ports, ","))
+		if !hasEnvKey(opts.Env, "PORT") {
+			if port := portEnvValue(opts); port != "" {
+				env = append(env, "PORT="+port)
+			}
+		}
 	}
 	return env
+}
+
+func portEnvValue(opts RunOptions) string {
+	if len(opts.Ports) == 0 {
+		return ""
+	}
+	hostPort, containerPort, err := splitPublishedPort(opts.Ports[0])
+	if err != nil {
+		return ""
+	}
+	if opts.Network != "" && IsBridgeNetwork(opts.Network) {
+		return containerPort
+	}
+	return hostPort
+}
+
+func hasEnvKey(env []string, key string) bool {
+	prefix := key + "="
+	for _, item := range env {
+		if strings.HasPrefix(item, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func ParseMeta(path string) (map[string]string, error) {

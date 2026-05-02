@@ -9,6 +9,29 @@ import (
 	"testing"
 )
 
+func TestImageEnvSetsPortFromPublishedHostPort(t *testing.T) {
+	env := imageEnv(&Image{Meta: map[string]string{}, Path: t.TempDir(), RootfsDir: t.TempDir()}, RunOptions{Ports: []string{"18080:8000"}})
+	if !containsEnv(env, "PORT=18080") {
+		t.Fatalf("PORT should use host port for shared host networking: %v", env)
+	}
+}
+
+func TestImageEnvDoesNotOverrideExplicitPort(t *testing.T) {
+	env := imageEnv(&Image{Meta: map[string]string{}, Path: t.TempDir(), RootfsDir: t.TempDir()}, RunOptions{Ports: []string{"18080:8000"}, Env: []string{"PORT=9000"}})
+	if !containsEnv(env, "PORT=9000") || containsEnv(env, "PORT=18080") {
+		t.Fatalf("explicit PORT should be preserved: %v", env)
+	}
+}
+
+func containsEnv(env []string, want string) bool {
+	for _, item := range env {
+		if item == want {
+			return true
+		}
+	}
+	return false
+}
+
 func TestInitBuildRunExportImport(t *testing.T) {
 	base := t.TempDir()
 	imagePath := filepath.Join(base, "app.dockan")

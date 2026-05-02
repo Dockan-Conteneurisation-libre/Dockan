@@ -81,7 +81,8 @@ func AppTemplateNames() []string {
 
 func appTemplates() map[string]appTemplate {
 	return map[string]appTemplate{
-		"python": runtimeTemplate("python", "python:3.12", "8000", "app.py", "python3 app.py", `from http.server import BaseHTTPRequestHandler, HTTPServer
+		"python": runtimeTemplate("python", "python:3.12", "8000", "app.py", "python3 app.py", `import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -92,7 +93,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-HTTPServer(("0.0.0.0", 8000), Handler).serve_forever()
+port = int(os.environ.get("PORT", "8000"))
+HTTPServer(("0.0.0.0", port), Handler).serve_forever()
 `),
 		"node": runtimeTemplate("node", "node:20", "3000", "server.js", "node server.js", `const http = require("http");
 

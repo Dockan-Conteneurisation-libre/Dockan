@@ -24,6 +24,21 @@ func TestCreateAppTemplateCreatesPHPProject(t *testing.T) {
 	}
 }
 
+func TestCreateAppTemplateCreatesPythonProjectUsingPortEnv(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "pyapp")
+	if err := CreateAppTemplate(AppTemplateOptions{Language: "python", Dir: dir, Name: "demo"}); err != nil {
+		t.Fatalf("CreateAppTemplate() error = %v", err)
+	}
+	app, err := os.ReadFile(filepath.Join(dir, "app.py"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(app)
+	if !strings.Contains(content, `os.environ.get("PORT", "8000")`) {
+		t.Fatalf("python app should read PORT env: %s", content)
+	}
+}
+
 func TestCreateAppTemplateRefusesUnknownLanguage(t *testing.T) {
 	err := CreateAppTemplate(AppTemplateOptions{Language: "brainfuck", Dir: t.TempDir()})
 	if err == nil {
