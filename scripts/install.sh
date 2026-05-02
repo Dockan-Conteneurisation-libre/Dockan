@@ -88,8 +88,17 @@ install_file() {
   src="$1"
   choose_bindir
   mkdir -p "$BINDIR" || fail "impossible de créer $BINDIR"
-  cp "$src" "$BINDIR/dockan" || fail "impossible d'installer dans $BINDIR. Essayez: curl -fsSL https://raw.githubusercontent.com/$REPO/main/scripts/install.sh | sudo sh"
-  chmod 0755 "$BINDIR/dockan" || fail "impossible de rendre $BINDIR/dockan exécutable"
+  tmp="$BINDIR/.dockan.tmp.$$"
+  rm -f "$tmp"
+  cp "$src" "$tmp" || fail "impossible de préparer l'installation dans $BINDIR. Essayez: curl -fsSL https://raw.githubusercontent.com/$REPO/main/scripts/install.sh | sudo sh"
+  chmod 0755 "$tmp" || {
+    rm -f "$tmp"
+    fail "impossible de rendre $tmp exécutable"
+  }
+  mv -f "$tmp" "$BINDIR/dockan" || {
+    rm -f "$tmp"
+    fail "impossible d'installer dans $BINDIR. Essayez: curl -fsSL https://raw.githubusercontent.com/$REPO/main/scripts/install.sh | sudo sh"
+  }
 }
 
 choose_bindir() {
