@@ -101,6 +101,7 @@ Check the machine:
 ```bash
 dockan version
 dockan doctor
+dockan ps -a
 ```
 
 ## Quick Test
