@@ -146,6 +146,12 @@ dockan logs myapp-web
 dockan logs myapp-db
 ```
 
+Enable native restart after reboot without adding a Dockan daemon:
+
+```bash
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
+```
+
 For HTTP apps, run an external load tool from another shell or another machine:
 
 ```bash

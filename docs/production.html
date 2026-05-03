@@ -269,6 +269,8 @@ dockan ps -a
 dockan logs myapp-web
 wrk -t4 -c64 -d60s http://127.0.0.1:8080/</code></pre>
       <p>Check CPU, RAM, logs, restart behavior, published ports, volume writes, and cleanup.</p>
+      <p>Enable restart after reboot without adding a Dockan daemon:</p>
+      <pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>
       <pre><code>dockan compose health -f /srv/myapp/dockan.yml</code></pre>
     </section>
 

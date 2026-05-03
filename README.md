@@ -357,9 +357,7 @@ dockan compose up
 To start on boot:
 
 ```bash
-sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-myapp.service
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 Full guide: [Developer Guide](docs/developer.md)
@@ -684,20 +682,23 @@ This is useful for a team, a NAS, a USB drive, or an internal server share. It i
 
 ## Install As A Service
 
-Systemd service with sudo:
+Dockan stays daemonless. For reboot persistence, it creates a native systemd
+service for the project:
 
 ```bash
-sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-myapp.service
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 User service without sudo:
 
 ```bash
-dockan service install --user -f ~/myapp/dockan.yml --name myapp
-systemctl --user daemon-reload
-systemctl --user enable --now dockan-myapp.service
+dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp
+```
+
+Disable auto-start:
+
+```bash
+sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 ## Simple Network
@@ -852,7 +853,7 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - cgroup limits through `systemd-run --scope` when available, with `prlimit` fallback for memory
 - tar.gz packages and `.deb` when `dpkg-deb` is available
 - explicit dependency installation through apt/dnf/apk/pacman/zypper
-- systemd service install
+- native systemd auto-start with `dockan compose autostart`
 
 ## Not Yet
 

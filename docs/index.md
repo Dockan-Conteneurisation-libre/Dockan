@@ -188,9 +188,7 @@ sudo mkdir -p /srv/dockan-panel /var/lib/dockan
 sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /path/to/Dockan-Panel/restore-prod-storage.sh /srv/dockan-panel/
 sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2>/dev/null || true
 cd /srv/dockan-panel
-sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan service install -f dockan.yml --name dockan-panel
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-dockan-panel.service
+sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan compose autostart -f dockan.yml --name dockan-panel
 ```
 
 If the panel was first launched directly from a local checkout and already has
@@ -458,20 +456,23 @@ The registry folder contains archives, checksums, and an index. It does not need
 
 ## Install As A Service
 
-System service with sudo:
+Dockan stays daemonless. For reboot persistence, it creates a native systemd
+service for the project:
 
 ```bash
-sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-myapp.service
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 User service:
 
 ```bash
-dockan service install --user -f ~/myapp/dockan.yml --name myapp
-systemctl --user daemon-reload
-systemctl --user enable --now dockan-myapp.service
+dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp
+```
+
+Disable auto-start:
+
+```bash
+sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 ## Developer Guide

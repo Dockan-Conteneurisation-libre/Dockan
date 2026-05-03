@@ -317,14 +317,12 @@ dockan logs myapp-web</code></pre>
     <section>
       <span class="badge blue">Service</span>
       <h2>Start On Boot</h2>
-      <p>System service:</p>
-      <pre><code>sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-myapp.service</code></pre>
+      <p>Native system auto-start:</p>
+      <pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>
       <p>User service:</p>
-      <pre><code>dockan service install --user -f ~/myapp/dockan.yml --name myapp
-systemctl --user daemon-reload
-systemctl --user enable --now dockan-myapp.service</code></pre>
+      <pre><code>dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp</code></pre>
+      <p>Disable auto-start:</p>
+      <pre><code>sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>
     </section>
 
     <section>
@@ -357,7 +355,7 @@ sudo dockan run -d --name web --network appnet -p 8080:80 myapp:v1</code></pre>
       <ul>
         <li>The developer shares the app: `Dockanfile`, `dockan.yml`, code, and README.</li>
         <li>The admin installs Dockan, builds locally, and runs locally.</li>
-        <li>For automatic startup, Dockan creates a systemd service.</li>
+        <li>For automatic startup, Dockan creates and enables a native systemd service.</li>
         <li>GitHub Actions release packages build Dockan itself, not user apps.</li>
       </ul>
     </section>

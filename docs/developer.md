@@ -78,20 +78,22 @@ dockan logs myapp-web
 
 ## Start On Boot
 
-Install as a systemd service:
+Enable native auto-start through systemd:
 
 ```bash
-sudo dockan service install -f /srv/myapp/dockan.yml --name myapp
-sudo systemctl daemon-reload
-sudo systemctl enable --now dockan-myapp.service
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 User service without sudo:
 
 ```bash
-dockan service install --user -f ~/myapp/dockan.yml --name myapp
-systemctl --user daemon-reload
-systemctl --user enable --now dockan-myapp.service
+dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp
+```
+
+Disable auto-start:
+
+```bash
+sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp
 ```
 
 ## Local Base Images

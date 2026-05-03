@@ -12,6 +12,16 @@ No. Dockan does not run a permanent daemon like `dockerd`.
 
 Each command does its work directly.
 
+For apps that must return after a reboot, Dockan can create a native systemd
+service for the `dockan.yml` project:
+
+```bash
+sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp
+```
+
+That keeps Dockan daemonless while letting the operating system handle boot
+startup.
+
 ## Can Dockan run without root?
 
 Yes for simple workflows.
