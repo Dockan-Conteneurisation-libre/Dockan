@@ -1,9 +1,11 @@
 package internal
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -63,6 +65,41 @@ func TestLoadContainersFromRootReadsSelectedStore(t *testing.T) {
 	}
 	if containers[0].Name != "prometheus-web" || containers[0].Image != "prometheus:local" || containers[0].Ports != "9091:9090" {
 		t.Fatalf("container = %#v", containers[0])
+	}
+}
+
+func TestPrintContainersTableExpandsLongNames(t *testing.T) {
+	var out bytes.Buffer
+	printContainersTable(&out, true, []Container{{
+		Name:   "nginx-proxy-manager-web",
+		Status: "exited",
+		PID:    168979,
+		Image:  "nginx-proxy-manager:local",
+		Ports:  "8084:80,8443:443,8181:81",
+	}})
+
+	text := out.String()
+	if !strings.Contains(text, "nginx-proxy-manager-web  exited") {
+		t.Fatalf("table did not keep a separator after long name:\n%s", text)
+	}
+}
+
+func TestPrintScopedContainersTableExpandsLongNames(t *testing.T) {
+	var out bytes.Buffer
+	printScopedContainersTable(&out, []scopedContainerRow{{
+		Store: "current",
+		Container: Container{
+			Name:   "nginx-proxy-manager-web",
+			Status: "exited",
+			PID:    168979,
+			Image:  "nginx-proxy-manager:local",
+			Ports:  "8084:80,8443:443,8181:81",
+		},
+	}})
+
+	text := out.String()
+	if !strings.Contains(text, "current    nginx-proxy-manager-web  exited") {
+		t.Fatalf("scoped table did not keep separators after long fields:\n%s", text)
 	}
 }
 

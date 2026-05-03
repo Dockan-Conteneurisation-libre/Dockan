@@ -218,13 +218,7 @@ func ListContainersFromRoot(all bool, root string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%-18s %-12s %-8s %-24s %s\n", "NAME", "STATUS", "PID", "IMAGE", "PORTS")
-	for _, c := range containers {
-		if !all && c.Status != "running" {
-			continue
-		}
-		fmt.Printf("%-18s %-12s %-8d %-24s %s\n", c.Name, c.Status, c.PID, c.Image, c.Ports)
-	}
+	printContainersTable(os.Stdout, all, containers)
 	return nil
 }
 
@@ -232,7 +226,7 @@ func ListContainersFromScopes(all bool, scopes []StoreScope) error {
 	if len(scopes) == 1 {
 		return ListContainersFromRoot(all, scopes[0].Root)
 	}
-	fmt.Printf("%-10s %-18s %-12s %-8s %-24s %s\n", "STORE", "NAME", "STATUS", "PID", "IMAGE", "PORTS")
+	rows := []scopedContainerRow{}
 	for _, scope := range scopes {
 		containers, err := LoadContainersFromRoot(scope.Root)
 		if os.IsPermission(err) {
@@ -245,10 +239,66 @@ func ListContainersFromScopes(all bool, scopes []StoreScope) error {
 			if !all && c.Status != "running" {
 				continue
 			}
-			fmt.Printf("%-10s %-18s %-12s %-8d %-24s %s\n", scope.Label, c.Name, c.Status, c.PID, c.Image, c.Ports)
+			rows = append(rows, scopedContainerRow{Store: scope.Label, Container: c})
 		}
 	}
+	printScopedContainersTable(os.Stdout, rows)
 	return nil
+}
+
+type scopedContainerRow struct {
+	Store     string
+	Container Container
+}
+
+func printContainersTable(w io.Writer, all bool, containers []Container) {
+	rows := []Container{}
+	for _, c := range containers {
+		if !all && c.Status != "running" {
+			continue
+		}
+		rows = append(rows, c)
+	}
+	nameWidth := len("NAME")
+	imageWidth := len("IMAGE")
+	for _, c := range rows {
+		nameWidth = maxInt(nameWidth, len(c.Name))
+		imageWidth = maxInt(imageWidth, len(c.Image))
+	}
+	nameWidth = maxInt(nameWidth+1, 18)
+	imageWidth = maxInt(imageWidth+1, 24)
+
+	fmt.Fprintf(w, "%-*s %-12s %-8s %-*s %s\n", nameWidth, "NAME", "STATUS", "PID", imageWidth, "IMAGE", "PORTS")
+	for _, c := range rows {
+		fmt.Fprintf(w, "%-*s %-12s %-8d %-*s %s\n", nameWidth, c.Name, c.Status, c.PID, imageWidth, c.Image, c.Ports)
+	}
+}
+
+func printScopedContainersTable(w io.Writer, rows []scopedContainerRow) {
+	storeWidth := len("STORE")
+	nameWidth := len("NAME")
+	imageWidth := len("IMAGE")
+	for _, row := range rows {
+		storeWidth = maxInt(storeWidth, len(row.Store))
+		nameWidth = maxInt(nameWidth, len(row.Container.Name))
+		imageWidth = maxInt(imageWidth, len(row.Container.Image))
+	}
+	storeWidth = maxInt(storeWidth+1, 10)
+	nameWidth = maxInt(nameWidth+1, 18)
+	imageWidth = maxInt(imageWidth+1, 24)
+
+	fmt.Fprintf(w, "%-*s %-*s %-12s %-8s %-*s %s\n", storeWidth, "STORE", nameWidth, "NAME", "STATUS", "PID", imageWidth, "IMAGE", "PORTS")
+	for _, row := range rows {
+		c := row.Container
+		fmt.Fprintf(w, "%-*s %-*s %-12s %-8d %-*s %s\n", storeWidth, row.Store, nameWidth, c.Name, c.Status, c.PID, imageWidth, c.Image, c.Ports)
+	}
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func LoadContainers() ([]Container, error) {
