@@ -78,7 +78,7 @@ func ComposeUp(file string) error {
 			Ports:       service.Ports,
 			Network:     service.Network,
 			Aliases:     service.Aliases,
-			Volumes:     service.Volumes,
+			Volumes:     composeVolumes(file, service.Volumes),
 			Command:     service.Command,
 			Entrypoint:  service.Entrypoint,
 			Restart:     service.Restart,
@@ -498,6 +498,31 @@ func composePath(file, path string) string {
 		return path
 	}
 	return filepath.Join(filepath.Dir(absOrSame(file)), path)
+}
+
+func composeVolumes(file string, volumes []string) []string {
+	resolved := make([]string, 0, len(volumes))
+	for _, volume := range volumes {
+		source, target, err := parseVolumeSpec(volume)
+		if err != nil {
+			resolved = append(resolved, volume)
+			continue
+		}
+		if target == "" || !isHostVolumeSource(source) || filepath.IsAbs(source) {
+			resolved = append(resolved, volume)
+			continue
+		}
+		resolved = append(resolved, composePath(file, source)+":"+target+composeVolumeModeSuffix(volume))
+	}
+	return resolved
+}
+
+func composeVolumeModeSuffix(volume string) string {
+	mode := volumeSpecMode(volume)
+	if mode == "" {
+		return ""
+	}
+	return ":" + mode
 }
 
 func absOrSame(path string) string {

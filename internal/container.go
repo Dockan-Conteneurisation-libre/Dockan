@@ -57,6 +57,13 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if err := os.MkdirAll(containerDir, 0755); err != nil {
 		return err
 	}
+	createdContainerDir := true
+	containerStarted := false
+	defer func() {
+		if createdContainerDir && !containerStarted {
+			_ = os.RemoveAll(containerDir)
+		}
+	}()
 	runtimeVolumes := EffectiveRunVolumes(opts)
 	var volumeBinds []VolumeBind
 	if usesPrivateBubblewrapBinds(isolation, img) {
@@ -174,6 +181,7 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 		_ = CleanupContainerNetwork(meta)
 		return err
 	}
+	containerStarted = true
 	if opts.Network != "" && opts.Network != HostNetwork {
 		_ = WriteNetworkHosts(opts.Network)
 	}

@@ -14,9 +14,10 @@ import (
 )
 
 type VolumeBind struct {
-	Source   string
-	Target   string
-	ReadOnly bool
+	Source       string
+	Target       string
+	ReadOnly     bool
+	SourceIsFile bool
 }
 
 func PrepareVolumes(imagePath string, meta map[string]string) (func(), error) {
@@ -51,7 +52,7 @@ func PrepareVolumesForRun(imagePath string, meta map[string]string, runtimeVolum
 			mounted = append(mounted, container)
 			continue
 		}
-		if err := ensureVolumeLink(bind.Source, container); err != nil {
+		if err := ensureVolumeLink(bind.Source, container, bind.SourceIsFile); err != nil {
 			cleanup()
 			return cleanup, err
 		}
@@ -73,19 +74,49 @@ func PrepareVolumeBindsForRun(imagePath string, meta map[string]string, runtimeV
 		if err != nil {
 			return nil, err
 		}
-		if err := os.MkdirAll(bind.Source, 0755); err != nil {
-			return nil, err
-		}
 		cleanContainer, err := cleanVolumeTarget(bind.Target)
 		if err != nil {
 			return nil, err
 		}
-		if err := os.MkdirAll(filepath.Join(imagePath, "rootfs", cleanContainer), 0755); err != nil {
+		if err := prepareVolumeSource(bind); err != nil {
+			return nil, err
+		}
+		if err := prepareVolumeTarget(filepath.Join(imagePath, "rootfs", cleanContainer), bind.SourceIsFile); err != nil {
 			return nil, err
 		}
 		binds = append(binds, bind)
 	}
 	return binds, nil
+}
+
+func prepareVolumeSource(bind VolumeBind) error {
+	if bind.SourceIsFile {
+		return nil
+	}
+	return os.MkdirAll(bind.Source, 0755)
+}
+
+func prepareVolumeTarget(target string, fileTarget bool) error {
+	if !fileTarget {
+		if info, err := os.Lstat(target); err == nil && !info.IsDir() {
+			return fmt.Errorf("volume cible déjà existante et non répertoire: %s", target)
+		}
+		return os.MkdirAll(target, 0755)
+	}
+	if info, err := os.Lstat(target); err == nil {
+		if info.IsDir() {
+			return fmt.Errorf("volume cible fichier déjà répertoire: %s", target)
+		}
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(target, os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil {
+		return err
+	}
+	return file.Close()
 }
 
 func EffectiveRunVolumes(opts RunOptions) []string {
@@ -183,7 +214,7 @@ func unescapeMountinfoPath(path string) string {
 	return replacer.Replace(path)
 }
 
-func ensureVolumeLink(source, target string) error {
+func ensureVolumeLink(source, target string, fileTarget bool) error {
 	if info, err := os.Lstat(target); err == nil {
 		if info.Mode()&os.ModeSymlink != 0 {
 			current, err := os.Readlink(target)
@@ -203,6 +234,10 @@ func ensureVolumeLink(source, target string) error {
 				}
 			} else {
 				return fmt.Errorf("volume cible déjà existante et non vide: %s", target)
+			}
+		} else if fileTarget {
+			if err := os.Remove(target); err != nil {
+				return err
 			}
 		} else {
 			return fmt.Errorf("volume cible déjà existante: %s", target)
@@ -531,10 +566,15 @@ func resolveVolumeBind(imagePath, spec string, runtime bool) (VolumeBind, error)
 	if err != nil {
 		return VolumeBind{}, err
 	}
+	sourceIsFile := false
+	if info, err := os.Stat(source); err == nil && !info.IsDir() {
+		sourceIsFile = true
+	}
 	return VolumeBind{
-		Source:   source,
-		Target:   "/" + strings.TrimPrefix(filepath.Clean(target), string(filepath.Separator)),
-		ReadOnly: mode == "ro",
+		Source:       source,
+		Target:       "/" + strings.TrimPrefix(filepath.Clean(target), string(filepath.Separator)),
+		ReadOnly:     mode == "ro",
+		SourceIsFile: sourceIsFile,
 	}, nil
 }
 

@@ -108,6 +108,31 @@ services:
 	}
 }
 
+func TestComposeVolumesResolveRelativeHostPaths(t *testing.T) {
+	base := t.TempDir()
+	file := filepath.Join(base, "dockan.yml")
+	got := composeVolumes(file, []string{
+		"./prometheus.yml:/etc/prometheus/prometheus.yml:ro",
+		"data:/data",
+		"/srv/config:/config",
+		"cache/subdir:/cache",
+	})
+	want := []string{
+		filepath.Join(base, "prometheus.yml") + ":/etc/prometheus/prometheus.yml:ro",
+		"data:/data",
+		"/srv/config:/config",
+		filepath.Join(base, "cache/subdir") + ":/cache",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("composeVolumes() = %#v, want %#v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("composeVolumes() = %#v, want %#v", got, want)
+		}
+	}
+}
+
 func TestLoadComposeFileRejectsBadPort(t *testing.T) {
 	base := t.TempDir()
 	file := filepath.Join(base, "dockan.yml")

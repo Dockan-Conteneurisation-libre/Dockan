@@ -393,6 +393,32 @@ func TestPrepareVolumesSupportsAnonymousAndRuntimeVolumes(t *testing.T) {
 	}
 }
 
+func TestPrepareVolumesSupportsRuntimeFileBind(t *testing.T) {
+	base := t.TempDir()
+	imagePath := filepath.Join(base, "app.dockan")
+	if err := InitImage(imagePath); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DOCKAN_HOME", filepath.Join(base, "store"))
+	hostFile := filepath.Join(base, "prometheus.yml")
+	if err := os.WriteFile(hostFile, []byte("global: {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cleanup, err := PrepareVolumesForRun(imagePath, nil, []string{hostFile + ":/etc/prometheus/prometheus.yml:ro"})
+	if err != nil {
+		t.Fatalf("PrepareVolumesForRun() error = %v", err)
+	}
+	defer cleanup()
+	target := filepath.Join(imagePath, "rootfs", "etc", "prometheus", "prometheus.yml")
+	info, err := os.Stat(target)
+	if err != nil {
+		t.Fatalf("runtime file bind target missing: %v", err)
+	}
+	if info.IsDir() {
+		t.Fatalf("runtime file bind target is directory: %s", target)
+	}
+}
+
 func TestImportBaseImageFromLocalRootfs(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv("DOCKAN_HOME", filepath.Join(base, "store"))

@@ -32,6 +32,20 @@ func TestOCIBubblewrapUnsharesPIDNamespace(t *testing.T) {
 	t.Fatalf("OCI bubblewrap command must create a PID namespace, got args %#v", cmd.Args)
 }
 
+func TestOCIBubblewrapRunsCommandAsPID1(t *testing.T) {
+	base := t.TempDir()
+	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/", nil)
+	if err != nil {
+		t.Fatalf("ociRootfsCommand() error = %v", err)
+	}
+	for _, arg := range cmd.Args {
+		if arg == "--as-pid-1" {
+			return
+		}
+	}
+	t.Fatalf("OCI bubblewrap command must run s6-style init as PID 1, got args %#v", cmd.Args)
+}
+
 func TestOCIBubblewrapAddsPrivateVolumeBinds(t *testing.T) {
 	base := t.TempDir()
 	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/", []VolumeBind{
