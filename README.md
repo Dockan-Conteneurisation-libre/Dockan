@@ -27,6 +27,7 @@ It helps you:
 - read logs
 - use a `dockan.yml` file
 - install an app as a Linux service
+- manage Dockan from the optional Dockan Panel web UI
 
 Dockan does not need a daemon.
 
@@ -121,6 +122,58 @@ Update a system-wide installation:
 ```bash
 dockan update --system
 ```
+
+## Dockan Panel
+
+Dockan Panel is the optional web UI for managing Dockan containers, images,
+volumes, stacks, backups, and live terminals from the browser.
+
+When it runs with Dockan Compose, the panel stores its state in the persistent
+Dockan volume named `dockan-panel-data`.
+
+What is saved there:
+
+- admin users
+- password hashes
+- 2FA/TOTP secrets
+- passkeys/WebAuthn public keys
+- stacks
+- volume backups created by the panel
+
+Inside the panel app, the auth database is:
+
+```text
+/app/storage/auth-users.json
+```
+
+On a normal user install, the same persistent volume lives on the host under:
+
+```text
+~/.local/share/dockan/volumes/dockan-panel-data
+```
+
+So the auth file is stored in that volume, not in the Git repository and not in
+the image. If you remove the `dockan-panel-data` volume, you remove the panel
+users, 2FA, passkeys, stacks, and panel backups.
+
+Run the panel:
+
+```bash
+cd /path/to/Dockan-Panel
+dockan compose up
+```
+
+Open:
+
+```text
+http://127.0.0.1:9090
+```
+
+On first launch, create the first admin account. There is no default password
+and no default token.
+
+Passkeys work on `localhost`, `127.0.0.1`, or HTTPS. Browsers usually block
+passkeys on a plain HTTP LAN address like `http://192.168.x.x`.
 
 ## Quick Test
 

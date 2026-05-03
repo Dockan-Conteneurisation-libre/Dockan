@@ -11,6 +11,7 @@ Dockan is made to:
 - run apps in foreground or in the background
 - manage logs, volumes, networks, ports, and systemd services
 - use a `dockan.yml` file to run multiple services
+- manage Dockan from the optional Dockan Panel web UI
 - stay local: no forced registry, no permanent daemon
 
 ## Dockan vs Docker
@@ -88,6 +89,39 @@ Update a system-wide installation:
 ```bash
 dockan update --system
 ```
+
+## Dockan Panel
+
+Dockan Panel is the optional browser UI for Dockan. It can manage containers,
+images, volumes, stacks, backups, and live terminals.
+
+When the panel is started with Dockan Compose, its persistent data is stored in
+the `dockan-panel-data` volume. The admin auth database is:
+
+```text
+/app/storage/auth-users.json
+```
+
+On a normal user install, that volume is on the host under:
+
+```text
+~/.local/share/dockan/volumes/dockan-panel-data
+```
+
+That volume contains panel users, password hashes, 2FA/TOTP secrets, passkey
+public keys, stacks, and panel backups. Removing the volume removes that panel
+state.
+
+```bash
+cd /path/to/Dockan-Panel
+dockan compose up
+```
+
+Open `http://127.0.0.1:9090`, then create the first admin account. There is no
+default password and no default token.
+
+Passkeys work on `localhost`, `127.0.0.1`, or HTTPS. Browsers usually block
+passkeys on plain HTTP LAN addresses.
 
 ## First Test
 

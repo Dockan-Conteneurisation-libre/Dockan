@@ -354,6 +354,7 @@
       </a>
       <nav aria-label="Navigation">
         <a href="#install">Install</a>
+        <a href="#panel">Panel</a>
         <a href="#usage">Usage</a>
         <a href="#compare">Vs Docker</a>
         <a href="./languages.html">Languages</a>
@@ -440,6 +441,36 @@ dockan update --system">Copy</button>
         <pre><code>dockan update
 dockan update --version v0.1.1
 dockan update --system</code></pre>
+      </div>
+    </section>
+
+    <section id="panel">
+      <h2>Dockan Panel</h2>
+      <p class="lead">Dockan Panel is the optional browser UI for containers, images, volumes, stacks, backups, and live terminals.</p>
+      <div class="split">
+        <div class="card">
+          <span class="badge">Storage</span>
+          <h3>Persistent panel data</h3>
+          <p>The panel stores users, password hashes, 2FA/TOTP secrets, passkey public keys, stacks, and panel backups in the <code>dockan-panel-data</code> volume.</p>
+          <div class="code-block">
+            <pre><code>/app/storage/auth-users.json
+~/.local/share/dockan/volumes/dockan-panel-data</code></pre>
+          </div>
+          <p>Removing that volume removes the panel users, 2FA, passkeys, stacks, and panel backups.</p>
+        </div>
+        <div class="card">
+          <span class="badge blue">Run</span>
+          <h3>Start the UI</h3>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy="cd /path/to/Dockan-Panel&#10;dockan compose up">Copy</button>
+            </div>
+            <pre><code>cd /path/to/Dockan-Panel
+dockan compose up</code></pre>
+          </div>
+          <p>Open <code>http://127.0.0.1:9090</code>, then create the first admin account. There is no default password and no default token.</p>
+          <p>Passkeys work on <code>localhost</code>, <code>127.0.0.1</code>, or HTTPS. Browsers usually block passkeys on plain HTTP LAN addresses.</p>
+        </div>
       </div>
     </section>
 
@@ -727,6 +758,11 @@ dockan pull myapp:latest /srv/dockan-registry</code></pre>
           <span class="badge">Production</span>
           <h3>Server checklist</h3>
           <p>Updates, rollback, load testing, isolation, and bridge/NAT validation.</p>
+        </a>
+        <a class="card" href="#panel">
+          <span class="badge blue">Panel</span>
+          <h3>Web UI</h3>
+          <p>Manage containers, stacks, users, 2FA, passkeys, and persistent panel storage.</p>
         </a>
         <a class="card" href="./faq.html">
           <span class="badge">FAQ</span>
