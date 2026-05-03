@@ -123,6 +123,12 @@ Update a system-wide installation:
 dockan update --system
 ```
 
+Express update from a local source checkout:
+
+```bash
+cd /home/anar/Bureau/Test/Dockan && git pull && make install PREFIX=/home/anar/.local
+```
+
 ## Dockan Panel
 
 Dockan Panel is the optional web UI for managing Dockan containers, images,
