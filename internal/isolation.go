@@ -137,6 +137,7 @@ func ociRootfsCommand(method, imagePath, rootfs, workdir string) (*exec.Cmd, err
 	switch method {
 	case IsolationBubblewrap:
 		args := []string{
+			"--unshare-pid",
 			"--bind", rootfs, "/",
 			"--bind", imagePath, "/dockan",
 			"--proc", "/proc",
