@@ -1,9 +1,8 @@
-# Ancienne version
+# Legacy Example
 
-Ce dossier appartient a l'ancien exemple manuel `example.dockan`.
+This directory belongs to the old manual `example.dockan` example.
 
-Pour les nouveaux projets, utilisez plutot `Dockanfile`, `dockan.yml`,
-`dockan new` et `dockan compose`.
+For new projects, use `Dockanfile`, `dockan.yml`, `dockan new`, and
+`dockan compose`.
 
-Dans cet ancien format, `rootfs/` contenait les fichiers applicatifs de
-l'exemple Dockan.
+In this old format, `rootfs/` contained the example application files.

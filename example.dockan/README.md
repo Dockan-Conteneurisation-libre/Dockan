@@ -1,25 +1,25 @@
-# Ancienne version d'exemple Dockan
+# Legacy Dockan Example
 
-Ce dossier est garde uniquement comme reference historique.
+This directory is kept only as a historical reference.
 
-Il montre l'ancien format manuel d'image Dockan avec `meta.conf`, `build.sh`,
-`start.sh` et `rootfs/`.
+It shows the old manual Dockan image format with `meta.conf`, `build.sh`,
+`start.sh`, and `rootfs/`.
 
-Pour les nouveaux projets, utilisez plutot:
+For new projects, use:
 
 ```bash
-dockan new python mon-app
-dockan build -t mon-app:latest .
-dockan run -d --name mon-app -p 8080:8000 mon-app:latest
+dockan new python my-app
+dockan build -t my-app:latest .
+dockan run -d --name my-app -p 8080:8000 my-app:latest
 ```
 
-Ou utilisez un fichier `dockan.yml` avec:
+Or use a `dockan.yml` file with:
 
 ```bash
 dockan compose up
 ```
 
-Le format recommande aujourd'hui est:
+The recommended format today is:
 
 - `Dockanfile`
 - `dockan.yml`
@@ -27,7 +27,7 @@ Le format recommande aujourd'hui est:
 - `dockan new`
 - `dockan compose`
 
-## Ancien format
+## Old Format
 
 meta.conf
 ---------
@@ -38,15 +38,15 @@ requires=bash,python3
 build.sh
 --------
 #!/bin/bash
-echo "(build.sh) Installation des dépendances..."
+echo "(build.sh) Installing dependencies..."
 # Ex: cp -r src/* rootfs/
 
 start.sh
 --------
 #!/bin/bash
-echo "(start.sh) Lancement de l'app Python..."
+echo "(start.sh) Starting the Python app..."
 cd "$(dirname "$0")/rootfs" && python3 app.py
 
 rootfs/
 ------
-# Placez ici vos fichiers applicatifs (ex: app.py, static/)
+# Put application files here, for example app.py or static assets.

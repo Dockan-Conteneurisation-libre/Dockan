@@ -1,9 +1,9 @@
-# Ancienne version
+# Legacy Example
 
-Ce dossier appartient a l'ancien exemple manuel `example.dockan`.
+This directory belongs to the old manual `example.dockan` example.
 
-Pour les nouveaux projets, utilisez plutot `Dockanfile`, `dockan.yml`,
-`dockan new` et `dockan compose`.
+For new projects, use `Dockanfile`, `dockan.yml`, `dockan new`, and
+`dockan compose`.
 
-Dans cet ancien format, ce dossier contenait les hooks Dockan comme `prestart`
-ou `poststop`.
+In this old format, this directory contained Dockan hooks such as `prestart`
+or `poststop`.
