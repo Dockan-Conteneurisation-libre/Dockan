@@ -185,13 +185,27 @@ page can run dependency installs and runtime updates directly.
 ```bash
 sudo install -m 0755 "$HOME/.local/bin/dockan" /usr/local/bin/dockan
 sudo mkdir -p /srv/dockan-panel /var/lib/dockan
-sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /srv/dockan-panel/
+sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /path/to/Dockan-Panel/restore-prod-storage.sh /srv/dockan-panel/
 sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2>/dev/null || true
 cd /srv/dockan-panel
 sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan service install -f dockan.yml --name dockan-panel
 sudo systemctl daemon-reload
 sudo systemctl enable --now dockan-dockan-panel.service
 ```
+
+If the panel was first launched directly from a local checkout and already has
+users or stacks in `storage/`, migrate that local storage into the production
+volume with:
+
+```bash
+cd /path/to/Dockan-Panel
+sudo ./restore-prod-storage.sh
+```
+
+The script keeps a timestamped backup of the existing production volume under
+`/var/lib/dockan/volumes/`, copies local `storage/` into
+`dockan-panel-data`, fixes SELinux labels when available, and restarts the
+service.
 
 For public access, put an HTTPS reverse proxy in front of the panel. Do not
 expose port `9090` directly to the Internet over plain HTTP.
