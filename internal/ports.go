@@ -34,7 +34,15 @@ func StartPortProxies(containerDir string, ports []string, targetIPCIDR string) 
 			CleanupPIDs(pids)
 			return nil, err
 		}
-		listen := "127.0.0.1:" + hostPort
+		bindAddr := strings.TrimSpace(os.Getenv("DOCKAN_PORT_BIND_ADDR"))
+		if bindAddr == "" {
+			bindAddr = "127.0.0.1"
+		}
+		if net.ParseIP(bindAddr) == nil {
+			CleanupPIDs(pids)
+			return nil, fmt.Errorf("adresse de publication invalide: %s", bindAddr)
+		}
+		listen := net.JoinHostPort(bindAddr, hostPort)
 		target := net.JoinHostPort(targetIP, containerPort)
 		cmd := exec.Command(exe, "__port-proxy", listen, target)
 		cmd.Stdout = logFile
