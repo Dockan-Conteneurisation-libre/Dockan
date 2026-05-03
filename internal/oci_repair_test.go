@@ -36,4 +36,11 @@ func TestRepairOCIRootfsMergedUsrAndWorkdir(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(rootfs, "var/www/html")); err != nil {
 		t.Fatalf("workdir missing: %v", err)
 	}
+	info, err := os.Stat(filepath.Join(rootfs, "tmp"))
+	if err != nil {
+		t.Fatalf("tmp missing: %v", err)
+	}
+	if info.Mode().Perm() != 0777 {
+		t.Fatalf("tmp mode = %v, want 0777 permissions", info.Mode())
+	}
 }

@@ -30,6 +30,12 @@ func RepairOCIRootfs(img *Image) error {
 			return err
 		}
 	}
+	if err := os.MkdirAll(filepath.Join(img.RootfsDir, "tmp"), 01777); err != nil {
+		return err
+	}
+	if err := os.Chmod(filepath.Join(img.RootfsDir, "tmp"), 01777); err != nil {
+		return err
+	}
 	return nil
 }
 
