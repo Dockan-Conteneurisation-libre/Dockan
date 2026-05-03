@@ -110,6 +110,7 @@ func TestServiceUnitContent(t *testing.T) {
 		`ExecStart="/usr/bin/dockan" compose up -f "/srv/demo/dockan.yml"`,
 		`ExecStop="/usr/bin/dockan" compose down -f "/srv/demo/dockan.yml"`,
 		`WorkingDirectory=/srv/demo`,
+		"Restart=on-failure",
 		"WantedBy=default.target",
 	} {
 		if !strings.Contains(unit, want) {

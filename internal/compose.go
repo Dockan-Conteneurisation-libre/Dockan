@@ -90,6 +90,18 @@ func ComposeUp(file string) error {
 		if opts.Isolation == "" {
 			opts.Isolation = IsolationAuto
 		}
+		if existing, _, err := loadContainer(opts.Name); err == nil {
+			if existing.PID > 0 && processRunning(existing.PID) && existing.Status == "running" {
+				fmt.Printf("%s existe déjà\n", opts.Name)
+				continue
+			}
+			if err := StopContainer(opts.Name); err != nil && !strings.Contains(err.Error(), "conteneur introuvable") {
+				return fmt.Errorf("service %s: stop conteneur existant: %w", service.Name, err)
+			}
+			if err := RemoveContainer(opts.Name); err != nil && !strings.Contains(err.Error(), "conteneur introuvable") {
+				return fmt.Errorf("service %s: supprime conteneur existant: %w", service.Name, err)
+			}
+		}
 		if err := StartDetachedContainer(imagePath, imageRef, opts); err != nil {
 			if strings.Contains(err.Error(), "conteneur déjà existant") {
 				fmt.Printf("%s existe déjà\n", opts.Name)

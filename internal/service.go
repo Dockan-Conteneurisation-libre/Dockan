@@ -113,6 +113,8 @@ RemainAfterExit=yes
 WorkingDirectory=%s
 %sExecStart=%s compose up -f %s
 ExecStop=%s compose down -f %s
+Restart=on-failure
+RestartSec=5s
 TimeoutStartSec=0
 
 [Install]
