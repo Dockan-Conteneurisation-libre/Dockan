@@ -33,7 +33,14 @@ func ExportImage(imagePath, outFile string) error {
 		if rel == "." {
 			return nil
 		}
-		hdr, err := tar.FileInfoHeader(info, "")
+		link := ""
+		if info.Mode()&os.ModeSymlink != 0 {
+			link, err = os.Readlink(path)
+			if err != nil {
+				return err
+			}
+		}
+		hdr, err := tar.FileInfoHeader(info, link)
 		if err != nil {
 			return err
 		}
@@ -86,6 +93,21 @@ func ImportImage(archivePath, destDir string) error {
 		outPath := filepath.Join(destDir, cleanName)
 		if hdr.FileInfo().IsDir() || strings.HasSuffix(hdr.Name, "/") {
 			if err := os.MkdirAll(outPath, 0755); err != nil {
+				return err
+			}
+			continue
+		}
+		if hdr.Typeflag == tar.TypeSymlink {
+			if hdr.Linkname == "" {
+				continue
+			}
+			if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+				return err
+			}
+			if err := os.RemoveAll(outPath); err != nil {
+				return err
+			}
+			if err := os.Symlink(hdr.Linkname, outPath); err != nil {
 				return err
 			}
 			continue

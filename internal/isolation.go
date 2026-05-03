@@ -86,6 +86,10 @@ func isolationCommand(method string, img *Image) (*exec.Cmd, error) {
 		return nil, err
 	}
 
+	if img.Meta["rootfs.mode"] == "oci" {
+		return ociRootfsCommand(method, imagePath, rootfs, img.Meta["workdir"])
+	}
+
 	switch method {
 	case IsolationNone:
 		cmd := exec.Command("bash", startScript)
@@ -123,6 +127,38 @@ func isolationCommand(method string, img *Image) (*exec.Cmd, error) {
 		return exec.Command("chroot", rootfs, "/start.sh"), nil
 	default:
 		return nil, fmt.Errorf("aucune méthode d'isolation valide")
+	}
+}
+
+func ociRootfsCommand(method, imagePath, rootfs, workdir string) (*exec.Cmd, error) {
+	if workdir == "" {
+		workdir = "/"
+	}
+	switch method {
+	case IsolationBubblewrap:
+		args := []string{
+			"--bind", rootfs, "/",
+			"--bind", imagePath, "/dockan",
+			"--proc", "/proc",
+			"--dev", "/dev",
+			"--tmpfs", "/tmp",
+			"--chdir", workdir,
+			"/bin/sh", "/dockan/start.sh",
+		}
+		return exec.Command("bwrap", args...), nil
+	case IsolationSystemdNspawn:
+		return exec.Command("systemd-nspawn", "-D", rootfs, "/.dockan-start.sh"), nil
+	case IsolationChroot:
+		return exec.Command("chroot", rootfs, "/.dockan-start.sh"), nil
+	case IsolationFirejail:
+		if commandExists("bwrap") {
+			return ociRootfsCommand(IsolationBubblewrap, imagePath, rootfs, workdir)
+		}
+		return nil, fmt.Errorf("image OCI Dockan nécessite bubblewrap, systemd-nspawn ou chroot")
+	case IsolationNone:
+		return nil, fmt.Errorf("image OCI Dockan nécessite une isolation rootfs: bubblewrap, systemd-nspawn ou chroot")
+	default:
+		return nil, fmt.Errorf("aucune méthode d'isolation OCI valide")
 	}
 }
 
