@@ -177,12 +177,18 @@ dockan compose up
 Open `http://127.0.0.1:9090`, then create the first admin account. There is no
 default password and no default token.
 
-For production, keep the panel as a Dockan app but install it as a system
-service with Dockan. This starts the panel through systemd/root, so the
-`Packages` page can run dependency installs and runtime updates directly.
+For production, keep the panel as a Dockan app but install it from a system
+path such as `/srv/dockan-panel`. This avoids home-directory access blocks on
+Fedora/SELinux and starts the panel through systemd/root, so the `Packages`
+page can run dependency installs and runtime updates directly.
 
 ```bash
-sudo dockan service install -f /path/to/Dockan-Panel/dockan.yml --name dockan-panel
+sudo install -m 0755 "$HOME/.local/bin/dockan" /usr/local/bin/dockan
+sudo mkdir -p /srv/dockan-panel /var/lib/dockan
+sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /srv/dockan-panel/
+sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2>/dev/null || true
+cd /srv/dockan-panel
+sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan service install -f dockan.yml --name dockan-panel
 sudo systemctl daemon-reload
 sudo systemctl enable --now dockan-dockan-panel.service
 ```
