@@ -68,6 +68,12 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if err != nil {
 		return err
 	}
+	networkReadyPath := ""
+	if bridgeNetwork {
+		networkReadyPath = filepath.Join(containerDir, "network-ready")
+		_ = os.Remove(networkReadyPath)
+		cmd = gateCommandUntilFile(cmd, networkReadyPath)
+	}
 	logFile, err := os.OpenFile(filepath.Join(containerDir, "dockan.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
@@ -89,6 +95,12 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 		networkAttachment, err = AttachBridgeNetwork(opts.Name, cmd.Process.Pid, networkMeta)
 		if err != nil {
 			_ = cmd.Process.Kill()
+			_ = os.RemoveAll(containerDir)
+			return err
+		}
+		if err := os.WriteFile(networkReadyPath, []byte("ready\n"), 0644); err != nil {
+			_ = cmd.Process.Kill()
+			_ = CleanupContainerNetwork(map[string]string{"vethHost": networkAttachment.HostInterface})
 			_ = os.RemoveAll(containerDir)
 			return err
 		}
@@ -157,6 +169,19 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	_ = cmd.Process.Release()
 	fmt.Printf("%s\n", opts.Name)
 	return nil
+}
+
+func gateCommandUntilFile(cmd *exec.Cmd, readyPath string) *exec.Cmd {
+	args := []string{
+		"-c",
+		`ready=$1; shift; while [ ! -e "$ready" ]; do sleep 0.05 2>/dev/null || sleep 1; done; exec "$@"`,
+		"dockan-network-gate",
+		readyPath,
+	}
+	args = append(args, cmd.Args...)
+	gated := exec.Command("sh", args...)
+	gated.Dir = cmd.Dir
+	return gated
 }
 
 func hostSharedProxyPorts(ports []string) []string {

@@ -1,6 +1,9 @@
 package internal
 
-import "testing"
+import (
+	"os/exec"
+	"testing"
+)
 
 func TestHostSharedProxyPortsOnlyIncludesTranslatedPorts(t *testing.T) {
 	got := hostSharedProxyPorts([]string{"8081:80", "9090:9090", "8443:443"})
@@ -11,6 +14,29 @@ func TestHostSharedProxyPortsOnlyIncludesTranslatedPorts(t *testing.T) {
 	for i := range want {
 		if got[i] != want[i] {
 			t.Fatalf("hostSharedProxyPorts() = %#v, want %#v", got, want)
+		}
+	}
+}
+
+func TestGateCommandUntilFilePreservesOriginalCommand(t *testing.T) {
+	cmd := exec.Command("original", "arg one", "arg-two")
+	cmd.Dir = "/tmp"
+
+	gated := gateCommandUntilFile(cmd, "/tmp/dockan-ready")
+	if gated.Args[0] != "sh" {
+		t.Fatalf("Args[0] = %q, want sh", gated.Args[0])
+	}
+	if gated.Dir != cmd.Dir {
+		t.Fatalf("Dir = %q, want %q", gated.Dir, cmd.Dir)
+	}
+	if len(gated.Args) < 7 {
+		t.Fatalf("Args too short: %#v", gated.Args)
+	}
+	gotTail := gated.Args[len(gated.Args)-3:]
+	wantTail := []string{"original", "arg one", "arg-two"}
+	for i := range wantTail {
+		if gotTail[i] != wantTail[i] {
+			t.Fatalf("tail args = %#v, want %#v", gotTail, wantTail)
 		}
 	}
 }
