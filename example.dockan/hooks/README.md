@@ -1,2 +1,9 @@
-# Ce dossier contiendra les hooks Dockan (prestart, poststop, etc.)
-# Placez ici vos scripts personnalisés.
+# Ancienne version
+
+Ce dossier appartient a l'ancien exemple manuel `example.dockan`.
+
+Pour les nouveaux projets, utilisez plutot `Dockanfile`, `dockan.yml`,
+`dockan new` et `dockan compose`.
+
+Dans cet ancien format, ce dossier contenait les hooks Dockan comme `prestart`
+ou `poststop`.

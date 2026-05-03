@@ -1,4 +1,33 @@
-# Exemple d'image Dockan avancée
+# Ancienne version d'exemple Dockan
+
+Ce dossier est garde uniquement comme reference historique.
+
+Il montre l'ancien format manuel d'image Dockan avec `meta.conf`, `build.sh`,
+`start.sh` et `rootfs/`.
+
+Pour les nouveaux projets, utilisez plutot:
+
+```bash
+dockan new python mon-app
+dockan build -t mon-app:latest .
+dockan run -d --name mon-app -p 8080:8000 mon-app:latest
+```
+
+Ou utilisez un fichier `dockan.yml` avec:
+
+```bash
+dockan compose up
+```
+
+Le format recommande aujourd'hui est:
+
+- `Dockanfile`
+- `dockan.yml`
+- `examples/`
+- `dockan new`
+- `dockan compose`
+
+## Ancien format
 
 meta.conf
 ---------
