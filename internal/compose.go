@@ -510,7 +510,13 @@ func absOrSame(path string) string {
 
 func cleanScalar(value string) string {
 	value = strings.TrimSpace(value)
-	value = strings.Trim(value, "\"'")
+	if len(value) >= 2 {
+		first := value[0]
+		last := value[len(value)-1]
+		if (first == '"' || first == '\'') && first == last {
+			return value[1 : len(value)-1]
+		}
+	}
 	return value
 }
 

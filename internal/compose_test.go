@@ -85,6 +85,29 @@ networks:
 	}
 }
 
+func TestLoadComposeFilePreservesTrailingHealthcheckQuote(t *testing.T) {
+	base := t.TempDir()
+	file := filepath.Join(base, "dockan.yml")
+	data := `name: nextcloud
+services:
+  db:
+    image: mariadb:local
+    healthcheck: CMD-SHELL mariadb-admin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" || mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+`
+	if err := os.WriteFile(file, []byte(data), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	project, err := LoadComposeFile(file)
+	if err != nil {
+		t.Fatalf("LoadComposeFile() error = %v", err)
+	}
+	want := `CMD-SHELL mariadb-admin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" || mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"`
+	if project.Services[0].Healthcheck != want {
+		t.Fatalf("Healthcheck = %q, want %q", project.Services[0].Healthcheck, want)
+	}
+}
+
 func TestLoadComposeFileRejectsBadPort(t *testing.T) {
 	base := t.TempDir()
 	file := filepath.Join(base, "dockan.yml")
