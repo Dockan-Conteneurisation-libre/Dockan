@@ -43,6 +43,10 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if opts.Name == "" {
 		opts.Name = generatedContainerName(img)
 	}
+	isolation, err := ResolveIsolation(opts.Isolation)
+	if err != nil {
+		return err
+	}
 	if err := ValidateRunOptions(opts); err != nil {
 		return err
 	}
@@ -53,18 +57,21 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if err := os.MkdirAll(containerDir, 0755); err != nil {
 		return err
 	}
-	if _, err := PrepareVolumesForRun(imagePath, img.Meta, EffectiveRunVolumes(opts)); err != nil {
+	runtimeVolumes := EffectiveRunVolumes(opts)
+	var volumeBinds []VolumeBind
+	if usesPrivateBubblewrapBinds(isolation, img) {
+		volumeBinds, err = PrepareVolumeBindsForRun(imagePath, img.Meta, runtimeVolumes)
+	} else {
+		_, err = PrepareVolumesForRun(imagePath, img.Meta, runtimeVolumes)
+	}
+	if err != nil {
 		return err
 	}
 	networkMeta, bridgeNetwork, err := prepareDetachedNetwork(opts.Network)
 	if err != nil {
 		return err
 	}
-	isolation, err := ResolveIsolation(opts.Isolation)
-	if err != nil {
-		return err
-	}
-	cmd, err := isolationCommand(isolation, img)
+	cmd, err := isolationCommand(isolation, img, volumeBinds)
 	if err != nil {
 		return err
 	}

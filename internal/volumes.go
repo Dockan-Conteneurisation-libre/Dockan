@@ -13,6 +13,12 @@ import (
 	"syscall"
 )
 
+type VolumeBind struct {
+	Source   string
+	Target   string
+	ReadOnly bool
+}
+
 func PrepareVolumes(imagePath string, meta map[string]string) (func(), error) {
 	return PrepareVolumesForRun(imagePath, meta, nil)
 }
@@ -25,50 +31,61 @@ func PrepareVolumesForRun(imagePath string, meta map[string]string, runtimeVolum
 		}
 	}
 
-	specs := imageVolumeSpecs(meta)
-	specs = append(specs, runtimeVolumes...)
-	if len(specs) == 0 {
+	binds, err := PrepareVolumeBindsForRun(imagePath, meta, runtimeVolumes)
+	if err != nil {
+		return cleanup, err
+	}
+	if len(binds) == 0 {
 		return cleanup, nil
 	}
 
-	for _, v := range specs {
-		source, containerPath, err := resolveVolumeSource(imagePath, v, isRuntimeVolume(runtimeVolumes, v))
-		if err != nil {
-			cleanup()
-			return cleanup, err
-		}
-		cleanContainer, err := cleanVolumeTarget(containerPath)
-		if err != nil {
-			cleanup()
-			return cleanup, err
-		}
-		host := source
+	for _, bind := range binds {
+		cleanContainer, _ := cleanVolumeTarget(bind.Target)
 		container := filepath.Join(imagePath, "rootfs", cleanContainer)
-		if err := os.MkdirAll(host, 0755); err != nil {
-			cleanup()
-			return cleanup, err
-		}
 		if os.Geteuid() == 0 {
-			if err := os.MkdirAll(container, 0755); err != nil {
-				cleanup()
-				return cleanup, err
-			}
-			fmt.Printf("[dockan] Montage volume %s -> %s\n", host, container)
-			if err := bindMount(host, container); err != nil {
+			fmt.Printf("[dockan] Montage volume %s -> %s\n", bind.Source, container)
+			if err := bindMount(bind.Source, container); err != nil {
 				cleanup()
 				return cleanup, err
 			}
 			mounted = append(mounted, container)
 			continue
 		}
-		if err := ensureVolumeLink(host, container); err != nil {
+		if err := ensureVolumeLink(bind.Source, container); err != nil {
 			cleanup()
 			return cleanup, err
 		}
-		fmt.Printf("[dockan] Volume %s disponible via %s\n", host, container)
+		fmt.Printf("[dockan] Volume %s disponible via %s\n", bind.Source, container)
 	}
 
 	return cleanup, nil
+}
+
+func PrepareVolumeBindsForRun(imagePath string, meta map[string]string, runtimeVolumes []string) ([]VolumeBind, error) {
+	specs := imageVolumeSpecs(meta)
+	specs = append(specs, runtimeVolumes...)
+	if len(specs) == 0 {
+		return nil, nil
+	}
+	var binds []VolumeBind
+	for _, v := range specs {
+		bind, err := resolveVolumeBind(imagePath, v, isRuntimeVolume(runtimeVolumes, v))
+		if err != nil {
+			return nil, err
+		}
+		if err := os.MkdirAll(bind.Source, 0755); err != nil {
+			return nil, err
+		}
+		cleanContainer, err := cleanVolumeTarget(bind.Target)
+		if err != nil {
+			return nil, err
+		}
+		if err := os.MkdirAll(filepath.Join(imagePath, "rootfs", cleanContainer), 0755); err != nil {
+			return nil, err
+		}
+		binds = append(binds, bind)
+	}
+	return binds, nil
 }
 
 func EffectiveRunVolumes(opts RunOptions) []string {
@@ -502,6 +519,31 @@ func resolveVolumeSource(imagePath, spec string, runtime bool) (string, string, 
 		return filepath.Join(VolumesDir(), source), target, nil
 	}
 	return filepath.Join(imagePath, "volumes", source), target, nil
+}
+
+func resolveVolumeBind(imagePath, spec string, runtime bool) (VolumeBind, error) {
+	source, target, err := resolveVolumeSource(imagePath, spec, runtime)
+	if err != nil {
+		return VolumeBind{}, err
+	}
+	mode := volumeSpecMode(spec)
+	source, err = filepath.Abs(source)
+	if err != nil {
+		return VolumeBind{}, err
+	}
+	return VolumeBind{
+		Source:   source,
+		Target:   "/" + strings.TrimPrefix(filepath.Clean(target), string(filepath.Separator)),
+		ReadOnly: mode == "ro",
+	}, nil
+}
+
+func volumeSpecMode(spec string) string {
+	parts := strings.Split(strings.TrimSpace(spec), ":")
+	if len(parts) == 3 {
+		return strings.TrimSpace(parts[2])
+	}
+	return ""
 }
 
 func isHostVolumeSource(source string) bool {

@@ -85,7 +85,7 @@ func RunImage(path string, opts RunOptions) error {
 }
 
 func RunWithIsolationWithLogs(isolation string, img *Image, opts RunOptions, stdout, stderr io.Writer) error {
-	cmd, err := isolationCommand(isolation, img)
+	cmd, err := isolationCommand(isolation, img, nil)
 	if err != nil {
 		return err
 	}

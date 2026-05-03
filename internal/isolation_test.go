@@ -7,7 +7,7 @@ import (
 
 func TestOCIBubblewrapKeepsRootfsTmp(t *testing.T) {
 	base := t.TempDir()
-	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/")
+	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/", nil)
 	if err != nil {
 		t.Fatalf("ociRootfsCommand() error = %v", err)
 	}
@@ -20,7 +20,7 @@ func TestOCIBubblewrapKeepsRootfsTmp(t *testing.T) {
 
 func TestOCIBubblewrapUnsharesPIDNamespace(t *testing.T) {
 	base := t.TempDir()
-	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/")
+	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/", nil)
 	if err != nil {
 		t.Fatalf("ociRootfsCommand() error = %v", err)
 	}
@@ -30,4 +30,35 @@ func TestOCIBubblewrapUnsharesPIDNamespace(t *testing.T) {
 		}
 	}
 	t.Fatalf("OCI bubblewrap command must create a PID namespace, got args %#v", cmd.Args)
+}
+
+func TestOCIBubblewrapAddsPrivateVolumeBinds(t *testing.T) {
+	base := t.TempDir()
+	cmd, err := ociRootfsCommand(IsolationBubblewrap, filepath.Join(base, "image"), filepath.Join(base, "rootfs"), "/", []VolumeBind{
+		{Source: filepath.Join(base, "data"), Target: "/var/lib/postgresql"},
+		{Source: filepath.Join(base, "config"), Target: "/config", ReadOnly: true},
+	})
+	if err != nil {
+		t.Fatalf("ociRootfsCommand() error = %v", err)
+	}
+	args := cmd.Args
+	assertArgSequence(t, args, "--bind", filepath.Join(base, "data"), "/var/lib/postgresql")
+	assertArgSequence(t, args, "--ro-bind", filepath.Join(base, "config"), "/config")
+}
+
+func assertArgSequence(t *testing.T, args []string, want ...string) {
+	t.Helper()
+	for i := 0; i <= len(args)-len(want); i++ {
+		ok := true
+		for j := range want {
+			if args[i+j] != want[j] {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return
+		}
+	}
+	t.Fatalf("args %#v missing sequence %#v", args, want)
 }
