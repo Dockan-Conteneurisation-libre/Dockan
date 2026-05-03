@@ -60,8 +60,12 @@ func main() {
 			os.Exit(1)
 		}
 	case "ps":
-		all := len(os.Args) > 2 && (os.Args[2] == "-a" || os.Args[2] == "--all")
-		if err := internal.ListContainers(all); err != nil {
+		opts, err := parsePSOptions(os.Args[2:])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
+			os.Exit(1)
+		}
+		if err := internal.ListContainersFromScopes(opts.All, internal.StoreScopes(opts.Scope)); err != nil {
 			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
 			os.Exit(1)
 		}
@@ -818,12 +822,48 @@ func parseUpdateOptions(args []string) (internal.UpdateOptions, error) {
 	return opts, nil
 }
 
+type psOptions struct {
+	All   bool
+	Scope string
+}
+
+func parsePSOptions(args []string) (psOptions, error) {
+	opts := psOptions{Scope: "current"}
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "-a", "--all":
+			opts.All = true
+		case "--system":
+			opts.Scope = "system"
+		case "--user":
+			opts.Scope = "user"
+		case "--all-stores":
+			opts.Scope = "all"
+		case "--scope":
+			if i+1 >= len(args) {
+				return opts, fmt.Errorf("--scope attend current, system, user ou all")
+			}
+			opts.Scope = args[i+1]
+			i++
+		default:
+			return opts, fmt.Errorf("option inconnue: %s", args[i])
+		}
+	}
+	switch opts.Scope {
+	case "current", "system", "user", "all":
+		return opts, nil
+	default:
+		return opts, fmt.Errorf("scope inconnu: %s", opts.Scope)
+	}
+}
+
 func printHelp() {
 	fmt.Print(`Dockan - alternative libre à Docker
 Commandes :
   run [options] <image|tag>
                        Lance une image Dockan
-  ps [-a]              Liste les conteneurs
+  ps [-a] [--scope current|system|user|all]
+                       Liste les conteneurs
   logs <conteneur>     Affiche les logs
   exec <conteneur> <commande>  Exécute une commande dans un conteneur
   health <conteneur>   Exécute le healthcheck du conteneur
@@ -878,6 +918,13 @@ Options run :
   --network <nom>      Associe un réseau Dockan
   --alias <nom>        Ajoute un alias DNS/hosts sur le réseau Dockan
   --isolation=<mode>   auto|none|firejail|bubblewrap|systemd-nspawn|chroot
+
+Options ps :
+  -a, --all            Affiche aussi les conteneurs arrêtés
+  --scope <scope>      current|system|user|all
+  --system             Raccourci pour --scope system (/var/lib/dockan)
+  --user               Raccourci pour --scope user
+  --all-stores         Raccourci pour --scope all
 
 Options compose/service :
   -f, --file <fichier> Utilise un fichier dockan.yml

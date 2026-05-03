@@ -28,6 +28,10 @@ func ContainersDir() string {
 	return filepath.Join(StoreRoot(), "containers")
 }
 
+func containersDirForRoot(root string) string {
+	return filepath.Join(root, "containers")
+}
+
 func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	img, err := LoadImage(imagePath)
 	if err != nil {
@@ -199,7 +203,11 @@ func hostSharedProxyPorts(ports []string) []string {
 }
 
 func ListContainers(all bool) error {
-	containers, err := LoadContainers()
+	return ListContainersFromRoot(all, StoreRoot())
+}
+
+func ListContainersFromRoot(all bool, root string) error {
+	containers, err := LoadContainersFromRoot(root)
 	if err != nil {
 		return err
 	}
@@ -213,8 +221,35 @@ func ListContainers(all bool) error {
 	return nil
 }
 
+func ListContainersFromScopes(all bool, scopes []StoreScope) error {
+	if len(scopes) == 1 {
+		return ListContainersFromRoot(all, scopes[0].Root)
+	}
+	fmt.Printf("%-10s %-18s %-12s %-8s %-24s %s\n", "STORE", "NAME", "STATUS", "PID", "IMAGE", "PORTS")
+	for _, scope := range scopes {
+		containers, err := LoadContainersFromRoot(scope.Root)
+		if os.IsPermission(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		for _, c := range containers {
+			if !all && c.Status != "running" {
+				continue
+			}
+			fmt.Printf("%-10s %-18s %-12s %-8d %-24s %s\n", scope.Label, c.Name, c.Status, c.PID, c.Image, c.Ports)
+		}
+	}
+	return nil
+}
+
 func LoadContainers() ([]Container, error) {
-	dir := ContainersDir()
+	return LoadContainersFromRoot(StoreRoot())
+}
+
+func LoadContainersFromRoot(root string) ([]Container, error) {
+	dir := containersDirForRoot(root)
 	entries, err := os.ReadDir(dir)
 	if os.IsNotExist(err) {
 		return nil, nil

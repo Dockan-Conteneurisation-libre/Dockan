@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
@@ -38,6 +40,29 @@ func TestGateCommandUntilFilePreservesOriginalCommand(t *testing.T) {
 		if gotTail[i] != wantTail[i] {
 			t.Fatalf("tail args = %#v, want %#v", gotTail, wantTail)
 		}
+	}
+}
+
+func TestLoadContainersFromRootReadsSelectedStore(t *testing.T) {
+	root := t.TempDir()
+	containerDir := filepath.Join(root, "containers", "prometheus-web")
+	if err := os.MkdirAll(containerDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	meta := "image=prometheus:local\nstatus=exited\npid=0\nports=9091:9090\n"
+	if err := os.WriteFile(filepath.Join(containerDir, "meta.conf"), []byte(meta), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	containers, err := LoadContainersFromRoot(root)
+	if err != nil {
+		t.Fatalf("LoadContainersFromRoot() error = %v", err)
+	}
+	if len(containers) != 1 {
+		t.Fatalf("containers = %#v, want one", containers)
+	}
+	if containers[0].Name != "prometheus-web" || containers[0].Image != "prometheus:local" || containers[0].Ports != "9091:9090" {
+		t.Fatalf("container = %#v", containers[0])
 	}
 }
 

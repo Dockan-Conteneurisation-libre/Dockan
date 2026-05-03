@@ -13,10 +13,24 @@ type StoredImage struct {
 	Name string
 }
 
+const SystemStoreRoot = "/var/lib/dockan"
+
+type StoreScope struct {
+	Label string
+	Root  string
+}
+
 func StoreRoot() string {
 	if home := os.Getenv("DOCKAN_HOME"); home != "" {
 		return home
 	}
+	if os.Geteuid() == 0 {
+		return SystemStoreRoot
+	}
+	return UserStoreRoot()
+}
+
+func UserStoreRoot() string {
 	if dataHome := os.Getenv("XDG_DATA_HOME"); dataHome != "" {
 		return filepath.Join(dataHome, "dockan")
 	}
@@ -24,6 +38,34 @@ func StoreRoot() string {
 		return filepath.Join(home, ".local", "share", "dockan")
 	}
 	return filepath.Join(".", ".dockan-store")
+}
+
+func StoreScopes(scope string) []StoreScope {
+	switch scope {
+	case "system":
+		return []StoreScope{{Label: "system", Root: SystemStoreRoot}}
+	case "user":
+		return []StoreScope{{Label: "user", Root: UserStoreRoot()}}
+	case "all":
+		current := StoreRoot()
+		scopes := []StoreScope{
+			{Label: "current", Root: current},
+			{Label: "system", Root: SystemStoreRoot},
+			{Label: "user", Root: UserStoreRoot()},
+		}
+		seen := map[string]bool{}
+		var unique []StoreScope
+		for _, item := range scopes {
+			if seen[item.Root] {
+				continue
+			}
+			seen[item.Root] = true
+			unique = append(unique, item)
+		}
+		return unique
+	default:
+		return []StoreScope{{Label: "current", Root: StoreRoot()}}
+	}
 }
 
 func ImagesDir() string {

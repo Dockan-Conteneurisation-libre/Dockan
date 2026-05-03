@@ -31,3 +31,29 @@ func TestParseUpdateOptionsPositionalVersion(t *testing.T) {
 		t.Fatalf("unexpected opts: %#v", opts)
 	}
 }
+
+func TestParsePSOptionsScopeAll(t *testing.T) {
+	opts, err := parsePSOptions([]string{"-a", "--scope", "all"})
+	if err != nil {
+		t.Fatalf("parsePSOptions() error = %v", err)
+	}
+	if !opts.All || opts.Scope != "all" {
+		t.Fatalf("unexpected opts: %#v", opts)
+	}
+}
+
+func TestParsePSOptionsSystemShortcut(t *testing.T) {
+	opts, err := parsePSOptions([]string{"--system"})
+	if err != nil {
+		t.Fatalf("parsePSOptions() error = %v", err)
+	}
+	if opts.All || opts.Scope != "system" {
+		t.Fatalf("unexpected opts: %#v", opts)
+	}
+}
+
+func TestParsePSOptionsRejectsUnknownScope(t *testing.T) {
+	if _, err := parsePSOptions([]string{"--scope", "planet"}); err == nil {
+		t.Fatal("parsePSOptions() expected error")
+	}
+}
