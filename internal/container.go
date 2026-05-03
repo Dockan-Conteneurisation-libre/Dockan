@@ -252,6 +252,9 @@ func RemoveContainer(name string) error {
 	meta, _ := ParseMeta(filepath.Join(c.Path, "meta.conf"))
 	_ = CleanupPortProxies(meta)
 	_ = CleanupContainerNetwork(meta)
+	if imagePath := meta["imagePath"]; imagePath != "" {
+		_ = CleanupImageMounts(imagePath)
+	}
 	if err := os.RemoveAll(c.Path); err != nil {
 		return err
 	}

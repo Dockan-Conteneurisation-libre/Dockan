@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 )
 
 func PrepareVolumes(imagePath string, meta map[string]string) (func(), error) {
@@ -108,6 +109,61 @@ func MountVolumes(imagePath string, meta map[string]string) error {
 
 func bindMount(source, target string) error {
 	return execCommand("mount", "--bind", source, target)
+}
+
+func CleanupImageMounts(imagePath string) error {
+	targets, err := mountedTargetsUnder(filepath.Join(imagePath, "rootfs"))
+	if err != nil {
+		return err
+	}
+	var firstErr error
+	for i := len(targets) - 1; i >= 0; i-- {
+		if err := syscall.Unmount(targets[i], 0); err != nil {
+			if err := syscall.Unmount(targets[i], syscall.MNT_DETACH); err != nil && firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+	return firstErr
+}
+
+func mountedTargetsUnder(root string) ([]string, error) {
+	data, err := os.ReadFile("/proc/self/mountinfo")
+	if err != nil {
+		return nil, err
+	}
+	return mountedTargetsUnderFromMountinfo(root, string(data)), nil
+}
+
+func mountedTargetsUnderFromMountinfo(root, mountinfo string) []string {
+	root = filepath.Clean(root)
+	prefix := root + string(filepath.Separator)
+	var targets []string
+	for _, line := range strings.Split(mountinfo, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 5 {
+			continue
+		}
+		target := unescapeMountinfoPath(fields[4])
+		cleanTarget := filepath.Clean(target)
+		if cleanTarget == root || strings.HasPrefix(cleanTarget, prefix) {
+			targets = append(targets, cleanTarget)
+		}
+	}
+	sort.Slice(targets, func(i, j int) bool {
+		return len(targets[i]) < len(targets[j])
+	})
+	return targets
+}
+
+func unescapeMountinfoPath(path string) string {
+	replacer := strings.NewReplacer(
+		`\040`, " ",
+		`\011`, "\t",
+		`\012`, "\n",
+		`\134`, `\`,
+	)
+	return replacer.Replace(path)
 }
 
 func ensureVolumeLink(source, target string) error {

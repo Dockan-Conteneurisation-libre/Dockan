@@ -40,6 +40,9 @@ func BuildFromContext(opts BuildOptions) error {
 
 	tag := NormalizeTag(opts.Tag)
 	imagePath := StoreImagePath(tag)
+	if err := CleanupImageMounts(imagePath); err != nil {
+		return err
+	}
 	if err := os.RemoveAll(imagePath); err != nil {
 		return err
 	}
