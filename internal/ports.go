@@ -34,10 +34,7 @@ func StartPortProxies(containerDir string, ports []string, targetIPCIDR string) 
 			CleanupPIDs(pids)
 			return nil, err
 		}
-		bindAddr := strings.TrimSpace(os.Getenv("DOCKAN_PORT_BIND_ADDR"))
-		if bindAddr == "" {
-			bindAddr = "127.0.0.1"
-		}
+		bindAddr := portBindAddress()
 		if net.ParseIP(bindAddr) == nil {
 			CleanupPIDs(pids)
 			return nil, fmt.Errorf("adresse de publication invalide: %s", bindAddr)
@@ -57,6 +54,14 @@ func StartPortProxies(containerDir string, ports []string, targetIPCIDR string) 
 		_ = cmd.Process.Release()
 	}
 	return pids, nil
+}
+
+func portBindAddress() string {
+	bindAddr := strings.TrimSpace(os.Getenv("DOCKAN_PORT_BIND_ADDR"))
+	if bindAddr == "" {
+		return "0.0.0.0"
+	}
+	return bindAddr
 }
 
 func RunPortProxy(listenAddr, targetAddr string) error {
