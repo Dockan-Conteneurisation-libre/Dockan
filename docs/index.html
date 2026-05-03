@@ -25,12 +25,18 @@
       box-sizing: border-box;
     }
 
+    html {
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
     a {
@@ -40,6 +46,12 @@
 
     a:hover {
       text-decoration: underline;
+    }
+
+    img,
+    svg {
+      max-width: 100%;
+      height: auto;
     }
 
     header {
@@ -64,11 +76,13 @@
       color: var(--ink);
       font-weight: 800;
       font-size: 1.08rem;
+      min-width: 0;
     }
 
     .brand img {
       width: 40px;
       height: 40px;
+      flex: 0 0 auto;
     }
 
     nav {
@@ -77,6 +91,76 @@
       gap: 18px;
       flex-wrap: wrap;
       font-size: 0.95rem;
+    }
+
+    nav a {
+      white-space: nowrap;
+    }
+
+    .mobile-nav {
+      display: none;
+      position: relative;
+      width: 100%;
+    }
+
+    .mobile-nav summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--green-dark);
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
+      user-select: none;
+    }
+
+    .mobile-nav summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .mobile-nav summary::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .mobile-nav[open] summary::after {
+      transform: rotate(225deg) translateY(-2px);
+    }
+
+    .mobile-nav-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .mobile-nav-links a {
+      display: flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--ink);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .mobile-nav-links a:hover {
+      background: #eef6f1;
+      text-decoration: none;
     }
 
     .hero {
@@ -108,6 +192,7 @@
       flex-wrap: wrap;
       gap: 12px;
       margin: 28px 0;
+      min-width: 0;
     }
 
     .button {
@@ -122,6 +207,7 @@
       color: #fff;
       font-weight: 700;
       text-decoration: none;
+      text-align: center;
     }
 
     .button.secondary {
@@ -137,6 +223,7 @@
       box-shadow: var(--shadow);
       overflow: hidden;
       border: 1px solid #24342a;
+      min-width: 0;
     }
 
     .terminal-title {
@@ -166,11 +253,14 @@
       margin: 0;
       padding: 18px;
       overflow-x: auto;
+      max-width: 100%;
       font-size: 0.94rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     code {
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      overflow-wrap: anywhere;
     }
 
     main {
@@ -214,11 +304,24 @@
       border-radius: 8px;
       padding: 18px;
       min-height: 150px;
+      min-width: 0;
+    }
+
+    a.card {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a.card:hover {
+      border-color: var(--green);
+      text-decoration: none;
     }
 
     .card p {
       margin: 0;
       color: var(--muted);
+      overflow-wrap: anywhere;
     }
 
     .badge {
@@ -250,6 +353,8 @@
       border-radius: 8px;
       margin: 12px 0 0;
       overflow: hidden;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .code-block pre {
@@ -264,6 +369,7 @@
       padding: 8px;
       border-bottom: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.72);
+      gap: 8px;
     }
 
     .copy-button {
@@ -308,6 +414,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 18px;
+      min-width: 0;
     }
 
     ul {
@@ -317,6 +424,7 @@
 
     li {
       margin: 6px 0;
+      overflow-wrap: anywhere;
     }
 
     footer {
@@ -343,6 +451,109 @@
         flex-direction: column;
       }
     }
+
+    @media (max-width: 720px) {
+      .topbar {
+        padding: 12px 16px;
+        gap: 10px;
+      }
+
+      .desktop-nav {
+        display: none;
+      }
+
+      .mobile-nav {
+        display: block;
+      }
+
+      .hero {
+        padding: 34px 16px 26px;
+        gap: 22px;
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 14vw, 3.3rem);
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      section {
+        padding: 26px 0;
+      }
+
+      h2 {
+        font-size: 1.45rem;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      pre {
+        padding: 14px;
+        font-size: 0.84rem;
+      }
+
+      .code-block pre {
+        padding: 14px;
+      }
+
+      .copy-button {
+        min-width: 74px;
+      }
+
+      footer {
+        padding: 24px 16px 36px;
+      }
+    }
+
+    @media (max-width: 440px) {
+      .brand {
+        font-size: 1rem;
+      }
+
+      .brand img {
+        width: 34px;
+        height: 34px;
+      }
+
+      .mobile-nav-links {
+        grid-template-columns: 1fr;
+      }
+
+      .terminal-title {
+        padding: 10px 12px;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+
+      .badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+    }
   </style>
 </head>
 <body>
@@ -352,7 +563,7 @@
         <img src="./dockan-logo.svg" alt="">
         <span>Dockan</span>
       </a>
-      <nav aria-label="Navigation">
+      <nav class="desktop-nav" aria-label="Navigation">
         <a href="#install">Install</a>
         <a href="#deps">Deps</a>
         <a href="#panel">Panel</a>
@@ -364,6 +575,21 @@
         <a href="./production.html">Production</a>
         <a href="./faq.html">FAQ</a>
       </nav>
+      <details class="mobile-nav">
+        <summary>Menu</summary>
+        <div class="mobile-nav-links" aria-label="Navigation mobile">
+          <a href="#install">Install</a>
+          <a href="#deps">Deps</a>
+          <a href="#panel">Panel</a>
+          <a href="#usage">Usage</a>
+          <a href="#compare">Vs Docker</a>
+          <a href="./languages.html">Languages</a>
+          <a href="#network">Network</a>
+          <a href="./developer.html">Developer</a>
+          <a href="./production.html">Production</a>
+          <a href="./faq.html">FAQ</a>
+        </div>
+      </details>
     </div>
     <div class="hero" id="top">
       <div>
@@ -892,6 +1118,15 @@ dockan pull myapp:latest /srv/dockan-registry</code></pre>
     Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
   </footer>
   <script>
+    const mobileNav = document.querySelector(".mobile-nav");
+    for (const link of document.querySelectorAll(".mobile-nav-links a")) {
+      link.addEventListener("click", () => {
+        if (mobileNav) {
+          mobileNav.open = false;
+        }
+      });
+    }
+
     for (const button of document.querySelectorAll("[data-copy]")) {
       button.addEventListener("click", async () => {
         const value = button.getAttribute("data-copy") || "";
