@@ -451,10 +451,19 @@ func ensureNetwork(name string) error {
 	if name == HostNetwork {
 		return nil
 	}
-	if _, err := os.Stat(filepath.Join(NetworksDir(), name+".conf")); err == nil {
+	if meta, err := loadNetwork(name); err == nil {
+		if meta["driver"] == "bridge" && os.Geteuid() == 0 {
+			return EnableNetwork(name)
+		}
 		return nil
 	}
-	return CreateNetwork(name)
+	if err := CreateNetworkWithOptions(defaultComposeNetworkOptions(name)); err != nil {
+		return err
+	}
+	if os.Geteuid() == 0 {
+		return EnableNetwork(name)
+	}
+	return nil
 }
 
 func addComposeListValue(service *ComposeService, key, value string) {

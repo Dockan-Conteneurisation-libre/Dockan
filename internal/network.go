@@ -34,6 +34,27 @@ func CreateNetwork(name string) error {
 	return CreateNetworkWithOptions(NetworkOptions{Name: name, Driver: "host-shared"})
 }
 
+func defaultComposeNetworkOptions(name string) NetworkOptions {
+	hash := hashString(name)
+	second := 64 + int(hash%64)
+	third := int((hash / 64) % 256)
+	return NetworkOptions{
+		Name:    name,
+		Driver:  "bridge",
+		Subnet:  fmt.Sprintf("10.%d.%d.0/24", second, third),
+		Gateway: fmt.Sprintf("10.%d.%d.1/24", second, third),
+		Bridge:  defaultBridgeName(name),
+	}
+}
+
+func defaultBridgeName(name string) string {
+	bridge := "dockan-" + safeTag(name)
+	if len(bridge) > 15 {
+		bridge = bridge[:15]
+	}
+	return bridge
+}
+
 func CreateNetworkWithOptions(opts NetworkOptions) error {
 	if opts.Driver == "" {
 		opts.Driver = "host-shared"
@@ -45,10 +66,7 @@ func CreateNetworkWithOptions(opts NetworkOptions) error {
 		opts.Gateway = "10.89.0.1/24"
 	}
 	if opts.Bridge == "" {
-		opts.Bridge = "dockan-" + safeTag(opts.Name)
-		if len(opts.Bridge) > 15 {
-			opts.Bridge = opts.Bridge[:15]
-		}
+		opts.Bridge = defaultBridgeName(opts.Name)
 	}
 	name := opts.Name
 	if err := validateNetworkName(name); err != nil {

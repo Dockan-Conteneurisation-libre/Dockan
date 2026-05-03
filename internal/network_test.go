@@ -31,6 +31,22 @@ func TestCreateBridgeNetworkStoresMetadata(t *testing.T) {
 	}
 }
 
+func TestDefaultComposeNetworkOptionsUsesBridge(t *testing.T) {
+	opts := defaultComposeNetworkOptions("nextcloud-net")
+	if opts.Driver != "bridge" {
+		t.Fatalf("driver = %q, want bridge", opts.Driver)
+	}
+	if !strings.HasPrefix(opts.Subnet, "10.") || !strings.HasSuffix(opts.Subnet, ".0/24") {
+		t.Fatalf("subnet = %q", opts.Subnet)
+	}
+	if !strings.HasSuffix(opts.Gateway, ".1/24") {
+		t.Fatalf("gateway = %q", opts.Gateway)
+	}
+	if opts.Bridge == "" || len(opts.Bridge) > 15 {
+		t.Fatalf("bridge = %q", opts.Bridge)
+	}
+}
+
 func TestCreateBridgeNetworkRejectsBadCIDR(t *testing.T) {
 	t.Setenv("DOCKAN_HOME", filepath.Join(t.TempDir(), "store"))
 
