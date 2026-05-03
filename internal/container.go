@@ -379,10 +379,34 @@ func CheckContainerHealth(name string) error {
 		return fmt.Errorf("aucun healthcheck défini: %s", name)
 	}
 	if err := ExecContainer(name, []string{"sh", "-lc", check}); err != nil {
+		if fallback := bridgeHealthcheckFallback(check, meta); fallback != "" {
+			cmd := exec.Command("sh", "-lc", fallback)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if fallbackErr := cmd.Run(); fallbackErr == nil {
+				fmt.Printf("%s healthy\n", name)
+				return nil
+			}
+		}
 		return fmt.Errorf("%s unhealthy: %w", name, err)
 	}
 	fmt.Printf("%s healthy\n", name)
 	return nil
+}
+
+func bridgeHealthcheckFallback(check string, meta map[string]string) string {
+	ip := strings.Split(strings.TrimSpace(meta["networkIP"]), "/")[0]
+	if ip == "" {
+		return ""
+	}
+	rewritten := strings.ReplaceAll(check, "http://127.0.0.1", "http://"+ip)
+	rewritten = strings.ReplaceAll(rewritten, "http://localhost", "http://"+ip)
+	rewritten = strings.ReplaceAll(rewritten, "https://127.0.0.1", "https://"+ip)
+	rewritten = strings.ReplaceAll(rewritten, "https://localhost", "https://"+ip)
+	if rewritten == check {
+		return ""
+	}
+	return rewritten
 }
 
 func healthcheckCommand(value string) (string, error) {

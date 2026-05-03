@@ -48,3 +48,19 @@ func TestHealthcheckCommandHandlesNone(t *testing.T) {
 		t.Fatalf("healthcheckCommand() = %q, want empty", got)
 	}
 }
+
+func TestBridgeHealthcheckFallbackRewritesLoopback(t *testing.T) {
+	meta := map[string]string{"networkIP": "10.87.13.197/24"}
+	got := bridgeHealthcheckFallback("curl -f http://127.0.0.1:80/ || exit 1", meta)
+	want := "curl -f http://10.87.13.197:80/ || exit 1"
+	if got != want {
+		t.Fatalf("bridgeHealthcheckFallback() = %q, want %q", got, want)
+	}
+}
+
+func TestBridgeHealthcheckFallbackIgnoresNonLoopback(t *testing.T) {
+	meta := map[string]string{"networkIP": "10.87.13.197/24"}
+	if got := bridgeHealthcheckFallback("test -f /tmp/ready", meta); got != "" {
+		t.Fatalf("bridgeHealthcheckFallback() = %q, want empty", got)
+	}
+}
