@@ -29,24 +29,32 @@ The recommended format today is:
 
 ## Old Format
 
-meta.conf
----------
+### `meta.conf`
+
+```ini
 name=WebApp
 port=8080
 requires=bash,python3
+```
 
-build.sh
---------
+### `build.sh`
+
+```bash
 #!/bin/bash
 echo "(build.sh) Installing dependencies..."
 # Ex: cp -r src/* rootfs/
+```
 
-start.sh
---------
+### `start.sh`
+
+```bash
 #!/bin/bash
 echo "(start.sh) Starting the Python app..."
 cd "$(dirname "$0")/rootfs" && python3 app.py
+```
 
-rootfs/
-------
-# Put application files here, for example app.py or static assets.
+### `rootfs/`
+
+```text
+Put application files here, for example app.py or static assets.
+```
