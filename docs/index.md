@@ -95,6 +95,12 @@ dockan update --system
 Dockan Panel is the optional browser UI for Dockan. It can manage containers,
 images, volumes, stacks, backups, and live terminals.
 
+Repository:
+
+```text
+https://github.com/Dockan-Conteneurisation-libre/Dockan-Panel
+```
+
 When the panel is started with Dockan Compose, its persistent data is stored in
 the `dockan-panel-data` volume. The admin auth database is:
 
