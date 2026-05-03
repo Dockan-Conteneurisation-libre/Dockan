@@ -55,7 +55,7 @@ Use Docker when you need:
 - mature OCI image layers and caching
 - full Dockerfile compatibility
 - very robust internal DNS and networking
-- large production fleets already standardized on Docker/Kubernetes
+- large production fleets already standardized on Docker
 - the broadest third-party tooling support
 
 | Need | Dockan | Docker |
@@ -798,7 +798,6 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - complete CPU/RAM cgroups
 - fully automatic database init/user/password conventions for every DB image
 - advanced GUI isolation policies
-- Kubernetes
 
 ## License
 

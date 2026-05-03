@@ -33,7 +33,7 @@ Choose Docker for:
 - advanced OCI layers and cache behavior
 - full Dockerfile compatibility
 - mature dynamic internal DNS
-- Kubernetes-oriented production fleets
+- large production fleets already standardized on Docker
 - the largest third-party ecosystem
 
 Dockan is simpler and more local. Docker is broader and more mature.
