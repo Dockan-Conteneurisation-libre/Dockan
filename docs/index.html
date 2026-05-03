@@ -560,6 +560,15 @@ cd /path/to/Dockan-Panel
 dockan compose up</code></pre>
           </div>
           <p>Open <code>http://127.0.0.1:9090</code>, then create the first admin account. There is no default password and no default token.</p>
+          <p>For production, keep the panel as a Dockan app but install it as a system service with Dockan. This starts the panel through systemd/root, so the <code>Packages</code> page can run dependency installs and runtime updates directly.</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='sudo dockan service install -f /path/to/Dockan-Panel/dockan.yml --name dockan-panel&#10;sudo systemctl daemon-reload&#10;sudo systemctl enable --now dockan-dockan-panel.service'>Copy</button>
+            </div>
+            <pre><code>sudo dockan service install -f /path/to/Dockan-Panel/dockan.yml --name dockan-panel
+sudo systemctl daemon-reload
+sudo systemctl enable --now dockan-dockan-panel.service</code></pre>
+          </div>
           <p>For public access, put an HTTPS reverse proxy in front of the panel. Do not expose port <code>9090</code> directly to the Internet over plain HTTP.</p>
           <p>Passkeys work on <code>localhost</code>, <code>127.0.0.1</code>, or HTTPS. Browsers usually block passkeys on plain HTTP LAN addresses.</p>
         </div>

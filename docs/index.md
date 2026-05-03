@@ -177,6 +177,16 @@ dockan compose up
 Open `http://127.0.0.1:9090`, then create the first admin account. There is no
 default password and no default token.
 
+For production, keep the panel as a Dockan app but install it as a system
+service with Dockan. This starts the panel through systemd/root, so the
+`Packages` page can run dependency installs and runtime updates directly.
+
+```bash
+sudo dockan service install -f /path/to/Dockan-Panel/dockan.yml --name dockan-panel
+sudo systemctl daemon-reload
+sudo systemctl enable --now dockan-dockan-panel.service
+```
+
 For public access, put an HTTPS reverse proxy in front of the panel. Do not
 expose port `9090` directly to the Internet over plain HTTP.
 
