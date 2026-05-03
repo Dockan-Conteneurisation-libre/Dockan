@@ -90,6 +90,49 @@ Update a system-wide installation:
 dockan update --system
 ```
 
+## Dependencies
+
+Dockan can install host packages through `apt`, `dnf`, `apk`, `pacman`, or
+`zypper`, but only when you explicitly run a `deps` command.
+
+```bash
+dockan deps install --dry-run core
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install database -y
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y
+```
+
+Profiles:
+
+- `core`: required base packages
+- `tools`: git, jq, archives, rsync, OpenSSL, GPG, lsof, and file tools
+- `frontend`: Node.js and npm for React, Vue, Vite, and other Node frontends
+- `network`: network and process helpers
+- `database`: common database client tools for MariaDB/MySQL, PostgreSQL,
+  Redis, and SQLite
+- `web`: Nginx and Caddy for local reverse proxy workflows
+- `build`: compiler and package-config tools for native extensions
+- `debug`: strace, psmisc, htop, and tcpdump
+- `isolation`: sandbox helpers when available
+- `full`: recommended host setup with core, tools, frontend, network,
+  database, web, build, debug, and isolation helpers
+
+Profiles install the distribution's default package versions. To request a
+specific package version, pass the native package-manager syntax directly:
+
+```bash
+sudo dockan deps install --manager apt -y 'nodejs=20.*'
+sudo dockan deps install --manager dnf -y nodejs-20.11.1
+sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'
+sudo dockan deps install --manager zypper -y nodejs-20.11.1
+```
+
+For strict runtime versions, import a prepared local base such as
+`dockan base runtime node:20 --from ./node20-rootfs.tar.gz`.
+
+If `sudo dockan` says command not found after a user install, keep the
+`sudo env "PATH=$HOME/.local/bin:$PATH"` form or use the absolute Dockan path.
+
 ## Dockan Panel
 
 Dockan Panel is the optional browser UI for Dockan. It can manage containers,
@@ -118,13 +161,24 @@ That volume contains panel users, password hashes, 2FA/TOTP secrets, passkey
 public keys, stacks, and panel backups. Removing the volume removes that panel
 state.
 
+Dockan Panel runs with the host `frankenphp` binary. Its Dockan image is
+`scratch`, and the panel command is:
+
+```yaml
+command: frankenphp run --config Caddyfile
+```
+
 ```bash
+command -v frankenphp
 cd /path/to/Dockan-Panel
 dockan compose up
 ```
 
 Open `http://127.0.0.1:9090`, then create the first admin account. There is no
 default password and no default token.
+
+For public access, put an HTTPS reverse proxy in front of the panel. Do not
+expose port `9090` directly to the Internet over plain HTTP.
 
 Passkeys work on `localhost`, `127.0.0.1`, or HTTPS. Browsers usually block
 passkeys on plain HTTP LAN addresses.

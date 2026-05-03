@@ -354,6 +354,7 @@
       </a>
       <nav aria-label="Navigation">
         <a href="#install">Install</a>
+        <a href="#deps">Deps</a>
         <a href="#panel">Panel</a>
         <a href="#usage">Usage</a>
         <a href="#compare">Vs Docker</a>
@@ -444,6 +445,86 @@ dockan update --system</code></pre>
       </div>
     </section>
 
+    <section id="deps">
+      <h2>Dependencies</h2>
+      <p class="lead">Dockan can install the host packages it needs through <code>apt</code>, <code>dnf</code>, <code>apk</code>, <code>pacman</code>, or <code>zypper</code>. It only installs packages when you explicitly run a <code>deps</code> command.</p>
+      <div class="split">
+        <div class="card">
+          <span class="badge">Core</span>
+          <h3>Normal operation</h3>
+          <p>Use <code>core</code> for the base tools Dockan needs: shell, curl, certificates, archives, process tools, and network helpers.</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run core&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y'>Copy</button>
+            </div>
+            <pre><code>dockan deps install --dry-run core
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y</code></pre>
+          </div>
+        </div>
+        <div class="card">
+          <span class="badge blue">Full</span>
+          <h3>Recommended host setup</h3>
+          <p>Use <code>full</code> to install the recommended modern host setup: core tools, utilities, Node/npm frontend tools, network helpers, database clients, Nginx, Caddy, build tools, diagnostics, and isolation helpers.</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run full&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y'>Copy</button>
+            </div>
+            <pre><code>dockan deps install --dry-run full
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y</code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="card">
+          <span class="badge amber">Runtime</span>
+          <h3>FrankenPHP for PHP apps</h3>
+          <p>Dockan can prepare FrankenPHP automatically. On Fedora it configures the static PHP repository and installs <code>frankenphp</code> through <code>dnf</code>.</p>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y&#10;command -v frankenphp'>Copy</button>
+            </div>
+            <pre><code>sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+command -v frankenphp</code></pre>
+          </div>
+        </div>
+        <div class="card">
+          <span class="badge">Profiles</span>
+          <h3>Package groups</h3>
+          <ul>
+            <li><code>core</code>: required base packages</li>
+            <li><code>tools</code>: git, jq, archives, rsync, OpenSSL, GPG, lsof, and file tools</li>
+            <li><code>frontend</code>: Node.js and npm for React, Vue, Vite, and other Node frontends</li>
+            <li><code>network</code>: network and process helpers</li>
+            <li><code>database</code>: common database client tools</li>
+            <li><code>web</code>: Nginx and Caddy for local reverse proxy workflows</li>
+            <li><code>build</code>: compiler and package-config tools</li>
+            <li><code>debug</code>: strace, psmisc, htop, and tcpdump</li>
+            <li><code>isolation</code>: sandbox helpers when available</li>
+            <li><code>full</code>: recommended complete setup</li>
+          </ul>
+          <div class="code-block">
+            <div class="code-actions">
+              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run frontend&#10;dockan deps install --dry-run database&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y'>Copy</button>
+            </div>
+            <pre><code>dockan deps install --dry-run frontend
+dockan deps install --dry-run database
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y</code></pre>
+          </div>
+        </div>
+      </div>
+      <p class="lead">Profiles install the distribution's default package versions. To request a specific package version, pass the native package-manager syntax directly.</p>
+      <div class="code-block">
+        <div class="code-actions">
+          <button class="copy-button" type="button" data-copy="sudo dockan deps install --manager apt -y 'nodejs=20.*'&#10;sudo dockan deps install --manager dnf -y nodejs-20.11.1&#10;sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'&#10;sudo dockan deps install --manager zypper -y nodejs-20.11.1">Copy</button>
+        </div>
+        <pre><code>sudo dockan deps install --manager apt -y 'nodejs=20.*'
+sudo dockan deps install --manager dnf -y nodejs-20.11.1
+sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'
+sudo dockan deps install --manager zypper -y nodejs-20.11.1</code></pre>
+      </div>
+      <p class="lead">For strict runtime versions, import a prepared local base such as <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. If <code>sudo dockan</code> says command not found after a user install, keep the <code>sudo env "PATH=$HOME/.local/bin:$PATH"</code> form or use the absolute Dockan path.</p>
+    </section>
+
     <section id="panel">
       <h2>Dockan Panel</h2>
       <p class="lead">Dockan Panel is the optional browser UI for containers, images, volumes, stacks, backups, and live terminals.</p>
@@ -462,14 +543,17 @@ dockan update --system</code></pre>
         <div class="card">
           <span class="badge blue">Run</span>
           <h3>Start the UI</h3>
+          <p>Dockan Panel runs with the host <code>frankenphp</code> binary. Its Dockan image is <code>scratch</code>, and the panel command is <code>frankenphp run --config Caddyfile</code>.</p>
           <div class="code-block">
             <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="cd /path/to/Dockan-Panel&#10;dockan compose up">Copy</button>
+              <button class="copy-button" type="button" data-copy='command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y&#10;cd /path/to/Dockan-Panel&#10;dockan compose up'>Copy</button>
             </div>
-            <pre><code>cd /path/to/Dockan-Panel
+            <pre><code>command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+cd /path/to/Dockan-Panel
 dockan compose up</code></pre>
           </div>
           <p>Open <code>http://127.0.0.1:9090</code>, then create the first admin account. There is no default password and no default token.</p>
+          <p>For public access, put an HTTPS reverse proxy in front of the panel. Do not expose port <code>9090</code> directly to the Internet over plain HTTP.</p>
           <p>Passkeys work on <code>localhost</code>, <code>127.0.0.1</code>, or HTTPS. Browsers usually block passkeys on plain HTTP LAN addresses.</p>
         </div>
       </div>

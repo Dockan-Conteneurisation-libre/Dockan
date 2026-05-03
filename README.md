@@ -408,19 +408,71 @@ dockan deps check
 Show the command without installing:
 
 ```bash
-dockan deps install --dry-run curl git
+dockan deps install --dry-run core
 ```
 
-Install through the machine package manager:
+Install the core packages Dockan uses for normal operation:
+
+```bash
+sudo dockan deps install core -y
+```
+
+Install the fuller recommended set: core tools, utilities, Node/npm frontend
+tools, network helpers, database clients, Nginx, Caddy, build tools,
+diagnostics, and isolation helpers:
+
+```bash
+sudo dockan deps install full -y
+```
+
+Install modern utility packages used for day-to-day app hosting, debugging, and
+builds:
+
+```bash
+sudo dockan deps install tools -y
+sudo dockan deps install frontend -y
+sudo dockan deps install network -y
+sudo dockan deps install web -y
+sudo dockan deps install build -y
+sudo dockan deps install debug -y
+```
+
+Install common database client tools for apps that talk to MariaDB/MySQL,
+PostgreSQL, Redis, or SQLite:
+
+```bash
+sudo dockan deps install database -y
+```
+
+You can also install individual packages through the machine package manager:
 
 ```bash
 sudo dockan deps install -y curl git
 ```
 
+Package versions use the native package-manager syntax. Profiles such as
+`core`, `frontend`, or `full` intentionally install the distribution's default
+versions.
+
+Examples:
+
+```bash
+sudo dockan deps install --manager apt -y 'nodejs=20.*'
+sudo dockan deps install --manager dnf -y nodejs-20.11.1
+sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'
+sudo dockan deps install --manager zypper -y nodejs-20.11.1
+```
+
+For strict runtime versions, prefer importing a prepared local base:
+
+```bash
+dockan base runtime node:20 --from ./node20-rootfs.tar.gz
+```
+
 Choose the manager:
 
 ```bash
-sudo dockan deps install --manager dnf -y curl git
+sudo dockan deps install --manager dnf -y core
 ```
 
 Install a runtime for a Docker-style base without Docker Hub:
@@ -430,6 +482,13 @@ dockan deps runtime php:8.3 --dry-run
 sudo dockan deps runtime php:8.3 -y
 sudo dockan deps runtime node:20 -y
 sudo dockan deps runtime python:3.12 -y
+```
+
+For React, Vue, Vite, and other Node frontends, use:
+
+```bash
+sudo dockan deps install frontend -y
+sudo dockan deps runtime node:20 -y
 ```
 
 This installs on the local Linux machine. It is not Docker Hub.

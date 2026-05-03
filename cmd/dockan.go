@@ -869,10 +869,18 @@ Options deps install :
   --manager <nom>      auto|apt|dnf|apk|pacman|zypper
   -y, --yes            Accepte automatiquement si le gestionnaire le permet
   --dry-run            Affiche la commande sans installer
+  profils: core, tools, frontend, network, database, web, build, debug, isolation, full
+  sudo dockan deps install core -y
+  sudo dockan deps install tools -y
+  sudo dockan deps install frontend -y
+  sudo dockan deps install database -y
+  sudo dockan deps install full -y
+  versions: utilisez la syntaxe du gestionnaire; les profils utilisent les versions de la distribution
 
 Options deps runtime :
   dockan deps runtime php:8.3 --dry-run
   sudo dockan deps runtime node:20 -y
+  sudo dockan deps runtime frankenphp -y
 
 Options new :
   --name <nom>         Nom de l'image/service généré

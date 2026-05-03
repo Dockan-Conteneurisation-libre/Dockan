@@ -79,6 +79,10 @@ If you write `FROM php:8.3` and no `php:8.3` Dockan base exists, Dockan checks t
 Install a missing runtime explicitly:
 
 ```bash
+dockan deps install core --dry-run
+sudo dockan deps install core -y
+dockan deps install frontend --dry-run
+sudo dockan deps install frontend -y
 dockan deps runtime php:8.3 --dry-run
 sudo dockan deps runtime php:8.3 -y
 sudo dockan deps runtime node:20 -y

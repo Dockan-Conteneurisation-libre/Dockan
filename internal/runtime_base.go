@@ -2,6 +2,9 @@ package internal
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -43,6 +46,9 @@ func RuntimeDepsPackages(ref, manager string) ([]string, error) {
 }
 
 func InstallRuntimeDeps(ref string, opts DepsOptions) error {
+	if runtimeImageName(ref) == "frankenphp" {
+		return InstallFrankenPHPDeps(opts)
+	}
 	packages, err := RuntimeDepsPackages(ref, opts.Manager)
 	if err != nil {
 		return err
@@ -73,6 +79,7 @@ func runtimeImageName(ref string) string {
 func knownRuntimeBases() map[string]RuntimeBase {
 	return map[string]RuntimeBase{
 		"php":             {Name: "php", Command: "php"},
+		"frankenphp":      {Name: "frankenphp", Command: "frankenphp"},
 		"node":            {Name: "node", Command: "node"},
 		"python":          {Name: "python", Command: "python3", Alternatives: []string{"python"}},
 		"python3":         {Name: "python", Command: "python3", Alternatives: []string{"python"}},
@@ -111,6 +118,13 @@ func firstAvailableCommand(commands []string) string {
 
 func runtimePackagesByManager(ref, name, manager string) []string {
 	switch name {
+	case "frankenphp":
+		switch manager {
+		case "apt", "dnf", "apk":
+			return []string{"frankenphp"}
+		default:
+			return nil
+		}
 	case "php":
 		if manager == "apk" {
 			majorMinor := runtimeMajorMinor(ref)
@@ -123,7 +137,7 @@ func runtimePackagesByManager(ref, name, manager string) []string {
 		}
 		return []string{"php-cli"}
 	case "node":
-		return []string{"nodejs"}
+		return []string{"nodejs", "npm"}
 	case "python", "python3":
 		if manager == "pacman" {
 			return []string{"python"}
@@ -188,6 +202,172 @@ func runtimePackagesByManager(ref, name, manager string) []string {
 	default:
 		return nil
 	}
+}
+
+func InstallFrankenPHPDeps(opts DepsOptions) error {
+	pm, err := resolvePackageManager(opts.Manager)
+	if err != nil {
+		if opts.Manager == "" || opts.Manager == "auto" {
+			return installFrankenPHPStandalone(opts)
+		}
+		return fmt.Errorf("%w; fallback disponible avec --manager auto", err)
+	}
+	switch pm.Name {
+	case "dnf":
+		return installFrankenPHPDNF(opts)
+	case "apt":
+		return installFrankenPHPAPT(opts)
+	case "apk":
+		return installFrankenPHPAPK(opts)
+	case "pacman", "zypper":
+		if err := installFrankenPHPStandaloneDeps(opts, pm); err != nil {
+			return err
+		}
+		return installFrankenPHPStandalone(opts)
+	default:
+		return installFrankenPHPStandalone(opts)
+	}
+}
+
+func installFrankenPHPDNF(opts DepsOptions) error {
+	if err := runDepsCommand(opts, "dnf", appendYes([]string{"install"}, opts.Yes, "https://rpm.henderkes.com/static-php-1-0.noarch.rpm")...); err != nil {
+		return err
+	}
+	if err := runDepsCommand(opts, "dnf", appendYes([]string{"module", "enable"}, opts.Yes, "php-zts:static-8.5")...); err != nil {
+		return err
+	}
+	return runDepsCommand(opts, "dnf", appendYes([]string{"install"}, opts.Yes, "frankenphp")...)
+}
+
+func installFrankenPHPAPT(opts DepsOptions) error {
+	version := frankenPHPStaticVersion()
+	if err := runDepsCommand(opts, "apt-get", appendYes([]string{"install"}, opts.Yes, "ca-certificates", "curl")...); err != nil {
+		return err
+	}
+	keyringDir := "/etc/apt/keyrings"
+	keyring := filepath.Join(keyringDir, "static-php"+version+".asc")
+	source := filepath.Join("/etc/apt/sources.list.d", "static-php"+version+".list")
+	if opts.DryRun {
+		fmt.Printf("mkdir -p %s\n", keyringDir)
+	} else if err := os.MkdirAll(keyringDir, 0755); err != nil {
+		return err
+	}
+	if err := runDepsCommand(opts, "curl", "https://pkg.henderkes.com/api/packages/"+version+"/debian/repository.key", "-o", keyring); err != nil {
+		return err
+	}
+	sourceLine := "deb [signed-by=" + keyring + "] https://pkg.henderkes.com/api/packages/" + version + "/debian php-zts main\n"
+	if err := writeDepsFile(source, sourceLine, opts.DryRun); err != nil {
+		return err
+	}
+	if err := runDepsCommand(opts, "apt-get", "update"); err != nil {
+		return err
+	}
+	return runDepsCommand(opts, "apt-get", appendYes([]string{"install"}, opts.Yes, "frankenphp")...)
+}
+
+func installFrankenPHPAPK(opts DepsOptions) error {
+	version := frankenPHPStaticVersion()
+	if err := runDepsCommand(opts, "apk", "add", "ca-certificates", "curl"); err != nil {
+		return err
+	}
+	repository := "https://pkg.henderkes.com/api/packages/" + version + "/alpine/main/php-zts"
+	if err := appendDepsLine("/etc/apk/repositories", repository, opts.DryRun); err != nil {
+		return err
+	}
+	keyPath := filepath.Join("/etc/apk/keys", "static-php"+version+".rsa.pub")
+	if err := runDepsCommand(opts, "curl", "-fsSL", "https://pkg.henderkes.com/api/packages/"+version+"/alpine/key", "-o", keyPath); err != nil {
+		return err
+	}
+	if err := runDepsCommand(opts, "apk", "update"); err != nil {
+		return err
+	}
+	return runDepsCommand(opts, "apk", "add", "frankenphp")
+}
+
+func installFrankenPHPStandaloneDeps(opts DepsOptions, pm packageManager) error {
+	switch pm.Name {
+	case "pacman":
+		args := []string{"-S"}
+		if opts.Yes {
+			args = append(args, "--noconfirm")
+		}
+		args = append(args, "ca-certificates", "curl")
+		return runDepsCommand(opts, pm.Binary, args...)
+	case "zypper":
+		return runDepsCommand(opts, pm.Binary, appendYes([]string{"install"}, opts.Yes, "ca-certificates", "curl")...)
+	default:
+		return nil
+	}
+}
+
+func installFrankenPHPStandalone(opts DepsOptions) error {
+	script := strings.Join([]string{
+		`tmp="$(mktemp -d)"`,
+		`trap 'rm -rf "$tmp"' EXIT`,
+		`cd "$tmp"`,
+		`curl -fsSL https://frankenphp.dev/install.sh -o install.sh`,
+		`sh install.sh`,
+		`install -m 0755 frankenphp /usr/local/bin/frankenphp`,
+	}, " && ")
+	return runDepsCommand(opts, "sh", "-c", script)
+}
+
+func frankenPHPStaticVersion() string {
+	return "85"
+}
+
+func appendYes(prefix []string, yes bool, values ...string) []string {
+	args := append([]string{}, prefix...)
+	if yes {
+		args = append(args, "-y")
+	}
+	return append(args, values...)
+}
+
+func runDepsCommand(opts DepsOptions, name string, args ...string) error {
+	fmt.Printf("%s %s\n", name, strings.Join(args, " "))
+	if opts.DryRun {
+		return nil
+	}
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	return cmd.Run()
+}
+
+func writeDepsFile(path, content string, dryRun bool) error {
+	fmt.Printf("write %s\n", path)
+	if dryRun {
+		return nil
+	}
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+func appendDepsLine(path, line string, dryRun bool) error {
+	fmt.Printf("append %s: %s\n", path, line)
+	if dryRun {
+		return nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if strings.Contains(string(data), line) {
+		return nil
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if len(data) > 0 && !strings.HasSuffix(string(data), "\n") {
+		if _, err := f.WriteString("\n"); err != nil {
+			return err
+		}
+	}
+	_, err = f.WriteString(line + "\n")
+	return err
 }
 
 func runtimeMajorMinor(ref string) string {

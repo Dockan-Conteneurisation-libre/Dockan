@@ -111,7 +111,9 @@ dockan run -d --name my-python-app -p 8080:8000 my-python-app:latest</code></pre
       <h2>The Rule</h2>
       <p>The Docker-like rule is simple: the app must have what it needs to start. Dockan stays local, so it does not automatically pull <code>php:8</code>, <code>node:20</code>, or <code>python:3</code> from Docker Hub.</p>
       <p>If you write <code>FROM php:8.3</code> and no Dockan base exists, Dockan checks the host for <code>php</code>. If it exists, the build uses that local runtime. If it is missing, Dockan stops with a clear error.</p>
-      <pre><code>dockan deps runtime php:8.3 --dry-run
+      <pre><code>dockan deps install frontend --dry-run
+sudo dockan deps install frontend -y
+dockan deps runtime php:8.3 --dry-run
 sudo dockan deps runtime php:8.3 -y
 sudo dockan deps runtime node:20 -y
 sudo dockan deps runtime python:3.12 -y</code></pre>
