@@ -660,9 +660,26 @@ func parseNetworkCreateOptions(args []string) (internal.NetworkOptions, error) {
 
 func runCompose(args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("Usage: dockan compose <up|down|redeploy|health> [-f dockan.yml]")
+		return fmt.Errorf("Usage: dockan compose <up|down|redeploy|health|autostart|no-autostart> [-f dockan.yml]")
 	}
 	action := args[0]
+	if action == "autostart" || action == "enable" || action == "enable-autostart" {
+		opts, err := parseServiceOptions(args[1:])
+		if err != nil {
+			return err
+		}
+		return internal.InstallAndEnableService(opts)
+	}
+	if action == "no-autostart" || action == "disable" || action == "disable-autostart" {
+		opts, err := parseServiceOptions(args[1:])
+		if err != nil {
+			return err
+		}
+		if err := internal.DisableService(opts); err != nil {
+			return err
+		}
+		return internal.UninstallService(opts)
+	}
 	file, err := parseFileFlag(args[1:])
 	if err != nil {
 		return err
@@ -693,6 +710,12 @@ func runService(args []string) error {
 	switch action {
 	case "install":
 		return internal.InstallService(opts)
+	case "enable":
+		return internal.EnableService(opts)
+	case "install-enable", "enable-now":
+		return internal.InstallAndEnableService(opts)
+	case "disable":
+		return internal.DisableService(opts)
 	case "uninstall", "remove", "rm":
 		return internal.UninstallService(opts)
 	default:
@@ -824,9 +847,10 @@ Commandes :
                        Gère les volumes locaux
   network ls|create|rm|enable|disable|hosts|refresh|doctor
                        Gère les réseaux Dockan
-  compose up|down|redeploy|health
-                       Lance, stoppe, redéploie ou vérifie un projet dockan.yml
-  service install      Installe un projet dockan.yml comme service systemd
+  compose up|down|redeploy|health|autostart|no-autostart
+                       Lance, stoppe, vérifie ou active le démarrage auto d'un projet
+  service install|enable|install-enable|disable|uninstall
+                       Gère un projet dockan.yml comme service systemd natif
   service uninstall    Supprime le service systemd
   new <language> [dir] Crée une app Dockan: python,node,php,go,rust,java,ruby,binary
   list [dossier]       Liste les images Dockan
@@ -857,7 +881,8 @@ Options run :
 
 Options compose/service :
   -f, --file <fichier> Utilise un fichier dockan.yml
-  --user               Installe le service systemd utilisateur
+  --name <nom>         Nom du service systemd
+  --user               Utilise un service systemd utilisateur
 
 Options network create :
   --driver <driver>    host-shared|bridge

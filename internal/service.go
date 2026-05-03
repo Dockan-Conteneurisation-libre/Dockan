@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -66,6 +67,73 @@ func UninstallService(opts ServiceOptions) error {
 	return nil
 }
 
+func EnableService(opts ServiceOptions) error {
+	opts = normalizeServiceOptions(opts)
+	if err := validateResourceName("nom de service", opts.Name); err != nil {
+		return err
+	}
+	unitPath, err := serviceUnitPath(opts)
+	if err != nil {
+		return err
+	}
+	unitName := filepath.Base(unitPath)
+	if opts.User {
+		if err := runSystemctl("--user", "daemon-reload"); err != nil {
+			return err
+		}
+		if err := runSystemctl("--user", "enable", "--now", unitName); err != nil {
+			return err
+		}
+		fmt.Printf("Service activé au démarrage: %s\n", unitName)
+		return nil
+	}
+	if err := runSystemctl("daemon-reload"); err != nil {
+		return err
+	}
+	if err := runSystemctl("enable", "--now", unitName); err != nil {
+		return err
+	}
+	fmt.Printf("Service activé au démarrage: %s\n", unitName)
+	return nil
+}
+
+func DisableService(opts ServiceOptions) error {
+	opts = normalizeServiceOptions(opts)
+	if err := validateResourceName("nom de service", opts.Name); err != nil {
+		return err
+	}
+	unitPath, err := serviceUnitPath(opts)
+	if err != nil {
+		return err
+	}
+	unitName := filepath.Base(unitPath)
+	if opts.User {
+		if err := runSystemctl("--user", "disable", "--now", unitName); err != nil {
+			return err
+		}
+		if err := runSystemctl("--user", "daemon-reload"); err != nil {
+			return err
+		}
+		fmt.Printf("Service désactivé: %s\n", unitName)
+		return nil
+	}
+	if err := runSystemctl("disable", "--now", unitName); err != nil {
+		return err
+	}
+	if err := runSystemctl("daemon-reload"); err != nil {
+		return err
+	}
+	fmt.Printf("Service désactivé: %s\n", unitName)
+	return nil
+}
+
+func InstallAndEnableService(opts ServiceOptions) error {
+	if err := InstallService(opts); err != nil {
+		return err
+	}
+	return EnableService(opts)
+}
+
 func normalizeServiceOptions(opts ServiceOptions) ServiceOptions {
 	if opts.File == "" {
 		opts.File = "dockan.yml"
@@ -120,6 +188,19 @@ TimeoutStartSec=0
 [Install]
 WantedBy=%s
 `, opts.Name, unitPath(filepath.Dir(fileAbs)), envLine, unitQuote(dockanBin), unitQuote(fileAbs), unitQuote(dockanBin), unitQuote(fileAbs), wantedBy)
+}
+
+func runSystemctl(args ...string) error {
+	cmd := exec.Command("systemctl", args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		text := strings.TrimSpace(string(out))
+		if text == "" {
+			return fmt.Errorf("systemctl %s: %w", strings.Join(args, " "), err)
+		}
+		return fmt.Errorf("systemctl %s: %w: %s", strings.Join(args, " "), err, text)
+	}
+	return nil
 }
 
 func unitPath(value string) string {
