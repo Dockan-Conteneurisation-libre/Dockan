@@ -65,6 +65,9 @@ func RunImage(path string, opts RunOptions) error {
 	if err != nil {
 		return err
 	}
+	if err := RepairOCIRootfs(img); err != nil {
+		return err
+	}
 	isolation, err := ResolveIsolation(opts.Isolation)
 	if err != nil {
 		return err

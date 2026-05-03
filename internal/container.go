@@ -33,6 +33,9 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if err != nil {
 		return err
 	}
+	if err := RepairOCIRootfs(img); err != nil {
+		return err
+	}
 	if opts.Name == "" {
 		opts.Name = generatedContainerName(img)
 	}
