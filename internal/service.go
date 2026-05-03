@@ -117,7 +117,18 @@ TimeoutStartSec=0
 
 [Install]
 WantedBy=%s
-`, opts.Name, unitQuote(filepath.Dir(fileAbs)), envLine, unitQuote(dockanBin), unitQuote(fileAbs), unitQuote(dockanBin), unitQuote(fileAbs), wantedBy)
+`, opts.Name, unitPath(filepath.Dir(fileAbs)), envLine, unitQuote(dockanBin), unitQuote(fileAbs), unitQuote(dockanBin), unitQuote(fileAbs), wantedBy)
+}
+
+func unitPath(value string) string {
+	return strings.NewReplacer(
+		`%`, `%%`,
+		`\`, `\\`,
+		` `, `\x20`,
+		"\t", `\x09`,
+		"\n", `\x0a`,
+		"\r", `\x0d`,
+	).Replace(value)
 }
 
 func unitQuote(value string) string {

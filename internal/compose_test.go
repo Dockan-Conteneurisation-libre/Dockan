@@ -109,11 +109,22 @@ func TestServiceUnitContent(t *testing.T) {
 	for _, want := range []string{
 		`ExecStart="/usr/bin/dockan" compose up -f "/srv/demo/dockan.yml"`,
 		`ExecStop="/usr/bin/dockan" compose down -f "/srv/demo/dockan.yml"`,
+		`WorkingDirectory=/srv/demo`,
 		"WantedBy=default.target",
 	} {
 		if !strings.Contains(unit, want) {
 			t.Fatalf("unit missing %q:\n%s", want, unit)
 		}
+	}
+}
+
+func TestServiceUnitContentEscapesWorkingDirectory(t *testing.T) {
+	unit := serviceUnitContent(ServiceOptions{Name: "demo"}, "/usr/bin/dockan", "/srv/my app/dockan.yml")
+	if !strings.Contains(unit, `WorkingDirectory=/srv/my\x20app`) {
+		t.Fatalf("unit does not escape working directory:\n%s", unit)
+	}
+	if strings.Contains(unit, `WorkingDirectory="/srv/my app"`) {
+		t.Fatalf("unit quotes WorkingDirectory, which systemd rejects:\n%s", unit)
 	}
 }
 
