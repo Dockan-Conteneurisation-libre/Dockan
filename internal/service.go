@@ -166,9 +166,16 @@ func serviceUnitContent(opts ServiceOptions, dockanBin, fileAbs string) string {
 	if opts.User {
 		wantedBy = "default.target"
 	}
-	var envLine string
+	var envLines []string
 	if dockanHome := os.Getenv("DOCKAN_HOME"); dockanHome != "" {
-		envLine = "Environment=DOCKAN_HOME=" + unitQuote(dockanHome) + "\n"
+		envLines = append(envLines, "Environment=DOCKAN_HOME="+unitQuote(dockanHome))
+	}
+	if bindAddr := os.Getenv("DOCKAN_PORT_BIND_ADDR"); bindAddr != "" {
+		envLines = append(envLines, "Environment=DOCKAN_PORT_BIND_ADDR="+unitQuote(bindAddr))
+	}
+	envBlock := ""
+	if len(envLines) > 0 {
+		envBlock = strings.Join(envLines, "\n") + "\n"
 	}
 	return fmt.Sprintf(`[Unit]
 Description=Dockan project %s
@@ -187,7 +194,7 @@ TimeoutStartSec=0
 
 [Install]
 WantedBy=%s
-`, opts.Name, unitPath(filepath.Dir(fileAbs)), envLine, unitQuote(dockanBin), unitQuote(fileAbs), unitQuote(dockanBin), unitQuote(fileAbs), wantedBy)
+`, opts.Name, unitPath(filepath.Dir(fileAbs)), envBlock, unitQuote(dockanBin), unitQuote(fileAbs), unitQuote(dockanBin), unitQuote(fileAbs), wantedBy)
 }
 
 func runSystemctl(args ...string) error {
