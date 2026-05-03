@@ -76,6 +76,9 @@ dockan ps -a
 dockan logs myapp-web
 ```
 
+Use `dockan ps -a --scope all` when user and system stores may both contain
+containers.
+
 ## Start On Boot
 
 Enable native auto-start through systemd:

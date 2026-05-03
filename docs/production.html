@@ -265,9 +265,10 @@ networks:
       <span class="badge blue">Load</span>
       <h2>Multiple Containers And Load</h2>
       <pre><code>dockan compose up -f /srv/myapp/dockan.yml
-dockan ps -a
+dockan ps -a --system
 dockan logs myapp-web
 wrk -t4 -c64 -d60s http://127.0.0.1:8080/</code></pre>
+      <p>For mixed user and system installs, <code>dockan ps -a --scope all</code> shows both stores in one table and adds a <code>STORE</code> column.</p>
       <p>Check CPU, RAM, logs, restart behavior, published ports, volume writes, and cleanup.</p>
       <p>Enable restart after reboot without adding a Dockan daemon:</p>
       <pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>

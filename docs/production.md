@@ -141,10 +141,13 @@ Before trusting a server, test more than one container:
 
 ```bash
 dockan compose up -f /srv/myapp/dockan.yml
-dockan ps -a
+dockan ps -a --system
 dockan logs myapp-web
 dockan logs myapp-db
 ```
+
+For mixed user and system installs, `dockan ps -a --scope all` shows both
+stores in one table and adds a `STORE` column.
 
 Enable native restart after reboot without adding a Dockan daemon:
 

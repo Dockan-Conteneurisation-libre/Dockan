@@ -102,8 +102,12 @@ Check the machine:
 ```bash
 dockan version
 dockan doctor
-dockan ps -a
+dockan ps -a --scope all
 ```
+
+`dockan ps -a` shows the current Dockan store. Use `dockan ps -a --system`
+for `/var/lib/dockan`, `dockan ps -a --user` for the user store, or
+`dockan ps -a --scope all` to see both sectors at once.
 
 Update later:
 
@@ -214,6 +218,10 @@ dockan run -d --name hello hello:latest
 dockan ps -a
 dockan logs hello
 ```
+
+When user and system installs coexist, use `dockan ps -a --scope all` to show
+both stores. This is useful when an app was installed by a root/system panel but
+you are checking from a normal shell.
 
 Stop and remove:
 
@@ -763,6 +771,7 @@ dockan new php my-php-app
 dockan push app:latest /srv/dockan-registry
 dockan pull app:latest /srv/dockan-registry
 dockan ps -a
+dockan ps -a --scope all
 dockan logs app
 dockan exec app sh
 dockan health app

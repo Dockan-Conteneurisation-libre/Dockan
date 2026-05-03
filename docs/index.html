@@ -643,13 +643,14 @@ dockan run hello:latest</code></pre>
               <button class="copy-button" type="button" data-copy='export PATH="$HOME/.local/bin:$PATH"
 dockan version
 dockan doctor
-dockan ps -a'>Copy</button>
+dockan ps -a --scope all'>Copy</button>
             </div>
             <pre><code>export PATH="$HOME/.local/bin:$PATH"
 dockan version
 dockan doctor
-dockan ps -a</code></pre>
+dockan ps -a --scope all</code></pre>
           </div>
+          <p><code>dockan ps -a</code> reads the current store. Add <code>--system</code> for <code>/var/lib/dockan</code>, <code>--user</code> for the user store, or <code>--scope all</code> to see both.</p>
         </div>
         <div class="card">
           <span class="badge blue">System</span>

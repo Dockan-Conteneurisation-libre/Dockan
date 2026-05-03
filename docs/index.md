@@ -69,8 +69,11 @@ Check the machine:
 ```bash
 dockan version
 dockan doctor
-dockan ps -a
+dockan ps -a --scope all
 ```
+
+`dockan ps -a` reads the current store. Add `--system` for `/var/lib/dockan`,
+`--user` for the user store, or `--scope all` when you want to see both.
 
 Update later:
 
@@ -288,6 +291,9 @@ dockan exec myapp sh
 dockan stop myapp
 dockan rm myapp
 ```
+
+If the machine has both user and system Dockan stores, list everything with
+`dockan ps -a --scope all`.
 
 ## Volumes
 
