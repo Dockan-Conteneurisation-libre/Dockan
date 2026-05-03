@@ -102,6 +102,16 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 			_ = os.RemoveAll(containerDir)
 			return err
 		}
+	} else if len(opts.Ports) > 0 {
+		hostSharedProxyPorts := hostSharedProxyPorts(opts.Ports)
+		if len(hostSharedProxyPorts) > 0 {
+			portProxyPIDs, err = StartPortProxies(containerDir, hostSharedProxyPorts, "127.0.0.1")
+			if err != nil {
+				_ = cmd.Process.Kill()
+				_ = os.RemoveAll(containerDir)
+				return err
+			}
+		}
 	}
 	meta := map[string]string{
 		"name":       opts.Name,
@@ -147,6 +157,20 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	_ = cmd.Process.Release()
 	fmt.Printf("%s\n", opts.Name)
 	return nil
+}
+
+func hostSharedProxyPorts(ports []string) []string {
+	var proxyPorts []string
+	for _, published := range ports {
+		hostPort, containerPort, err := splitPublishedPort(published)
+		if err != nil {
+			continue
+		}
+		if hostPort != containerPort {
+			proxyPorts = append(proxyPorts, published)
+		}
+	}
+	return proxyPorts
 }
 
 func ListContainers(all bool) error {

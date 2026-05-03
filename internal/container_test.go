@@ -2,6 +2,19 @@ package internal
 
 import "testing"
 
+func TestHostSharedProxyPortsOnlyIncludesTranslatedPorts(t *testing.T) {
+	got := hostSharedProxyPorts([]string{"8081:80", "9090:9090", "8443:443"})
+	want := []string{"8081:80", "8443:443"}
+	if len(got) != len(want) {
+		t.Fatalf("hostSharedProxyPorts() = %#v, want %#v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("hostSharedProxyPorts() = %#v, want %#v", got, want)
+		}
+	}
+}
+
 func TestHealthcheckCommandParsesCommonForms(t *testing.T) {
 	tests := []struct {
 		name string
