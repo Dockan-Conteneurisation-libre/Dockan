@@ -141,7 +141,6 @@ func ociRootfsCommand(method, imagePath, rootfs, workdir string) (*exec.Cmd, err
 			"--bind", imagePath, "/dockan",
 			"--proc", "/proc",
 			"--dev", "/dev",
-			"--tmpfs", "/tmp",
 			"--chdir", workdir,
 			"/bin/sh", "/dockan/start.sh",
 		}
