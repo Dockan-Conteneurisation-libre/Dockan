@@ -23,6 +23,26 @@ func TestImageEnvDoesNotOverrideExplicitPort(t *testing.T) {
 	}
 }
 
+func TestCleanHostEnvForContainerRemovesDockanRuntimeEnv(t *testing.T) {
+	got := cleanHostEnvForContainer([]string{
+		"PATH=/usr/bin",
+		"DOCKAN_HOME=/var/lib/dockan",
+		"DOCKAN_RUN_COMMAND=frankenphp run",
+		"DOCKAN_ENTRYPOINT=/entrypoint.sh",
+		"DOCKAN_META_NAME=panel",
+		"DOCKAN_VOLUME_DATA=/var/lib/dockan/volumes/data",
+	})
+	joined := strings.Join(got, "\n")
+	for _, bad := range []string{"DOCKAN_RUN_COMMAND=", "DOCKAN_ENTRYPOINT=", "DOCKAN_META_NAME=", "DOCKAN_VOLUME_DATA="} {
+		if strings.Contains(joined, bad) {
+			t.Fatalf("environment still contains %s in %q", bad, joined)
+		}
+	}
+	if !strings.Contains(joined, "DOCKAN_HOME=/var/lib/dockan") {
+		t.Fatalf("DOCKAN_HOME should be preserved: %q", joined)
+	}
+}
+
 func containsEnv(env []string, want string) bool {
 	for _, item := range env {
 		if item == want {

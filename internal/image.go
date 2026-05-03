@@ -156,7 +156,7 @@ func InitImage(dir string) error {
 }
 
 func imageEnv(img *Image, opts RunOptions) []string {
-	env := append([]string{}, os.Environ()...)
+	env := cleanHostEnvForContainer(os.Environ())
 	absImage, _ := filepath.Abs(img.Path)
 	absRootfs, _ := filepath.Abs(img.RootfsDir)
 	env = append(env,
@@ -206,6 +206,26 @@ func imageEnv(img *Image, opts RunOptions) []string {
 		}
 	}
 	return env
+}
+
+func cleanHostEnvForContainer(hostEnv []string) []string {
+	out := make([]string, 0, len(hostEnv))
+	for _, item := range hostEnv {
+		key, _, _ := strings.Cut(item, "=")
+		if key == "DOCKAN_RUN_COMMAND" ||
+			key == "DOCKAN_ENTRYPOINT" ||
+			key == "DOCKAN_RESTART" ||
+			key == "DOCKAN_MEMORY" ||
+			key == "DOCKAN_CPUS" ||
+			key == "DOCKAN_IMAGE_PATH" ||
+			key == "DOCKAN_ROOTFS" ||
+			strings.HasPrefix(key, "DOCKAN_META_") ||
+			strings.HasPrefix(key, "DOCKAN_VOLUME_") {
+			continue
+		}
+		out = append(out, item)
+	}
+	return out
 }
 
 func portEnvValue(opts RunOptions) string {
