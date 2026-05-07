@@ -14,6 +14,16 @@ Dockan is made to:
 - manage Dockan from the optional Dockan Panel web UI
 - stay local: no forced registry, no permanent daemon
 
+## Windows Port
+
+Dockan's main stable runtime is Linux. A native Windows port is maintained in
+the sibling `Dockan-Windows` tree and uses Windows HCS/HNS instead of Linux
+namespaces, mounts, and systemd.
+
+Read the Windows notes:
+
+- [Dockan Windows](https://dockan-windows.netlify.app/)
+
 ## Dockan vs Docker
 
 Dockan is a real Docker alternative for local Linux workflows. It is built for people who want Docker-like app running without a permanent daemon, without a required cloud registry, and with files that remain easy to inspect.
