@@ -611,7 +611,7 @@ func processRunning(pid int) bool {
 		return false
 	}
 	err := syscall.Kill(pid, 0)
-	if err != nil {
+	if err != nil && err != syscall.EPERM {
 		return false
 	}
 	if data, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat")); err == nil {
