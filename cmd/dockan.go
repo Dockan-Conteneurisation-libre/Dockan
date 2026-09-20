@@ -756,7 +756,7 @@ func runNew(args []string) error {
 }
 
 func parseFileFlag(args []string) (string, error) {
-	file := "dockan.yml"
+	file := ""
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "-f", "--file":
@@ -769,11 +769,19 @@ func parseFileFlag(args []string) (string, error) {
 			return file, fmt.Errorf("option inconnue: %s", args[i])
 		}
 	}
-	return file, nil
+	if file != "" {
+		return file, nil
+	}
+	for _, candidate := range []string{"dockan.yml", "dockan.yaml", "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"} {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+	return "dockan.yml", nil
 }
 
 func parseServiceOptions(args []string) (internal.ServiceOptions, error) {
-	opts := internal.ServiceOptions{File: "dockan.yml"}
+	opts := internal.ServiceOptions{}
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "-f", "--file":
@@ -792,6 +800,17 @@ func parseServiceOptions(args []string) (internal.ServiceOptions, error) {
 			opts.User = true
 		default:
 			return opts, fmt.Errorf("option inconnue: %s", args[i])
+		}
+	}
+	if opts.File == "" {
+		for _, candidate := range []string{"dockan.yml", "dockan.yaml", "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"} {
+			if _, err := os.Stat(candidate); err == nil {
+				opts.File = candidate
+				break
+			}
+		}
+		if opts.File == "" {
+			opts.File = "dockan.yml"
 		}
 	}
 	return opts, nil
