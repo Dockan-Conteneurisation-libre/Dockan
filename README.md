@@ -21,57 +21,56 @@
 
 It helps you:
 
-- build local images
-- run apps
-- keep containers running in the background
-- read logs
-- use a `dockan.yml` file
-- install an app as a Linux service
+- pull images directly from Docker Hub, GHCR, Quay, or local registries
+- build images locally from `Dockerfile` or `Dockanfile`
+- run apps with strong Bubblewrap isolation without a permanent daemon
+- keep containers running in the background (`dockan run -d`)
+- manage multi-container apps with `dockan compose` (`dockan.yml` or `docker-compose.yml`)
+- install apps as native Linux systemd services (`dockan compose autostart`)
 - manage Dockan from the optional Dockan Panel web UI
 
-Dockan does not need a daemon.
+Dockan does not need a daemon. It is 100% rootless-friendly, local-first, and lightweight.
 
-Important concept: Dockan stays local. It does not automatically download from Docker Hub. Bases, dependencies, and app files must exist on your machine or be provided with the project.
+Since v0.2.0, Dockan features **native OCI distribution support in pure Go (zero external dependencies)**: you can pull any standard image from Docker Hub or GHCR (`dockan pull alpine`, `dockan pull nginx:alpine`) or use local `:local` images and folder-based registries offline.
 
 Dependencies can be installed through `apt`, `dnf`, `apk`, `pacman`, or `zypper`, but only when you explicitly run the command. Dockan does not install packages secretly.
 
-## Dockan vs Docker
+## Dockan vs Docker & Podman
 
-Dockan is a real Docker alternative for local Linux workflows, especially when you want a smaller tool that stays understandable and does not require a permanent daemon or a cloud registry.
+Dockan is a lightweight, daemonless container alternative for Linux workflows. It combines the simplicity of local-first tools with the power to pull directly from standard container registries.
 
 Use Dockan when you want:
 
-- a daemonless container tool
-- local-first images and app sharing
-- no required Docker Hub account or central registry
+- a daemonless container tool without background overhead
+- native Docker Hub & OCI pulls (`dockan pull alpine`) in 100% pure Go
+- local-first images and offline/NAS registry support
 - simple `Dockanfile` / Dockerfile-style builds
-- readable folders, archives, checksums, and service files
-- apps installed as normal Linux systemd services
-- an easier path for self-hosting, labs, education, and internal tools
+- readable folders, rootfs directories, and service files
+- apps installed as normal Linux systemd services (`dockan compose autostart`)
+- an easier path for self-hosting, personal servers, labs, education, and internal tools
 
-Use Docker when you need:
+Use Docker / Podman when you need:
 
-- the full Docker Hub ecosystem
-- mature OCI image layers and caching
-- full Dockerfile compatibility
-- very robust internal DNS and networking
-- large production fleets already standardized on Docker
-- the broadest third-party tooling support
+- complex multi-stage OCI layer caching across CI/CD fleets
+- advanced overlay storage driver graph manipulation
+- Docker Swarm or Kubernetes-specific orchestration directives
+- large production enterprise clusters already standardized on Docker
 
-| Need | Dockan | Docker |
+| Need | Dockan | Docker / Podman |
 | --- | --- | --- |
 | Local app runner | Yes | Yes |
-| Permanent daemon required | No | Usually yes |
-| Forced cloud registry | No | No, but Docker Hub is central in the ecosystem |
-| Simple local registry | Folder-based `dockan push` / `dockan pull` | Registry server |
-| Dockerfile support | Common instructions | Full Dockerfile support |
-| Runtime bases | Host runtimes or local rootfs bases | OCI images from registries |
-| Internal DNS | Hosts-file based | Dynamic DNS |
-| Best fit | Simple local/self-hosted apps | Large standard container ecosystem |
+| Permanent daemon required | No | Docker: Yes, Podman: No |
+| OCI & Docker Hub Pull | Yes (pure Go, 0 external deps) | Yes |
+| Local & offline registry | Folder-based `dockan push` / `dockan pull` | Registry server |
+| Compose support | `dockan.yml`, `docker-compose.yml` | `docker-compose.yml` |
+| Native systemd service export | Yes (`dockan compose autostart`) | Via quadlet or external generator |
+| Runtime bases | OCI images, local rootfs, host runtimes | OCI images |
+| Best fit | Simple, fast, self-hosted & privacy-first | Large enterprise container ecosystem |
 
-Short version: Dockan is for people who want Docker-like app running with less machinery. Docker is still better when you need the full industry ecosystem.
+Short version: Dockan gives you the freedom to pull and run OCI containers from Docker Hub with the lightweight simplicity of a daemonless, local-first engine.
 
 ## Install
+
 
 User install, without sudo:
 
@@ -838,8 +837,11 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - builds from a simple local `Dockerfile`
 - common Dockerfile instructions
 - `.dockerignore`
+- native OCI image pulling from Docker Hub, GHCR, and Quay in pure Go
+- automatic image pull on `dockan run` and `dockan compose up`
+- `.dockerignore`
 - simple multi-stage Dockerfiles with `COPY --from`
-- local base imports
+- local base imports and folder-based local registries
 - host runtime bases such as `FROM php:8.3` or `FROM node:20` without Docker Hub
 - complete local runtime bases with `dockan base runtime`
 - app templates with `dockan new` for PHP, Node.js, Python, Go, Rust, Java, Ruby, shell, and static binaries
@@ -858,7 +860,7 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 - `dockan exec`
 - healthchecks with `dockan health`, `--healthcheck`, and `dockan compose health`
 - volume backup and restore with `dockan volume backup` and `dockan volume restore`
-- `dockan compose` with volumes, depends_on, command, entrypoint, restart, healthcheck
+- `dockan compose` with `dockan.yml` or `docker-compose.yml` auto-detection
 - cgroup limits through `systemd-run --scope` when available, with `prlimit` fallback for memory
 - tar.gz packages and `.deb` when `dpkg-deb` is available
 - explicit dependency installation through apt/dnf/apk/pacman/zypper
@@ -866,8 +868,7 @@ curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Docka
 
 ## Not Yet
 
-- Docker Hub integration
-- advanced Docker-like layers
+- advanced layer-by-layer caching during Dockerfile build
 - full 100% Dockerfile compatibility
 - full dynamic internal DNS like Docker
 - complete CPU/RAM cgroups

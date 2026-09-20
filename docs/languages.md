@@ -70,9 +70,9 @@ EXPOSE 8080
 CMD ./app
 ```
 
-## Local Bases
+## Local Bases & Host Runtimes
 
-Dockan stays local. It does not automatically pull `php:8`, `node:20`, or `python:3` from Docker Hub.
+For local builds, Dockan prioritizes local bases and host runtimes to keep builds fast, predictable, and offline-capable.
 
 If you write `FROM php:8.3` and no `php:8.3` Dockan base exists, Dockan checks the host for `php`. If `php` is installed, the build continues as a host-runtime base. If `php` is missing, Dockan stops with a clear error.
 

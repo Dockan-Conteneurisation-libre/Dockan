@@ -865,19 +865,17 @@ dockan stop monapp</code></pre>
           </ul>
         </div>
         <div class="card">
-          <span class="badge amber">Docker</span>
-          <h3>Where Docker is stronger</h3>
+          <span class="badge amber">Docker / Podman</span>
+          <h3>Where Docker &amp; Podman fit</h3>
           <ul>
-            <li>Full Docker Hub ecosystem</li>
-            <li>Mature OCI layers and cache behavior</li>
-            <li>Full Dockerfile compatibility</li>
-            <li>Dynamic internal DNS and mature networking</li>
-            <li>Large production fleets already standardized on Docker</li>
-            <li>Largest third-party tooling ecosystem</li>
+            <li>Large enterprise production fleets</li>
+            <li>Advanced multi-stage layer caching across CI/CD</li>
+            <li>Full dynamic internal DNS routing</li>
+            <li>Docker Swarm / Kubernetes orchestrators</li>
           </ul>
         </div>
       </div>
-      <p class="lead">Short version: Dockan is simpler and more local. Docker is broader and more mature.</p>
+      <p class="lead">Short version: Dockan gives you daemonless, lightweight OCI container execution with native Docker Hub pull and local-first privacy.</p>
     </section>
 
     <section>
@@ -887,6 +885,11 @@ dockan stop monapp</code></pre>
           <span class="badge">Images</span>
           <h3>Dockanfile and simple Dockerfile</h3>
           <p>Common instructions, `.dockerignore`, local bases, and simple multi-stage builds with `COPY --from`.</p>
+        </article>
+        <article class="card">
+          <span class="badge green">OCI Native</span>
+          <h3>Docker Hub &amp; GHCR</h3>
+          <p>Directly pull and run any OCI image from Docker Hub, GHCR, or Quay in pure Go with zero external dependencies.</p>
         </article>
         <article class="card">
           <span class="badge">Registry</span>
@@ -911,7 +914,7 @@ dockan stop monapp</code></pre>
         <article class="card">
           <span class="badge blue">Compose</span>
           <h3>Multiple services</h3>
-          <p>`dockan compose up` reads a `dockan.yml` with build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory, and cpus.</p>
+          <p>`dockan compose up` reads a `dockan.yml` or `docker-compose.yml` with build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory, and cpus.</p>
         </article>
         <article class="card">
           <span class="badge">Health</span>
@@ -922,11 +925,6 @@ dockan stop monapp</code></pre>
           <span class="badge blue">Service</span>
           <h3>systemd</h3>
           <p>Use <code>dockan compose autostart</code> so an app starts on boot without a Dockan daemon.</p>
-        </article>
-        <article class="card">
-          <span class="badge amber">Local</span>
-          <h3>No forced cloud</h3>
-          <p>Dockan does not automatically download from Docker Hub. Bases and files stay on your machine.</p>
         </article>
       </div>
     </section>

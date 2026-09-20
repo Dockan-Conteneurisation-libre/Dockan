@@ -35,9 +35,17 @@ Some advanced features require `sudo`, especially:
 
 ## Does Dockan download from Docker Hub?
 
-No.
+Yes! Since v0.2.0, Dockan features native OCI distribution compatibility in pure Go without requiring Docker or any background daemon.
 
-Dockan stays local. To use an Alpine, Ubuntu, or other base, import it from a local rootfs:
+You can pull and run images directly from Docker Hub, GHCR, or Quay:
+
+```bash
+dockan pull alpine:latest
+dockan pull nginx:alpine
+dockan run -d -p 8080:80 nginx:alpine
+```
+
+At the same time, Dockan strictly preserves local-first workflows: local images (`:local`), local folder-based registries, and host runtime bases continue to work offline and take priority without contacting the network:
 
 ```bash
 dockan base import alpine:local ./alpine-rootfs

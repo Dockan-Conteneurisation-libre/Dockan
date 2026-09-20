@@ -239,9 +239,12 @@
       <details>
         <summary>Does Dockan download from Docker Hub?</summary>
         <div class="answer">
-          <p>No. Dockan stays local.</p>
-          <p>To use an Alpine, Ubuntu, or other base, import it from a local rootfs:</p>
-          <pre><code>dockan base import alpine:local ./alpine-rootfs</code></pre>
+          <p><strong>Yes!</strong> Since v0.2.0, Dockan features native OCI distribution compatibility without requiring Docker or any background daemon.</p>
+          <p>You can pull and run images directly from Docker Hub, GHCR, or Quay:</p>
+          <pre><code>dockan pull alpine:latest
+dockan pull nginx:alpine
+dockan run -d -p 8080:80 nginx:alpine</code></pre>
+          <p>Local images (<code>:local</code>) and folder registries continue to work offline and take priority.</p>
         </div>
       </details>
 

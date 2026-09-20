@@ -131,7 +131,7 @@ LABEL org.opencontainers.image.title=PythonExample
 WORKDIR /app
 COPY app.py ./app.py
 CMD python3 app.py</code></pre>
-      <p>Dockan does not download from Docker Hub. If no <code>python:3.12</code> Dockan base exists, Dockan uses the local <code>python3</code> command.</p>
+      <p>If no <code>python:3.12</code> Dockan base exists locally, Dockan can use the local <code>python3</code> command as a host runtime base for fast offline builds.</p>
       <pre><code>dockan base import python:local ./python-rootfs</code></pre>
     </section>
 

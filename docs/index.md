@@ -24,29 +24,28 @@ Read the Windows notes:
 
 - [Dockan Windows](https://dockan-windows.netlify.app/)
 
-## Dockan vs Docker
+## Dockan vs Docker & Podman
 
-Dockan is a real Docker alternative for local Linux workflows. It is built for people who want Docker-like app running without a permanent daemon, without a required cloud registry, and with files that remain easy to inspect.
+Dockan is a real Docker alternative for Linux workflows. It is built for people who want Docker-like app running with native Docker Hub / OCI pulling, without a permanent daemon, and with files that remain easy to inspect.
 
 Choose Dockan for:
 
-- local-first self-hosting
-- simple app packaging
-- folder-based image sharing
-- systemd services
-- labs, education, internal tools, and small servers
+- native OCI pulling from Docker Hub, GHCR, and Quay with 0 external dependencies
+- daemonless, rootless-friendly container execution with Bubblewrap
+- local-first self-hosting and offline-capable registries
+- simple app packaging and `dockan compose` (`dockan.yml` or `docker-compose.yml`)
+- native systemd service export (`dockan compose autostart`)
+- labs, education, internal tools, and personal servers
 - readable builds and explicit dependencies
 
-Choose Docker for:
+Choose Docker / Podman for:
 
-- full Docker Hub compatibility
-- advanced OCI layers and cache behavior
-- full Dockerfile compatibility
-- mature dynamic internal DNS
-- large production fleets already standardized on Docker
-- the largest third-party ecosystem
+- complex multi-stage OCI layer caching across CI/CD fleets
+- advanced overlay storage driver graph manipulation
+- Docker Swarm or Kubernetes-specific orchestration directives
+- large production enterprise clusters already standardized on Docker
 
-Dockan is simpler and more local. Docker is broader and more mature.
+Dockan is simpler, faster, daemonless, and local-first, while giving you access to the entire Docker Hub ecosystem.
 
 ## Install
 

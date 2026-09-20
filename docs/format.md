@@ -80,7 +80,7 @@ COPY app.sh /app.sh
 CMD ./app.sh
 ```
 
-Dockan does not automatically download from Docker Hub. The base must exist locally.
+You can also pull standard OCI bases directly from Docker Hub (`dockan pull alpine:latest`), or use prepared local `:local` bases.
 
 ## Legacy Format: .dockan Folder
 

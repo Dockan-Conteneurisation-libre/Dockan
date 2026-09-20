@@ -26,7 +26,7 @@ COPY app.py ./app.py
 CMD python3 app.py
 ```
 
-Dockan does not download from Docker Hub. If no `python:3.12` Dockan base exists, Dockan uses the local `python3` command.
+If no `python:3.12` Dockan base exists locally, Dockan can use the local `python3` command as a host runtime base for fast offline builds.
 
 Import a local base:
 
