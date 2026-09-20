@@ -146,7 +146,6 @@ func pullImageFromLocalArchive(tag, registryDir string) error {
 	return nil
 }
 
-
 func ListRegistryImages(registryDir string) ([]RegistryImage, error) {
 	if registryDir == "" {
 		registryDir = DefaultRegistryDir()
