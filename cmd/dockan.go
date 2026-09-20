@@ -45,7 +45,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
 			os.Exit(1)
 		}
-		imagePath, err := internal.ResolveImageReference(imageRef)
+		imagePath, err := internal.EnsureImageAvailable(imageRef)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Erreur: %v\n", err)
 			os.Exit(1)

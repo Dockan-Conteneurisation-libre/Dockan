@@ -66,7 +66,7 @@ func ComposeUp(file string) error {
 		if imageRef == "" {
 			return fmt.Errorf("service %s: image ou build requis", service.Name)
 		}
-		imagePath, err := ResolveImageReference(imageRef)
+		imagePath, err := EnsureImageAvailable(imageRef)
 		if err != nil {
 			return fmt.Errorf("service %s: %w", service.Name, err)
 		}

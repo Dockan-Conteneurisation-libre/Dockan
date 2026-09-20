@@ -65,10 +65,43 @@ func PushImageToRegistry(ref, registryDir string) error {
 }
 
 func PullImageFromRegistry(ref, registryDir string) error {
-	if registryDir == "" {
-		registryDir = DefaultRegistryDir()
-	}
 	tag := NormalizeTag(ref)
+	if registryDir != "" {
+		return pullImageFromLocalArchive(tag, registryDir)
+	}
+
+	defaultReg := DefaultRegistryDir()
+	archive := filepath.Join(defaultReg, "images", safeTag(tag)+".tar.gz")
+	if _, err := os.Stat(archive); err == nil {
+		return pullImageFromLocalArchive(tag, defaultReg)
+	}
+
+	if strings.HasSuffix(tag, ":local") {
+		return fmt.Errorf("image introuvable dans registry locale: %s", tag)
+	}
+
+	_, err := PullOCIImage(ref, tag)
+	return err
+}
+
+func EnsureImageAvailable(ref string) (string, error) {
+	if path, err := ResolveImageReference(ref); err == nil {
+		return path, nil
+	}
+
+	tag := NormalizeTag(ref)
+	if strings.HasSuffix(tag, ":local") {
+		return "", fmt.Errorf("image introuvable: %s", ref)
+	}
+
+	fmt.Printf("[dockan] Image introuvable localement. Téléchargement de %s...\n", ref)
+	if err := PullImageFromRegistry(ref, ""); err != nil {
+		return "", err
+	}
+	return ResolveImageReference(ref)
+}
+
+func pullImageFromLocalArchive(tag, registryDir string) error {
 	archive := filepath.Join(registryDir, "images", safeTag(tag)+".tar.gz")
 	if _, err := os.Stat(archive); err != nil {
 		return fmt.Errorf("image introuvable dans registry locale: %s", tag)
@@ -112,6 +145,7 @@ func PullImageFromRegistry(ref, registryDir string) error {
 	fmt.Printf("Pulled %s from %s\n", tag, archive)
 	return nil
 }
+
 
 func ListRegistryImages(registryDir string) ([]RegistryImage, error) {
 	if registryDir == "" {
