@@ -129,7 +129,7 @@ dockan update --system
 Express update from a local source checkout:
 
 ```bash
-cd /home/anar/Bureau/Test/Dockan && git pull && make install PREFIX=/home/anar/.local
+cd /path/to/Dockan && git pull && make install PREFIX="$HOME/.local"
 ```
 
 ## Dockan Panel
