@@ -101,10 +101,7 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	cmd.Stderr = logFile
 	cmd.Stdin = nil
 	cmd.Env = imageEnv(img, opts)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if bridgeNetwork {
-		cmd.SysProcAttr.Cloneflags = syscall.CLONE_NEWNET
-	}
+	cmd.SysProcAttr = detachedSysProcAttr(bridgeNetwork)
 	if err := cmd.Start(); err != nil {
 		return err
 	}

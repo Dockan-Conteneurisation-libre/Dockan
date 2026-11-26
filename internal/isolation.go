@@ -1,10 +1,12 @@
 package internal
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 )
 
 const (
@@ -15,6 +17,18 @@ const (
 	IsolationSystemdNspawn = "systemd-nspawn"
 	IsolationChroot        = "chroot"
 )
+
+var errNoIsolationAvailable = errors.New("aucune isolation disponible: installez bubblewrap (bwrap) ou firejail, " +
+	"ou demandez explicitement --isolation=none pour exécuter l'image sans isolation")
+
+// hardenedBubblewrapArgs are namespaces every bubblewrap sandbox unshares.
+// The network namespace is left to Dockan's network layer (host or bridge).
+// Without --cap-add, bubblewrap already leaves no capability in the sandbox.
+var hardenedBubblewrapArgs = []string{
+	"--unshare-ipc",
+	"--unshare-uts",
+	"--unshare-cgroup-try",
+}
 
 func ResolveIsolation(requested string) (string, error) {
 	if requested == "" || requested == IsolationAuto {
@@ -30,7 +44,8 @@ func ResolveIsolation(requested string) (string, error) {
 		if os.Geteuid() == 0 && commandExists("chroot") {
 			return IsolationChroot, nil
 		}
-		return IsolationNone, nil
+		// Never fall back to running image code on the host without asking.
+		return "", errNoIsolationAvailable
 	}
 
 	switch requested {
@@ -104,11 +119,12 @@ func isolationCommand(method string, img *Image, volumeBinds []VolumeBind) (*exe
 		cmd.Dir = imagePath
 		return cmd, nil
 	case IsolationBubblewrap:
-		args := []string{
+		args := append([]string{"--unshare-pid"}, hardenedBubblewrapArgs...)
+		args = append(args,
 			"--proc", "/proc",
 			"--dev", "/dev",
 			"--tmpfs", "/tmp",
-		}
+		)
 		args = appendExistingBind(args, "--ro-bind", "/usr")
 		args = appendExistingBind(args, "--ro-bind", "/bin")
 		args = appendExistingBind(args, "--ro-bind", "/lib")
@@ -140,15 +156,14 @@ func ociRootfsCommand(method, imagePath, rootfs, workdir string, volumeBinds []V
 	}
 	switch method {
 	case IsolationBubblewrap:
-		args := []string{
-			"--unshare-pid",
-			"--as-pid-1",
+		args := append([]string{"--unshare-pid", "--as-pid-1"}, hardenedBubblewrapArgs...)
+		args = append(args,
 			"--bind", rootfs, "/",
 			"--bind", imagePath, "/dockan",
 			"--proc", "/proc",
 			"--dev", "/dev",
 			"--chdir", workdir,
-		}
+		)
 		for _, bind := range volumeBinds {
 			flag := "--bind"
 			if bind.ReadOnly {
@@ -217,9 +232,20 @@ func PrintDoctor() {
 		return
 	}
 	fmt.Printf("  isolation auto:  %s\n", method)
-	if method == IsolationNone {
-		fmt.Println("  note:            aucun outil rootless détecté; Dockan exécutera start.sh sans isolation forte")
+}
+
+// detachedSysProcAttr starts a background container in its own session, with
+// no controlling terminal, so it cannot inject input into the user's terminal
+// (TIOCSTI, CVE-2017-5226). setsid also makes the container the leader of a
+// new process group, which "dockan stop" signals as a whole. bubblewrap's
+// --new-session is not used: it would move the sandbox out of that group and
+// leave it running after stop.
+func detachedSysProcAttr(bridgeNetwork bool) *syscall.SysProcAttr {
+	attr := &syscall.SysProcAttr{Setsid: true}
+	if bridgeNetwork {
+		attr.Cloneflags = syscall.CLONE_NEWNET
 	}
+	return attr
 }
 
 func availability(command string) string {
