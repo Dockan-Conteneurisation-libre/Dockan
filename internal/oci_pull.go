@@ -2,8 +2,8 @@ package internal
 
 import (
 	"archive/tar"
-	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -165,7 +166,7 @@ func PullOCIImage(ref string, targetTag string) (*StoredImage, error) {
 		}
 		fmt.Printf("[dockan] Couche %d/%d (%s, %s)...\n", i+1, len(manifest.Layers), shortDigest, formatByteSize(layer.Size))
 		var layerErr error
-		token, layerErr = downloadAndExtractLayer(parsed, layer.Digest, token, rootfsDir)
+		token, layerErr = downloadAndExtractLayer(parsed, layer.Digest, layer.Size, token, rootfsDir, tmpDir)
 		if layerErr != nil {
 			_ = os.RemoveAll(tmpDir)
 			return nil, fmt.Errorf("échec d'extraction de la couche %d: %w", i+1, layerErr)
@@ -251,9 +252,16 @@ func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
 		return nil, token, fmt.Errorf("statut HTTP inattendu %d pour %s", resp.StatusCode, manifestURL)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := readOCIMetadata(resp.Body)
 	if err != nil {
 		return nil, token, err
+	}
+	// A tag is not content-addressed: the registry's announced digest is the
+	// only reference available (trust on first use). Check it when present.
+	if announced := resp.Header.Get("Docker-Content-Digest"); announced != "" {
+		if err := verifyOCIMetadata(body, announced); err != nil {
+			return nil, token, fmt.Errorf("manifeste rejeté: %w", err)
+		}
 	}
 
 	var list OCIManifestList
@@ -274,6 +282,9 @@ func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
 			selectedDigest = list.Manifests[0].Digest
 		}
 
+		if err := validateOCIDigest(selectedDigest); err != nil {
+			return nil, token, err
+		}
 		targetURL := fmt.Sprintf("https://%s/v2/%s/manifests/%s", ref.Registry, ref.Repository, selectedDigest)
 		subResp, newToken, err := ociGet(targetURL, token, accept)
 		if err != nil {
@@ -281,9 +292,12 @@ func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
 		}
 		defer subResp.Body.Close()
 		token = newToken
-		body, err = io.ReadAll(subResp.Body)
+		if subResp.StatusCode != http.StatusOK {
+			return nil, token, fmt.Errorf("statut HTTP inattendu %d pour %s", subResp.StatusCode, targetURL)
+		}
+		body, err = readVerifiedOCIMetadata(subResp.Body, selectedDigest)
 		if err != nil {
-			return nil, token, err
+			return nil, token, fmt.Errorf("manifeste de plateforme rejeté: %w", err)
 		}
 	}
 
@@ -301,6 +315,9 @@ func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
 
 func fetchOCIConfig(ref OCIRef, configDigest string, token string) (OCIImageConfig, string, error) {
 	var cfg OCIImageConfig
+	if err := validateOCIDigest(configDigest); err != nil {
+		return cfg, token, err
+	}
 	configURL := fmt.Sprintf("https://%s/v2/%s/blobs/%s", ref.Registry, ref.Repository, configDigest)
 	resp, token, err := ociGet(configURL, token, "application/vnd.docker.container.image.v1+json, application/vnd.oci.image.config.v1+json")
 	if err != nil {
@@ -312,11 +329,23 @@ func fetchOCIConfig(ref OCIRef, configDigest string, token string) (OCIImageConf
 		return cfg, token, fmt.Errorf("statut HTTP %d lors de la récupération de la config OCI", resp.StatusCode)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&cfg)
+	body, err := readVerifiedOCIMetadata(resp.Body, configDigest)
+	if err != nil {
+		return cfg, token, fmt.Errorf("configuration OCI rejetée: %w", err)
+	}
+	err = json.Unmarshal(body, &cfg)
 	return cfg, token, err
 }
 
-func downloadAndExtractLayer(ref OCIRef, layerDigest string, token string, destDir string) (string, error) {
+// downloadAndExtractLayer spools the layer blob to workDir, verifies its
+// digest and size, and only then extracts it into destDir.
+func downloadAndExtractLayer(ref OCIRef, layerDigest string, layerSize int64, token, destDir, workDir string) (string, error) {
+	if err := validateOCIDigest(layerDigest); err != nil {
+		return token, err
+	}
+	if err := validateOCILayerSize(layerSize); err != nil {
+		return token, err
+	}
 	layerURL := fmt.Sprintf("https://%s/v2/%s/blobs/%s", ref.Registry, ref.Repository, layerDigest)
 	resp, token, err := ociGet(layerURL, token, "*/*")
 	if err != nil {
@@ -328,14 +357,24 @@ func downloadAndExtractLayer(ref OCIRef, layerDigest string, token string, destD
 		return token, fmt.Errorf("statut HTTP %d lors du téléchargement de la couche", resp.StatusCode)
 	}
 
-	var streamReader io.Reader = resp.Body
-	gzReader, err := gzip.NewReader(resp.Body)
-	if err == nil {
-		defer gzReader.Close()
-		streamReader = gzReader
+	blob, err := spoolVerifiedBlob(resp.Body, layerDigest, layerSize, workDir)
+	if err != nil {
+		return token, fmt.Errorf("couche %s rejetée: %w", layerDigest, err)
 	}
+	defer discardTempFile(blob)
 
-	return token, extractTarStream(streamReader, destDir)
+	return token, extractLayerBlob(blob, destDir)
+}
+
+func extractLayerBlob(blob io.Reader, destDir string) error {
+	stream, closeStream, err := openLayerStream(blob)
+	if err != nil {
+		return err
+	}
+	if err := extractTarStream(stream, destDir); err != nil {
+		return errors.Join(err, closeStream())
+	}
+	return closeStream()
 }
 
 func ociGet(reqURL, token, accept string) (*http.Response, string, error) {
@@ -519,83 +558,122 @@ func extractTarStream(r io.Reader, dest string) error {
 			return err
 		}
 
+		// Absolute names and ".." are re-rooted by archiveEntryPath (chroot
+		// semantics), so they cannot leave dest and need no pre-filter.
 		cleanName := filepath.Clean(hdr.Name)
-		if strings.HasPrefix(cleanName, "..") || filepath.IsAbs(cleanName) {
+		if cleanName == "." || cleanName == string(filepath.Separator) {
 			continue
 		}
-
-		baseName := filepath.Base(cleanName)
-		target := filepath.Join(dest, cleanName)
-		parentDir := filepath.Dir(target)
-
-		// Handle OCI Whiteouts
-		if baseName == ".wh..wh..opq" {
-			// Opaque whiteout: clear the contents of parentDir
-			if entries, err := os.ReadDir(parentDir); err == nil {
-				for _, entry := range entries {
-					_ = os.RemoveAll(filepath.Join(parentDir, entry.Name()))
-				}
-			}
-			continue
-		} else if strings.HasPrefix(baseName, ".wh.") {
-			deletedName := strings.TrimPrefix(baseName, ".wh.")
-			_ = os.RemoveAll(filepath.Join(parentDir, deletedName))
-			continue
-		}
-
-		switch hdr.Typeflag {
-		case tar.TypeDir:
-			if fi, err := os.Lstat(target); err == nil && fi.Mode()&os.ModeSymlink != 0 {
-				continue
-			}
-			if err := os.MkdirAll(target, 0755); err != nil {
-				return err
-			}
-
-		case tar.TypeReg, tar.TypeRegA:
-			if err := os.MkdirAll(parentDir, 0755); err != nil {
-				return err
-			}
-			_ = os.Remove(target)
-			mode := hdr.FileInfo().Mode().Perm()
-			if mode == 0 {
-				mode = 0644
-			}
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode|0600)
-			if err != nil {
-				return err
-			}
-			if _, err := io.Copy(f, tr); err != nil {
-				f.Close()
-				return err
-			}
-			f.Close()
-			_ = os.Chmod(target, mode)
-
-		case tar.TypeSymlink:
-			if err := os.MkdirAll(parentDir, 0755); err != nil {
-				return err
-			}
-			_ = os.Remove(target)
-			if err := os.Symlink(hdr.Linkname, target); err != nil {
-				return err
-			}
-
-		case tar.TypeLink:
-			if err := os.MkdirAll(parentDir, 0755); err != nil {
-				return err
-			}
-			_ = os.Remove(target)
-			oldPath := filepath.Join(dest, filepath.Clean(hdr.Linkname))
-			if err := os.Link(oldPath, target); err != nil {
-				_ = copyFile(oldPath, target, 0644)
-			}
-
-		default:
-			// Ignore device nodes, fifos, etc. in rootless/container extractions
+		if err := extractLayerEntry(tr, hdr, dest, cleanName); err != nil {
+			return fmt.Errorf("%s: %w", hdr.Name, err)
 		}
 	}
 	return nil
+}
+
+// extractLayerEntry applies one tar entry inside dest. Every path is resolved
+// through archiveEntryPath, so symlinks planted by earlier entries or layers
+// stay confined to dest.
+func extractLayerEntry(tr *tar.Reader, hdr *tar.Header, dest, cleanName string) error {
+	target, err := archiveEntryPath(dest, cleanName)
+	if err != nil {
+		return err
+	}
+	baseName := filepath.Base(target)
+	if baseName == ".wh..wh..opq" {
+		return applyOpaqueWhiteout(filepath.Dir(target))
+	}
+	if strings.HasPrefix(baseName, ".wh.") {
+		deletedName := strings.TrimPrefix(baseName, ".wh.")
+		if deletedName == "" || deletedName == "." || deletedName == ".." {
+			return fmt.Errorf("whiteout invalide: %s", hdr.Name)
+		}
+		return os.RemoveAll(filepath.Join(filepath.Dir(target), deletedName))
+	}
+
+	switch hdr.Typeflag {
+	case tar.TypeDir:
+		info, err := os.Lstat(target)
+		if err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return nil // keep usrmerge-style directory symlinks
+		}
+		if err == nil && !info.IsDir() {
+			if err := removeExistingEntry(target); err != nil {
+				return err
+			}
+		}
+		return os.MkdirAll(target, 0755)
+	case tar.TypeReg, tar.TypeRegA:
+		mode := hdr.FileInfo().Mode().Perm()
+		if mode == 0 {
+			mode = 0644
+		}
+		return writeArchiveFile(target, tr, mode, true)
+	case tar.TypeSymlink:
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+		if err := removeExistingEntry(target); err != nil {
+			return err
+		}
+		return os.Symlink(hdr.Linkname, target)
+	case tar.TypeLink:
+		return extractHardLink(hdr, dest, target)
+	default:
+		// Device nodes, fifos, etc. are skipped in rootless extractions.
+		return nil
+	}
+}
+
+// applyOpaqueWhiteout empties a directory that a later layer replaces.
+func applyOpaqueWhiteout(dir string) error {
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if err := os.RemoveAll(filepath.Join(dir, entry.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// extractHardLink links target to an earlier entry of the same rootfs. When
+// hard links are not possible it copies the source, but only if it is a
+// regular file: a symlink source could otherwise pull host files into the
+// image.
+func extractHardLink(hdr *tar.Header, dest, target string) error {
+	// The link source is re-rooted inside dest like any other entry name.
+	oldPath, err := archiveEntryPath(dest, hdr.Linkname)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+		return err
+	}
+	if err := removeExistingEntry(target); err != nil {
+		return err
+	}
+	if err := os.Link(oldPath, target); err == nil {
+		return nil
+	}
+	info, err := os.Lstat(oldPath)
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("source de lien physique non régulière: %s", hdr.Linkname)
+	}
+	src, err := os.OpenFile(oldPath, os.O_RDONLY|syscall.O_NOFOLLOW, 0)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	return writeArchiveFile(target, src, info.Mode().Perm(), true)
 }
 
 func formatByteSize(bytes int64) string {

@@ -90,12 +90,19 @@ func ImportImage(archivePath, destDir string) error {
 		if cleanName == "." {
 			continue
 		}
-		outPath := filepath.Join(destDir, cleanName)
 		if hdr.FileInfo().IsDir() || strings.HasSuffix(hdr.Name, "/") {
-			if err := os.MkdirAll(outPath, 0755); err != nil {
+			dirPath, err := secureJoin(destDir, cleanName)
+			if err != nil {
+				return err
+			}
+			if err := os.MkdirAll(dirPath, 0755); err != nil {
 				return err
 			}
 			continue
+		}
+		outPath, err := archiveEntryPath(destDir, cleanName)
+		if err != nil {
+			return err
 		}
 		if hdr.Typeflag == tar.TypeSymlink {
 			if hdr.Linkname == "" {
@@ -115,18 +122,7 @@ func ImportImage(archivePath, destDir string) error {
 		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA {
 			continue
 		}
-		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
-			return err
-		}
-		f, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
-		if err != nil {
-			return err
-		}
-		if _, err := io.Copy(f, tr); err != nil {
-			f.Close()
-			return err
-		}
-		if err := f.Close(); err != nil {
+		if err := writeArchiveFile(outPath, tr, os.FileMode(hdr.Mode).Perm(), false); err != nil {
 			return err
 		}
 	}

@@ -104,9 +104,12 @@ func importRootfsArchive(archivePath, rootfs string) error {
 		if cleanName == "." {
 			continue
 		}
-		outPath := filepath.Join(rootfs, cleanName)
 		if hdr.FileInfo().IsDir() || strings.HasSuffix(hdr.Name, "/") {
-			if err := os.MkdirAll(outPath, 0755); err != nil {
+			dirPath, err := secureJoin(rootfs, cleanName)
+			if err != nil {
+				return err
+			}
+			if err := os.MkdirAll(dirPath, 0755); err != nil {
 				return err
 			}
 			continue
@@ -114,18 +117,11 @@ func importRootfsArchive(archivePath, rootfs string) error {
 		if hdr.Typeflag != tar.TypeReg && hdr.Typeflag != tar.TypeRegA {
 			continue
 		}
-		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
-			return err
-		}
-		out, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(hdr.Mode))
+		outPath, err := archiveEntryPath(rootfs, cleanName)
 		if err != nil {
 			return err
 		}
-		if _, err := io.Copy(out, tr); err != nil {
-			out.Close()
-			return err
-		}
-		if err := out.Close(); err != nil {
+		if err := writeArchiveFile(outPath, tr, os.FileMode(hdr.Mode).Perm(), false); err != nil {
 			return err
 		}
 	}
