@@ -360,23 +360,14 @@ func StopContainer(name string) error {
 	if err != nil {
 		return err
 	}
-	if c.PID <= 0 || !processRunning(c.PID) {
+	if c.PID <= 0 || !containerRunning(c.PID) {
 		meta["status"] = "exited"
 		_ = CleanupPortProxies(meta)
 		_ = CleanupContainerNetwork(meta)
 		return WriteMeta(filepath.Join(c.Path, "meta.conf"), meta)
 	}
-	if err := signalContainerProcess(c.PID, syscall.SIGTERM); err != nil {
-		return err
-	}
-	for i := 0; i < 20 && processRunning(c.PID); i++ {
-		time.Sleep(100 * time.Millisecond)
-	}
-	if processRunning(c.PID) {
-		_ = signalContainerProcess(c.PID, syscall.SIGKILL)
-		for i := 0; i < 20 && processRunning(c.PID); i++ {
-			time.Sleep(100 * time.Millisecond)
-		}
+	if err := terminateContainerGroup(c.PID); err != nil {
+		return fmt.Errorf("arrêt de %s: %w", name, err)
 	}
 	meta["status"] = "stopped"
 	_ = CleanupPortProxies(meta)
@@ -395,7 +386,7 @@ func RemoveContainer(name string) error {
 	if err != nil {
 		return err
 	}
-	if c.PID > 0 && processRunning(c.PID) {
+	if c.PID > 0 && containerRunning(c.PID) {
 		return fmt.Errorf("conteneur en cours: stoppez-le d'abord")
 	}
 	meta, _ := ParseMeta(filepath.Join(c.Path, "meta.conf"))
@@ -620,12 +611,94 @@ func processRunning(pid int) bool {
 	return true
 }
 
+// containerRunning reports whether the container leader or any process of
+// its group is still alive. The leader (the sandbox launcher) can exit on
+// SIGTERM while the workload, PID 1 of its own namespace, ignores it.
+func containerRunning(pid int) bool {
+	return processRunning(pid) || processGroupAlive(pid)
+}
+
+// processGroupAlive reports whether a non-zombie process belongs to the
+// process group pgid, by scanning /proc.
+func processGroupAlive(pgid int) bool {
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return syscall.Kill(-pgid, 0) == nil
+	}
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat"))
+		if err != nil {
+			continue // the process exited while scanning
+		}
+		state, group, ok := parseProcStatGroup(string(data))
+		if ok && group == pgid && state != "Z" {
+			return true
+		}
+	}
+	return false
+}
+
+// parseProcStatGroup extracts the state and process group from a
+// /proc/<pid>/stat line. The command name may contain spaces and
+// parentheses, so fields are read after its closing parenthesis.
+func parseProcStatGroup(stat string) (string, int, bool) {
+	end := strings.LastIndexByte(stat, ')')
+	if end < 0 {
+		return "", 0, false
+	}
+	fields := strings.Fields(stat[end+1:])
+	if len(fields) < 3 {
+		return "", 0, false
+	}
+	group, err := strconv.Atoi(fields[2])
+	if err != nil {
+		return "", 0, false
+	}
+	return fields[0], group, true
+}
+
+// terminateContainerGroup sends SIGTERM to the container group, waits up to
+// two seconds, then sends SIGKILL to whatever is left of the group.
+func terminateContainerGroup(pid int) error {
+	if err := signalContainerProcess(pid, syscall.SIGTERM); err != nil && err != syscall.ESRCH {
+		return err
+	}
+	if waitContainerExit(pid, 2*time.Second) {
+		return nil
+	}
+	if err := signalContainerProcess(pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+		return err
+	}
+	if waitContainerExit(pid, 2*time.Second) {
+		return nil
+	}
+	return fmt.Errorf("processus toujours actifs dans le groupe %d après SIGKILL", pid)
+}
+
+func waitContainerExit(pid int, timeout time.Duration) bool {
+	for deadline := time.Now().Add(timeout); containerRunning(pid); {
+		if time.Now().After(deadline) {
+			return false
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return true
+}
+
 func signalContainerProcess(pid int, sig syscall.Signal) error {
 	if pid <= 0 {
 		return nil
 	}
-	if err := syscall.Kill(-pid, sig); err == nil {
+	groupErr := syscall.Kill(-pid, sig)
+	if groupErr == nil {
 		return nil
+	}
+	if groupErr == syscall.EPERM {
+		return fmt.Errorf("droits insuffisants pour signaler le conteneur (groupe %d): %w", pid, groupErr)
 	}
 	return syscall.Kill(pid, sig)
 }
