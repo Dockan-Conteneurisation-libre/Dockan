@@ -1,946 +1,992 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="eo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dockan - A local Docker alternative</title>
-  <meta name="description" content="Dockan is a local Docker alternative for Linux: daemonless, easy to install, app-focused, with volumes, networking, compose, and services.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dockan: ujoj por Linukso, sen demono</title>
+  <meta name="description" content="Dockan elŝutas bildojn el Docker Hub, GHCR, Quay aŭ via propra dosierujo, kontrolas ilin kaj lanĉas ilin kiel ordinarajn procezojn. Neniu fona servo, neniu konto, neniu nubo.">
+  <link rel="canonical" href="https://dockan-conteneurisation-libre.github.io/Dockan/">
   <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Dockan: ujoj por Linukso, sen demono">
+  <meta property="og:description" content="Elŝutu, kontrolu kaj rulu bildojn el Docker Hub kiel ordinarajn procezojn. Neniu fona servo. Libera programaro AGPL-3.0.">
+  <meta property="og:url" content="https://dockan-conteneurisation-libre.github.io/Dockan/">
+  <meta name="theme-color" content="#0e2a1e">
   <style>
     :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17201b;
-      --muted: #56635c;
-      --line: #dfe5df;
-      --green: #176b48;
-      --green-dark: #0e4932;
-      --blue: #1d5f89;
-      --amber: #a56110;
-      --code: #eef2ee;
-      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
+      --pine: #0e2a1e;
+      --pine-2: #15392a;
+      --pine-line: #24503c;
+      --leaf: #1a5e3a;
+      --teal: #2b8c7e;
+      --mint: #9fd8c6;
+      --signal: #d99a2b;
+      --paper: #f4f6f2;
+      --surface: #ffffff;
+      --ink: #14201a;
+      --muted: #4d5c54;
+      --line: #d5ddd6;
+      --code-bg: #eaf0eb;
+      --focus: #2b8c7e;
+      --sans: system-ui, -apple-system, "Segoe UI", "Noto Sans", Ubuntu, Cantarell, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Liberation Mono", Menlo, Consolas, monospace;
+      --measure: 68ch;
     }
 
-    * {
-      box-sizing: border-box;
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #0f1713;
+        --surface: #15201a;
+        --ink: #e2ebe5;
+        --muted: #a6b6ad;
+        --line: #2a3a31;
+        --code-bg: #1b2a22;
+        --leaf: #4fb07c;
+        --teal: #5cc2b0;
+      }
     }
 
-    html {
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
       margin: 0;
-      background: var(--bg);
+      background: var(--paper);
       color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
+      font: 400 1.0625rem/1.65 var(--sans);
       overflow-x: hidden;
+      font-kerning: normal;
     }
 
-    a {
-      color: var(--green);
-      text-decoration: none;
+    a { color: var(--leaf); text-underline-offset: 0.18em; }
+    a:hover { color: var(--teal); }
+
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+      border-radius: 4px;
     }
 
-    a:hover {
-      text-decoration: underline;
+    code {
+      font: 0.92em/1.4 var(--mono);
+      background: var(--code-bg);
+      padding: 0.08em 0.35em;
+      border-radius: 4px;
+      overflow-wrap: break-word;
     }
 
-    img,
-    svg {
-      max-width: 100%;
-      height: auto;
+    pre code {
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      font: inherit;
+      overflow-wrap: normal;
     }
 
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid var(--line);
+    .skip {
+      position: absolute;
+      left: -9999px;
+    }
+    .skip:focus {
+      left: 1rem;
+      top: 1rem;
+      z-index: 10;
+      background: var(--surface);
+      padding: 0.6rem 0.9rem;
+    }
+
+    .wrap {
+      width: min(1160px, 100% - 2.5rem);
+      margin-inline: auto;
+    }
+
+    /* Masthead: dark pine band holding the header and the hero. Not sticky. */
+    .masthead {
+      background:
+        linear-gradient(180deg, rgba(43, 140, 126, 0.10), transparent 55%),
+        var(--pine);
+      color: #e6efe9;
     }
 
     .topbar {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 16px 24px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      gap: 1.5rem;
+      min-height: 72px;
     }
 
     .brand {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
-      color: var(--ink);
-      font-weight: 800;
-      font-size: 1.08rem;
-      min-width: 0;
-    }
-
-    .brand img {
-      width: 40px;
-      height: 40px;
-      flex: 0 0 auto;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      font-size: 0.95rem;
-    }
-
-    nav a {
-      white-space: nowrap;
-    }
-
-    .mobile-nav {
-      display: none;
-      position: relative;
-      width: 100%;
-    }
-
-    .mobile-nav summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 42px;
-      padding: 9px 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--green-dark);
-      cursor: pointer;
-      font-weight: 800;
-      list-style: none;
-      user-select: none;
-    }
-
-    .mobile-nav summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .mobile-nav summary::after {
-      content: "";
-      width: 10px;
-      height: 10px;
-      border-right: 2px solid currentColor;
-      border-bottom: 2px solid currentColor;
-      transform: rotate(45deg) translateY(-2px);
-    }
-
-    .mobile-nav[open] summary::after {
-      transform: rotate(225deg) translateY(-2px);
-    }
-
-    .mobile-nav-links {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-      box-shadow: var(--shadow);
-    }
-
-    .mobile-nav-links a {
-      display: flex;
-      align-items: center;
-      min-height: 42px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      color: var(--ink);
-      font-weight: 700;
-      overflow-wrap: anywhere;
-    }
-
-    .mobile-nav-links a:hover {
-      background: #eef6f1;
+      gap: 0.6rem;
+      color: #ffffff;
+      font-weight: 750;
+      font-size: 1.2rem;
+      letter-spacing: -0.01em;
       text-decoration: none;
     }
+    .brand img { width: 38px; height: 38px; }
+    .brand:hover { color: #ffffff; }
+
+    .nav {
+      display: flex;
+      gap: 0.2rem;
+      margin-left: auto;
+      align-items: center;
+    }
+    .nav a {
+      color: #c9d9cf;
+      text-decoration: none;
+      padding: 0.45rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .nav a:hover { color: #ffffff; background: var(--pine-2); }
+
+    .langs {
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--pine-line);
+      border-radius: 8px;
+    }
+    .langs button {
+      font: 600 0.8rem/1 var(--sans);
+      color: #b8cbbf;
+      background: transparent;
+      border: 0;
+      border-radius: 5px;
+      padding: 0.5rem 0.6rem;
+      min-width: 44px;
+      min-height: 36px;
+      cursor: pointer;
+    }
+    .langs button[aria-pressed="true"] { background: var(--teal); color: #ffffff; }
+    .langs button:hover:not([aria-pressed="true"]) { color: #ffffff; background: var(--pine-2); }
+
+    .lang-select, .menu { display: none; }
 
     .hero {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 64px 24px 40px;
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-      gap: 40px;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: clamp(2rem, 5vw, 4.5rem);
       align-items: center;
+      padding: clamp(2.5rem, 7vw, 5.5rem) 0 clamp(3rem, 8vw, 6rem);
     }
 
     .hero h1 {
-      margin: 0 0 16px;
-      font-size: clamp(2.2rem, 5vw, 4.6rem);
-      line-height: 1;
-      letter-spacing: 0;
+      margin: 0 0 1.2rem;
+      font-size: clamp(2.5rem, 5.4vw, 4.4rem);
+      line-height: 1.02;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      color: #ffffff;
+      text-wrap: balance;
     }
 
-    .hero p {
-      margin: 0 0 24px;
-      color: var(--muted);
-      font-size: 1.16rem;
-      max-width: 760px;
+    .hero p.lead {
+      margin: 0 0 2rem;
+      max-width: 34em;
+      font-size: clamp(1.06rem, 1.6vw, 1.22rem);
+      color: #c3d4ca;
     }
 
     .actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      margin: 28px 0;
-      min-width: 0;
+      gap: 0.75rem;
+      align-items: center;
     }
 
-    .button {
+    .btn {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      min-height: 44px;
-      padding: 10px 16px;
+      gap: 0.55rem;
+      min-height: 48px;
+      padding: 0.75rem 1.2rem;
       border-radius: 8px;
-      border: 1px solid var(--green);
-      background: var(--green);
-      color: #fff;
-      font-weight: 700;
+      font: 650 1rem/1.2 var(--sans);
       text-decoration: none;
-      text-align: center;
+      cursor: pointer;
+      border: 1px solid transparent;
     }
+    .btn-primary { background: var(--teal); color: #ffffff; }
+    .btn-primary:hover { background: #33a091; color: #ffffff; }
+    .btn-ghost { border-color: var(--pine-line); color: #e6efe9; background: transparent; }
+    .btn-ghost:hover { background: var(--pine-2); color: #ffffff; }
+    .btn svg { width: 18px; height: 18px; flex: none; }
 
-    .button.secondary {
-      background: #fff;
-      color: var(--green-dark);
-      border-color: var(--line);
-    }
-
-    .terminal {
-      background: #101812;
-      color: #eaf6ef;
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      border: 1px solid #24342a;
-      min-width: 0;
-    }
-
-    .terminal-title {
+    .install-line {
       display: flex;
-      gap: 7px;
-      padding: 12px 14px;
-      background: #18251c;
-      border-bottom: 1px solid #24342a;
+      align-items: stretch;
+      margin-top: 1.4rem;
+      max-width: 36rem;
+      border: 1px solid var(--pine-line);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.22);
     }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #d66a4d;
-    }
-
-    .dot:nth-child(2) {
-      background: #d9a441;
-    }
-
-    .dot:nth-child(3) {
-      background: #48a86b;
-    }
-
-    pre {
+    .install-line pre {
       margin: 0;
-      padding: 18px;
-      overflow-x: auto;
-      max-width: 100%;
-      font-size: 0.94rem;
-      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-width: 0;
+      padding: 0.8rem 1rem;
+      font: 0.86rem/1.5 var(--mono);
+      color: #d7e6dd;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .install-line .copy {
+      border-left: 1px solid var(--pine-line);
+      border-radius: 0 8px 8px 0;
+      color: #d7e6dd;
     }
 
-    code {
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    .hero .note {
+      margin: 0.9rem 0 0;
+      font-size: 0.92rem;
+      color: #9fb5a8;
+    }
+    .hero .note code { background: var(--pine-2); color: #d7e6dd; }
+
+    /* The terminal replays a real session once on load. */
+    .term {
+      border: 1px solid var(--pine-line);
+      border-radius: 10px;
+      background: #081a12;
+      box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+    .term-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 0.9rem;
+      border-bottom: 1px solid var(--pine-line);
+      color: #87a294;
+      font: 0.8rem/1 var(--mono);
+    }
+    .term-bar span { flex: 1; }
+    .replay {
+      font: 600 0.78rem/1 var(--sans);
+      color: #b8cbbf;
+      background: transparent;
+      border: 1px solid var(--pine-line);
+      border-radius: 5px;
+      padding: 0.4rem 0.6rem;
+      min-height: 32px;
+      cursor: pointer;
+    }
+    .replay:hover { color: #ffffff; }
+    .term pre {
+      margin: 0;
+      padding: 1.1rem 1.2rem 1.3rem;
+      min-height: 19.5rem;
+      font: 0.88rem/1.7 var(--mono);
+      color: #cfe0d6;
+      white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
-
-    main {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px;
+    .term .l { display: block; }
+    .term .c::before { content: "$ "; color: var(--mint); }
+    .term .o { color: #8aa598; }
+    .term .ok { color: var(--mint); }
+    .term .hidden { visibility: hidden; }
+    .term .caret::after {
+      content: "";
+      display: inline-block;
+      width: 0.55em;
+      height: 1.05em;
+      margin-left: 1px;
+      vertical-align: -0.15em;
+      background: var(--mint);
+      animation: blink 1s steps(1) infinite;
     }
+    @keyframes blink { 50% { opacity: 0; } }
 
-    section {
-      padding: 34px 0;
-      border-top: 1px solid var(--line);
-    }
+    /* Sections */
+    section { padding: clamp(3.5rem, 8vw, 6rem) 0; }
+    section + section { border-top: 1px solid var(--line); }
 
     h2 {
-      margin: 0 0 16px;
-      font-size: 1.8rem;
-      line-height: 1.2;
-      letter-spacing: 0;
+      margin: 0 0 0.9rem;
+      font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+      line-height: 1.12;
+      font-weight: 780;
+      letter-spacing: -0.025em;
+      text-wrap: balance;
+      max-width: 22em;
     }
-
     h3 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
-    }
-
-    .lead {
-      color: var(--muted);
-      max-width: 780px;
-      margin: 0 0 22px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
-      min-height: 150px;
-      min-width: 0;
-    }
-
-    a.card {
-      display: block;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    a.card:hover {
-      border-color: var(--green);
-      text-decoration: none;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      overflow-wrap: anywhere;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      background: #eef6f1;
-      color: var(--green-dark);
+      margin: 0 0 0.4rem;
+      font-size: 1.12rem;
+      line-height: 1.3;
       font-weight: 700;
-      font-size: 0.86rem;
-      margin-bottom: 12px;
+      letter-spacing: -0.01em;
     }
-
-    .badge.blue {
-      background: #edf5fa;
-      color: var(--blue);
+    .section-lead {
+      margin: 0 0 2.5rem;
+      max-width: var(--measure);
+      color: var(--muted);
+      font-size: 1.1rem;
     }
+    p { max-width: var(--measure); }
 
-    .badge.amber {
-      background: #fff4e4;
-      color: var(--amber);
-    }
-
-    .code-block {
-      background: var(--code);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      margin: 12px 0 0;
-      overflow: hidden;
-      max-width: 100%;
-      min-width: 0;
-    }
-
-    .code-block pre {
-      padding: 18px;
-    }
-
-    .code-actions {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      min-height: 46px;
-      padding: 8px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.72);
-      gap: 8px;
-    }
-
-    .copy-button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 34px;
-      min-width: 82px;
-      padding: 7px 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #ffffff;
-      color: var(--green-dark);
-      cursor: pointer;
-      font: inherit;
-      font-size: 0.86rem;
-      font-weight: 800;
-    }
-
-    .copy-button:hover {
-      border-color: var(--green);
-    }
-
-    .terminal .copy-button {
-      border-color: #34513d;
-      background: #eaf6ef;
-    }
-
-    .terminal .code-actions {
-      border-bottom-color: #24342a;
-      background: #18251c;
-    }
-
-    .terminal .code-block {
-      margin: 0;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-    }
-
-    .split {
+    /* Signature: real process trees */
+    .trees {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 18px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+    .tree {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 1.5rem 1.5rem 1.3rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .tree h3 { display: flex; align-items: center; gap: 0.6rem; }
+    .tree h3 img { width: 26px; height: 26px; }
+    .ps {
+      margin: 1rem 0 1.2rem;
+      padding: 1rem 1.1rem;
+      background: var(--code-bg);
+      border-radius: 8px;
+      font: 0.92rem/2 var(--mono);
+      list-style: none;
+      flex: 1;
+    }
+    .ps ul { list-style: none; margin: 0; padding-left: 1.6rem; }
+    .ps li { position: relative; }
+    .ps ul > li::before {
+      content: "";
+      position: absolute;
+      left: -1.05rem;
+      top: 0;
+      width: 0.8rem;
+      height: 1em;
+      border-left: 1.5px solid var(--muted);
+      border-bottom: 1.5px solid var(--muted);
+      opacity: 0.55;
+    }
+    .proc { color: var(--ink); }
+    .proc.app { color: var(--leaf); font-weight: 700; }
+    .tag {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0 0.45rem;
+      border-radius: 4px;
+      font: 600 0.74rem/1.6 var(--sans);
+      vertical-align: 0.1em;
+      white-space: nowrap;
+    }
+    .tag.always { background: rgba(217, 154, 43, 0.16); color: #9a6410; }
+    .tag.sandbox { background: rgba(43, 140, 126, 0.14); color: var(--teal); }
+    @media (prefers-color-scheme: dark) {
+      .tag.always { color: var(--signal); }
+    }
+    .tree figcaption, .tree .caption { margin: 0; color: var(--muted); font-size: 0.97rem; }
+
+    /* Steps: a real sequence, so it is numbered */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.25rem;
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .steps li {
+      counter-increment: step;
+      border-top: 3px solid var(--leaf);
+      padding-top: 1rem;
       min-width: 0;
     }
-
-    ul {
-      margin: 0;
-      padding-left: 20px;
+    .steps li::before {
+      content: counter(step);
+      display: block;
+      font: 800 2.2rem/1 var(--sans);
+      color: var(--teal);
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.04em;
     }
+    .steps p { color: var(--muted); font-size: 0.98rem; margin: 0 0 0.9rem; }
+    .steps .code pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 
-    li {
-      margin: 6px 0;
+    /* Code blocks with copy */
+    .code {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--code-bg);
+      margin: 0.6rem 0 1rem;
+      max-width: 100%;
+    }
+    .code pre {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      padding: 0.85rem 1rem;
+      font: 0.86rem/1.6 var(--mono);
+      white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
-
-    footer {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 28px 24px 46px;
+    .copy {
+      flex: none;
+      align-self: stretch;
+      min-width: 76px;
+      min-height: 44px;
+      padding: 0 0.8rem;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0 8px 8px 0;
+      background: transparent;
       color: var(--muted);
+      font: 600 0.82rem/1 var(--sans);
+      cursor: pointer;
+    }
+    .copy:hover { color: var(--ink); }
+    .copy[data-state="done"] { color: var(--teal); }
+
+    /* Features: a definition grid with hairlines, not a card kit */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 3.5rem;
+      margin: 0;
+    }
+    .features div {
+      padding: 1.3rem 0;
       border-top: 1px solid var(--line);
     }
+    .features dt { font-weight: 700; font-size: 1.08rem; margin-bottom: 0.3rem; }
+    .features dd { margin: 0; color: var(--muted); }
 
-    @media (max-width: 820px) {
-      .hero,
-      .split,
-      .grid {
-        grid-template-columns: 1fr;
-      }
+    /* Security: what Dockan checks, on a pine band */
+    .band {
+      background: var(--pine);
+      color: #dbe7e0;
+      border-top: 0;
+    }
+    section.band + section { border-top: 0; }
+    .band h2 { color: #ffffff; }
+    .band .section-lead { color: #b5c9bd; }
+    .band a { color: var(--mint); }
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 3.5rem;
+      list-style: none;
+      padding: 0;
+      margin: 0 0 2rem;
+    }
+    .checks li { display: grid; grid-template-columns: 28px 1fr; gap: 0.9rem; }
+    .checks svg { width: 28px; height: 28px; color: var(--mint); margin-top: 2px; }
+    .checks h3 { color: #ffffff; }
+    .checks p { margin: 0; color: #b5c9bd; }
+    .band code { background: var(--pine-2); color: #d7e6dd; }
 
-      .hero {
-        padding-top: 42px;
-      }
+    /* Comparison table */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    th, td { text-align: left; padding: 0.9rem 1.2rem; vertical-align: top; }
+    thead th {
+      font-size: 0.95rem;
+      border-bottom: 2px solid var(--line);
+    }
+    thead th:nth-child(2) { color: var(--leaf); }
+    tbody th { font-weight: 600; width: 32%; }
+    tbody tr + tr > * { border-top: 1px solid var(--line); }
+    td { color: var(--muted); }
+    td.yes { color: var(--ink); }
+    .choose {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem 3.5rem;
+      margin-top: 2rem;
+    }
+    .choose p { margin: 0; padding-left: 1rem; border-left: 3px solid var(--line); }
+    .choose p:first-child { border-left-color: var(--leaf); }
 
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
+    /* Install */
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 3.5rem;
+    }
+    .cols > * { min-width: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 0.95rem; }
+
+    details.more {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      margin-top: 1.25rem;
+    }
+    details.more > summary {
+      cursor: pointer;
+      padding: 1rem 1.2rem;
+      font-weight: 650;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-height: 52px;
+    }
+    details.more > summary::-webkit-details-marker { display: none; }
+    details.more > summary::before {
+      content: "";
+      width: 0.55rem;
+      height: 0.55rem;
+      border-right: 2px solid var(--teal);
+      border-bottom: 2px solid var(--teal);
+      transform: rotate(-45deg);
+      transition: transform 0.15s ease;
+      flex: none;
+    }
+    details.more[open] > summary::before { transform: rotate(45deg); }
+    details.more > .inner { padding: 0 1.2rem 1.2rem; }
+    .inner ul { padding-left: 1.2rem; margin: 0.4rem 0 1rem; }
+    .inner li { margin: 0.25rem 0; }
+
+    /* Ecosystem and docs: link rows */
+    .links {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+    .links a {
+      display: block;
+      padding: 1.2rem 1.4rem 1.3rem 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      min-width: 0;
+    }
+    .links a:hover h3 { color: var(--leaf); text-decoration: underline; text-underline-offset: 0.18em; }
+    .links p { margin: 0; color: var(--muted); font-size: 0.97rem; }
+    .eco {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-top: 2.5rem;
+    }
+    .eco a {
+      display: block;
+      padding: 1.3rem 1.4rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .eco a:hover { border-color: var(--teal); }
+    .eco p { margin: 0; color: var(--muted); }
+
+    footer {
+      background: var(--pine);
+      color: #b5c9bd;
+      padding: 2.5rem 0 calc(2.5rem + env(safe-area-inset-bottom));
+      font-size: 0.95rem;
+    }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; }
+    footer a { color: var(--mint); }
+    footer .brand { font-size: 1rem; }
+    footer .brand img { width: 28px; height: 28px; }
+
+    @media (max-width: 1020px) {
+      .hero { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2rem; }
+      .nav a.opt { display: none; }
     }
 
-    @media (max-width: 720px) {
-      .topbar {
-        padding: 12px 16px;
-        gap: 10px;
-      }
+    @media (max-width: 760px) {
+      .trees, .features, .checks, .choose, .cols, .eco { grid-template-columns: 1fr; }
+      .links { grid-template-columns: 1fr; }
+      .features { column-gap: 0; }
+    }
 
-      .desktop-nav {
-        display: none;
-      }
-
-      .mobile-nav {
+    @media (max-width: 640px) {
+      .wrap { width: min(1160px, 100% - 1.5rem); }
+      .topbar { gap: 0.6rem; min-height: 64px; }
+      .nav, .langs { display: none; }
+      .lang-select {
         display: block;
+        margin-left: auto;
+        font: 600 16px/1 var(--sans);
+        color: #e6efe9;
+        background: var(--pine-2);
+        border: 1px solid var(--pine-line);
+        border-radius: 6px;
+        min-height: 44px;
+        padding: 0 0.5rem;
       }
-
-      .hero {
-        padding: 34px 16px 26px;
-        gap: 22px;
-      }
-
-      .hero h1 {
-        font-size: clamp(2rem, 14vw, 3.3rem);
-      }
-
-      .hero p {
-        font-size: 1rem;
-      }
-
-      main {
-        padding: 16px;
-      }
-
-      section {
-        padding: 26px 0;
-      }
-
-      h2 {
-        font-size: 1.45rem;
-      }
-
-      .actions {
+      .menu { display: block; position: relative; }
+      .menu > summary {
+        list-style: none;
+        cursor: pointer;
+        min-height: 44px;
+        min-width: 44px;
         display: grid;
-        grid-template-columns: 1fr;
+        place-items: center;
+        border: 1px solid var(--pine-line);
+        border-radius: 6px;
+        color: #e6efe9;
       }
-
-      .button {
-        width: 100%;
+      .menu > summary::-webkit-details-marker { display: none; }
+      .menu > summary svg { width: 22px; height: 22px; }
+      .menu-links {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        z-index: 5;
+        display: grid;
+        min-width: 13rem;
+        padding: 0.4rem;
+        background: var(--pine-2);
+        border: 1px solid var(--pine-line);
+        border-radius: 8px;
       }
-
-      .card {
-        padding: 15px;
+      .menu-links a {
+        color: #e6efe9;
+        text-decoration: none;
+        padding: 0.7rem 0.8rem;
+        border-radius: 6px;
+        min-height: 44px;
       }
-
-      pre {
-        padding: 14px;
-        font-size: 0.84rem;
-      }
-
-      .code-block pre {
-        padding: 14px;
-      }
-
-      .copy-button {
-        min-width: 74px;
-      }
-
-      footer {
-        padding: 24px 16px 36px;
-      }
+      .menu-links a:hover { background: var(--pine); }
+      .steps { grid-template-columns: 1fr; }
+      .term pre { min-height: 0; font-size: 0.82rem; }
+      .tree { padding: 1.1rem 1rem 1rem; }
+      .ps { padding: 0.8rem 0.7rem; font-size: 0.84rem; }
+      .ps ul { padding-left: 1.2rem; }
+      .ps ul > li::before { left: -0.85rem; width: 0.6rem; }
+      table { min-width: 0; font-size: 0.86rem; }
+      th, td { padding: 0.7rem 0.6rem; }
+      tbody th { width: auto; }
+      .btn { width: 100%; justify-content: center; }
     }
 
-    @media (max-width: 440px) {
-      .brand {
-        font-size: 1rem;
-      }
-
-      .brand img {
-        width: 34px;
-        height: 34px;
-      }
-
-      .mobile-nav-links {
-        grid-template-columns: 1fr;
-      }
-
-      .terminal-title {
-        padding: 10px 12px;
-      }
-
-      .dot {
-        width: 9px;
-        height: 9px;
-      }
-
-      .card {
-        padding: 14px;
-      }
-
-      .badge {
-        max-width: 100%;
-        overflow-wrap: anywhere;
-      }
+    @media (prefers-reduced-motion: reduce) {
+      .term .caret::after { animation: none; }
+      details.more > summary::before { transition: none; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <a class="brand" href="#top" aria-label="Dockan home">
-        <img src="./dockan-logo.svg" alt="">
+  <a class="skip" href="#main" data-i18n="ui.skip">Iri al la enhavo</a>
+
+  <div class="masthead">
+    <header class="wrap topbar">
+      <a class="brand" href="#main">
+        <img src="./dockan-logo.svg" alt="" width="38" height="38">
         <span>Dockan</span>
       </a>
-      <nav class="desktop-nav" aria-label="Navigation">
-        <a href="#install">Install</a>
-        <a href="#deps">Deps</a>
-        <a href="#panel">Panel</a>
-        <a href="https://dockan-conteneurisation-libre.github.io/Dockan-store/" target="_blank" rel="noopener">Store</a>
-        <a href="#usage">Usage</a>
-        <a href="#compare">Vs Docker</a>
-        <a href="./languages.html">Languages</a>
-        <a href="https://dockan-windows.netlify.app/" target="_blank" rel="noopener">Windows</a>
-        <a href="#network">Network</a>
-        <a href="./developer.html">Developer</a>
-        <a href="./production.html">Production</a>
-        <a href="./faq.html">FAQ</a>
+      <nav class="nav" data-i18n-aria="ui.nav" aria-label="Ĉefa navigado">
+        <a href="#why" data-i18n="nav.why">Kial</a>
+        <a href="#security" class="opt" data-i18n="nav.security">Sekureco</a>
+        <a href="#compare" data-i18n="nav.compare">Komparo</a>
+        <a href="#install" data-i18n="nav.install">Instali</a>
+        <a href="#panel" class="opt" data-i18n="nav.panel">Panelo</a>
+        <a href="#docs" data-i18n="nav.docs">Dokumentaro</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
       </nav>
-      <details class="mobile-nav">
-        <summary>Menu</summary>
-        <div class="mobile-nav-links" aria-label="Navigation mobile">
-          <a href="#install">Install</a>
-          <a href="#deps">Deps</a>
-          <a href="#panel">Panel</a>
-          <a href="https://dockan-conteneurisation-libre.github.io/Dockan-store/" target="_blank" rel="noopener">Store</a>
-          <a href="#usage">Usage</a>
-          <a href="#compare">Vs Docker</a>
-          <a href="./languages.html">Languages</a>
-          <a href="https://dockan-windows.netlify.app/" target="_blank" rel="noopener">Windows</a>
-          <a href="#network">Network</a>
-          <a href="./developer.html">Developer</a>
-          <a href="./production.html">Production</a>
-          <a href="./faq.html">FAQ</a>
+      <div class="langs" role="group" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <button type="button" data-lang="eo" aria-pressed="true" lang="eo" title="Esperanto">EO</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+        <button type="button" data-lang="es" aria-pressed="false" lang="es" title="Español">ES</button>
+      </div>
+      <select class="lang-select" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <option value="eo">EO</option>
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+      </select>
+      <details class="menu">
+        <summary data-i18n-aria="ui.menu" aria-label="Menuo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <div class="menu-links">
+          <a href="#why" data-i18n="nav.why">Kial</a>
+          <a href="#security" data-i18n="nav.security">Sekureco</a>
+          <a href="#compare" data-i18n="nav.compare">Komparo</a>
+          <a href="#install" data-i18n="nav.install">Instali</a>
+          <a href="#panel" data-i18n="nav.panel">Panelo</a>
+          <a href="#docs" data-i18n="nav.docs">Dokumentaro</a>
+          <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
         </div>
       </details>
-    </div>
-    <div class="hero" id="top">
+    </header>
+
+    <div class="wrap hero">
       <div>
-        <h1>Dockan</h1>
-        <p>A local Docker alternative for Linux: daemonless, easy to install, built for running apps, keeping data local, and understanding what runs on the machine.</p>
+        <h1 data-i18n="hero.title">Ujoj por Linukso, sen demono.</h1>
+        <p class="lead" data-i18n="hero.lead">Dockan elŝutas bildojn el Docker Hub, GHCR, Quay aŭ via propra dosierujo, kontrolas ilin kaj lanĉas ilin kiel ordinarajn procezojn, kiujn vi vidas kaj regas. Neniu fona servo, neniu konto, neniu nubo.</p>
         <div class="actions">
-          <a class="button" href="#install">Install</a>
-          <a class="button secondary" href="https://dockan-conteneurisation-libre.github.io/Dockan-store/" target="_blank" rel="noopener">Open Store</a>
-          <a class="button secondary" href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn btn-primary" href="#install">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"/></svg>
+            <span data-i18n="hero.install">Instali Dockan</span>
+          </a>
+          <a class="btn btn-ghost" href="#docs" data-i18n="hero.docs">Legi la dokumentaron</a>
         </div>
+        <div class="install-line">
+          <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
+          <button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh" data-i18n="ui.copy">Kopii</button>
+        </div>
+        <p class="note" data-i18n-html="hero.note">Instaliĝas en <code>~/.local/bin</code> sen <code>sudo</code>. Libera programaro sub AGPL-3.0.</p>
       </div>
-      <div class="terminal" aria-label="Commande d'installation">
-        <div class="terminal-title">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </div>
-        <div class="code-block">
-          <div class="code-actions">
-            <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
-          </div>
-          <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
 
-dockan doctor
-dockan build -t hello:latest examples/hello
-dockan run hello:latest</code></pre>
+      <div class="term" role="img" data-i18n-aria="term.label" aria-label="Ekzempla seanco: elŝuti nginx, ruli ĝin, listigi kaj haltigi ujojn">
+        <div class="term-bar">
+          <span>~/apps</span>
+          <button class="replay" type="button" data-i18n="term.replay" hidden>Reludi</button>
         </div>
+<pre id="session"><span class="l c">dockan pull nginx:alpine</span><span class="l c">dockan run nginx:alpine nginx -v</span><span class="l o">nginx version: nginx/1.31.10</span><span class="l c">dockan run -d --name web nginx:alpine</span><span class="l c">dockan ps</span><span class="l o">web    <span class="ok">running</span>   1306905   nginx:alpine</span><span class="l c">dockan compose autostart</span><span class="l c">dockan stop web</span></pre>
       </div>
     </div>
-  </header>
+  </div>
 
-  <main>
-    <section id="install">
-      <h2>Install</h2>
-      <p class="lead">Dockan installs from GitHub Releases. The installer downloads the right Linux package and verifies checksums when they are available.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">User</span>
-          <h3>Install without sudo</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
-            </div>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
-          </div>
-          <p>If Dockan installs into <code>~/.local/bin</code>, add it to your shell path and verify the CLI:</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='export PATH="$HOME/.local/bin:$PATH"
-dockan version
-dockan doctor
-dockan ps -a --scope all'>Copy</button>
-            </div>
-            <pre><code>export PATH="$HOME/.local/bin:$PATH"
-dockan version
-dockan doctor
-dockan ps -a --scope all</code></pre>
-          </div>
-          <p><code>dockan ps -a</code> reads the current store. Add <code>--system</code> for <code>/var/lib/dockan</code>, <code>--user</code> for the user store, or <code>--scope all</code> to see both.</p>
-        </div>
-        <div class="card">
-          <span class="badge blue">System</span>
-          <h3>System-wide install</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh">Copy</button>
-            </div>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh</code></pre>
-          </div>
-        </div>
-      </div>
-      <div class="code-block">
-        <div class="code-actions">
-          <button class="copy-button" type="button" data-copy="dockan update
-dockan update --version v0.1.1
-dockan update --system">Copy</button>
-        </div>
-        <pre><code>dockan update
-dockan update --version v0.1.1
-dockan update --system</code></pre>
-      </div>
-      <p>Express update from a local source checkout:</p>
-      <div class="code-block">
-        <div class="code-actions">
-          <button class="copy-button" type="button" data-copy="cd /home/anar/Bureau/Test/Dockan &amp;&amp; git pull &amp;&amp; make install PREFIX=/home/anar/.local">Copy</button>
-        </div>
-        <pre><code>cd /home/anar/Bureau/Test/Dockan &amp;&amp; git pull &amp;&amp; make install PREFIX=/home/anar/.local</code></pre>
-      </div>
-    </section>
-
-    <section id="deps">
-      <h2>Dependencies</h2>
-      <p class="lead">Dockan can install the host packages it needs through <code>apt</code>, <code>dnf</code>, <code>apk</code>, <code>pacman</code>, or <code>zypper</code>. It only installs packages when you explicitly run a <code>deps</code> command.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Core</span>
-          <h3>Normal operation</h3>
-          <p>Use <code>core</code> for the base tools Dockan needs: shell, curl, certificates, archives, process tools, and network helpers.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run core&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y'>Copy</button>
-            </div>
-            <pre><code>dockan deps install --dry-run core
-sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge blue">Full</span>
-          <h3>Recommended host setup</h3>
-          <p>Use <code>full</code> to install the recommended modern host setup: core tools, utilities, Node/npm frontend tools, network helpers, database clients, Nginx, Caddy, build tools, diagnostics, and isolation helpers.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run full&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y'>Copy</button>
-            </div>
-            <pre><code>dockan deps install --dry-run full
-sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y</code></pre>
-          </div>
-        </div>
-      </div>
-      <div class="split">
-        <div class="card">
-          <span class="badge amber">Runtime</span>
-          <h3>FrankenPHP for PHP apps</h3>
-          <p>Dockan can prepare FrankenPHP automatically. On Fedora it configures the static PHP repository and installs <code>frankenphp</code> through <code>dnf</code>.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y&#10;command -v frankenphp'>Copy</button>
-            </div>
-            <pre><code>sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
-command -v frankenphp</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge">Profiles</span>
-          <h3>Package groups</h3>
-          <ul>
-            <li><code>core</code>: required base packages</li>
-            <li><code>tools</code>: git, jq, archives, rsync, OpenSSL, GPG, lsof, and file tools</li>
-            <li><code>frontend</code>: Node.js and npm for React, Vue, Vite, and other Node frontends</li>
-            <li><code>network</code>: network and process helpers</li>
-            <li><code>database</code>: common database client tools</li>
-            <li><code>web</code>: Nginx and Caddy for local reverse proxy workflows</li>
-            <li><code>build</code>: compiler and package-config tools</li>
-            <li><code>debug</code>: strace, psmisc, htop, and tcpdump</li>
-            <li><code>isolation</code>: sandbox helpers when available</li>
-            <li><code>full</code>: recommended complete setup</li>
-          </ul>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='dockan deps install --dry-run frontend&#10;dockan deps install --dry-run database&#10;sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y'>Copy</button>
-            </div>
-            <pre><code>dockan deps install --dry-run frontend
-dockan deps install --dry-run database
-sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y</code></pre>
-          </div>
-        </div>
-      </div>
-      <p class="lead">Profiles install the distribution's default package versions. To request a specific package version, pass the native package-manager syntax directly.</p>
-      <div class="code-block">
-        <div class="code-actions">
-          <button class="copy-button" type="button" data-copy="sudo dockan deps install --manager apt -y 'nodejs=20.*'&#10;sudo dockan deps install --manager dnf -y nodejs-20.11.1&#10;sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'&#10;sudo dockan deps install --manager zypper -y nodejs-20.11.1">Copy</button>
-        </div>
-        <pre><code>sudo dockan deps install --manager apt -y 'nodejs=20.*'
-sudo dockan deps install --manager dnf -y nodejs-20.11.1
-sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'
-sudo dockan deps install --manager zypper -y nodejs-20.11.1</code></pre>
-      </div>
-      <p class="lead">For strict runtime versions, import a prepared local base such as <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. If <code>sudo dockan</code> says command not found after a user install, keep the <code>sudo env "PATH=$HOME/.local/bin:$PATH"</code> form or use the absolute Dockan path.</p>
-    </section>
-
-    <section id="panel">
-      <h2>Dockan Panel</h2>
-      <p class="lead">Dockan Panel is the optional browser UI for containers, images, volumes, stacks, backups, and live terminals.</p>
-      <p><a class="button secondary" href="https://github.com/Dockan-Conteneurisation-libre/Dockan-Panel">Open Dockan Panel repository</a></p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Storage</span>
-          <h3>Persistent panel data</h3>
-          <p>The panel stores users, password hashes, 2FA/TOTP secrets, passkey public keys, stacks, and panel backups in the <code>dockan-panel-data</code> volume.</p>
-          <div class="code-block">
-            <pre><code>/app/storage/auth-users.json
-~/.local/share/dockan/volumes/dockan-panel-data</code></pre>
-          </div>
-          <p>Removing that volume removes the panel users, 2FA, passkeys, stacks, and panel backups.</p>
-        </div>
-        <div class="card">
-          <span class="badge blue">Run</span>
-          <h3>Start the UI</h3>
-          <p>Dockan Panel runs with the host <code>frankenphp</code> binary. Its Dockan image is <code>scratch</code>, and the panel command is <code>frankenphp run --config Caddyfile</code>.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y&#10;cd /path/to/Dockan-Panel&#10;dockan compose up'>Copy</button>
-            </div>
-            <pre><code>command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
-cd /path/to/Dockan-Panel
-dockan compose up</code></pre>
-          </div>
-          <p>Open <code>http://127.0.0.1:9090</code>, then create the first admin account. There is no default password and no default token.</p>
-          <p>For production, keep the panel as a Dockan app but install it from a system path such as <code>/srv/dockan-panel</code>. This avoids home-directory access blocks on Fedora/SELinux and starts the panel through systemd/root, so the <code>Packages</code> page can run dependency installs and runtime updates directly.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='sudo install -m 0755 "$HOME/.local/bin/dockan" /usr/local/bin/dockan&#10;sudo mkdir -p /srv/dockan-panel /var/lib/dockan&#10;sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /path/to/Dockan-Panel/restore-prod-storage.sh /srv/dockan-panel/&#10;sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2>/dev/null || true&#10;cd /srv/dockan-panel&#10;sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan compose autostart -f dockan.yml --name dockan-panel'>Copy</button>
-            </div>
-            <pre><code>sudo install -m 0755 "$HOME/.local/bin/dockan" /usr/local/bin/dockan
-sudo mkdir -p /srv/dockan-panel /var/lib/dockan
-sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /path/to/Dockan-Panel/restore-prod-storage.sh /srv/dockan-panel/
-sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2&gt;/dev/null || true
-cd /srv/dockan-panel
-sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan compose autostart -f dockan.yml --name dockan-panel</code></pre>
-          </div>
-          <p>If the panel was first launched directly from a local checkout and already has users or stacks in <code>storage/</code>, migrate that local storage into the production volume with:</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy='cd /path/to/Dockan-Panel&#10;sudo ./restore-prod-storage.sh'>Copy</button>
-            </div>
-            <pre><code>cd /path/to/Dockan-Panel
-sudo ./restore-prod-storage.sh</code></pre>
-          </div>
-          <p>The script keeps a timestamped backup of the existing production volume under <code>/var/lib/dockan/volumes/</code>, copies local <code>storage/</code> into <code>dockan-panel-data</code>, fixes SELinux labels when available, and restarts the service.</p>
-          <p>For public access, put an HTTPS reverse proxy in front of the panel. Do not expose port <code>9090</code> directly to the Internet over plain HTTP.</p>
-          <p>Passkeys work on <code>localhost</code>, <code>127.0.0.1</code>, or HTTPS. Browsers usually block passkeys on plain HTTP LAN addresses.</p>
+  <main id="main">
+    <section id="why">
+      <div class="wrap">
+        <h2 data-i18n="why.title">Nenio inter vi kaj via aplikaĵo</h2>
+        <p class="section-lead" data-i18n="why.lead">Docker funkcias per konstanta demono, kiu defaŭlte ruliĝas kiel root kaj posedas ĉiujn ujojn. Dockan lanĉas vian aplikaĵon rekte el via ŝelo aŭ el systemd, en izolejo de bubblewrap. Jen la procezarboj, tiaj kiaj ilin montras ps.</p>
+        <div class="trees">
+          <figure class="tree">
+            <h3>Docker</h3>
+            <ul class="ps" aria-label="Docker">
+              <li><span class="proc">systemd</span>
+                <ul>
+                  <li><span class="proc">dockerd</span><span class="tag always" data-i18n="why.always">ĉiam aktiva, root</span></li>
+                  <li><span class="proc">containerd</span><span class="tag always" data-i18n="why.always2">ĉiam aktiva</span></li>
+                  <li><span class="proc">containerd-shim-runc-v2</span>
+                    <ul><li><span class="proc app" data-i18n="why.app">via aplikaĵo</span></li></ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <figcaption data-i18n="why.docker">La demonoj restas aktivaj eĉ kiam neniu ujo ruliĝas.</figcaption>
+          </figure>
+          <figure class="tree">
+            <h3><img src="./dockan-logo.svg" alt="" width="26" height="26">Dockan</h3>
+            <ul class="ps" aria-label="Dockan">
+              <li><span class="proc" data-i18n="why.shell">systemd aŭ via ŝelo</span>
+                <ul>
+                  <li><span class="proc">bwrap</span><span class="tag sandbox" data-i18n="why.sandbox">izolejo</span>
+                    <ul><li><span class="proc app" data-i18n="why.app">via aplikaĵo</span></li></ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <figcaption data-i18n="why.dockan">Kiam vi haltigas la aplikaĵon, nenio plu restas en memoro.</figcaption>
+          </figure>
         </div>
       </div>
     </section>
 
-    <section id="usage">
-      <h2>Core Usage</h2>
-      <p class="lead">A `Dockanfile` is enough to build a local image and run it.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Build</span>
-          <h3>Create an image</h3>
-          <div class="code-block">
-            <pre><code>FROM scratch
-LABEL org.opencontainers.image.title=MonApp
-COPY app.sh /app.sh
-RUN chmod +x /app.sh
-CMD ./app.sh</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge blue">Run</span>
-          <h3>Run and manage</h3>
-          <div class="code-block">
-            <pre><code>dockan build -t monapp:latest .
-dockan run -d --name monapp monapp:latest
-dockan logs monapp
-dockan exec monapp sh
-dockan stop monapp</code></pre>
-          </div>
-        </div>
+    <section id="how">
+      <div class="wrap">
+        <h2 data-i18n="how.title">De nulo al servo en kvar paŝoj</h2>
+        <p class="section-lead" data-i18n="how.lead">La samaj komandoj por provo sur via tekkomputilo kaj por servo, kiu daŭre funkcias sur servilo.</p>
+        <ol class="steps">
+          <li>
+            <h3 data-i18n="how.s1.t">Instali</h3>
+            <p data-i18n-html="how.s1.d">Unu skripto instalas la ĝustan pakaĵon; <code>dockan doctor</code> montras, kiun izoladon via sistemo ofertas.</p>
+            <div class="code"><pre><code>dockan doctor</code></pre></div>
+          </li>
+          <li>
+            <h3 data-i18n="how.s2.t">Akiri bildon</h3>
+            <p data-i18n="how.s2.d">Elŝutu ĝin el registro aŭ konstruu ĝin el Dockanfile aŭ Dockerfile.</p>
+            <div class="code"><pre><code>dockan pull nginx:alpine
+dockan build -t app .</code></pre></div>
+          </li>
+          <li>
+            <h3 data-i18n="how.s3.t">Ruli</h3>
+            <p data-i18n="how.s3.d">En malfono por provi, aŭ en fono kun protokoloj kaj komandoj ene de la ujo.</p>
+            <div class="code"><pre><code>dockan run -d --name app app
+dockan logs app</code></pre></div>
+          </li>
+          <li>
+            <h3 data-i18n="how.s4.t">Konservi ĝin aktiva</h3>
+            <p data-i18n="how.s4.d">La aplikaĵo iĝas ordinara servo de systemd, kiu startas kun la maŝino.</p>
+            <div class="code"><pre><code>dockan compose autostart</code></pre></div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <h2 data-i18n="feat.title">Ĉio por memgastigi aplikaĵojn</h2>
+        <p class="section-lead" data-i18n="feat.lead">Unu binaraĵo en Go, sen eksteraj dependaĵoj. Legeblaj dosieroj, arkivoj kaj kontrolsumoj.</p>
+        <dl class="features">
+          <div><dt data-i18n="feat.oci.t">Bildoj el Docker Hub, GHCR kaj Quay</dt><dd data-i18n="feat.oci.d">Ĉiu tavolo estas kontrolata per sia haketaĵo antaŭ ol esti malpakita, rekte en pura Go.</dd></div>
+          <div><dt data-i18n="feat.build.t">Dockanfile kaj Dockerfile</dt><dd data-i18n-html="feat.build.d">Oftaj instrukcioj, <code>.dockerignore</code>, lokaj bazoj kaj simplaj plurŝtupaj konstruoj per <code>COPY --from</code>.</dd></div>
+          <div><dt data-i18n="feat.compose.t">Compose</dt><dd data-i18n-html="feat.compose.d"><code>dockan compose up</code> legas <code>dockan.yml</code> aŭ <code>docker-compose.yml</code>: build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory kaj cpus.</dd></div>
+          <div><dt data-i18n="feat.systemd.t">Servoj de systemd</dt><dd data-i18n-html="feat.systemd.d"><code>dockan compose autostart</code> instalas vian aplikaĵon kiel ordinaran servon, kiu startas kun la maŝino.</dd></div>
+          <div><dt data-i18n="feat.volumes.t">Daŭraj datumoj</dt><dd data-i18n="feat.volumes.d">Nomitaj volumoj, muntado de lokaj dosierujoj kaj sekurkopioj tar.gz, kiujn vi povas restarigi.</dd></div>
+          <div><dt data-i18n="feat.registry.t">Loka registro</dt><dd data-i18n-html="feat.registry.d">Dosierujo sufiĉas kiel registro: <code>dockan push</code> kaj <code>dockan pull</code> kun arkivoj kaj kontrolsumoj, ankaŭ sur NAS sen interreto.</dd></div>
+          <div><dt data-i18n="feat.run.t">Ruli, legi protokolojn, eniri</dt><dd data-i18n="feat.run.d">Lanĉo en malfono aŭ fono, inspektado, haltigo, forigo kaj komandoj ene de ruliĝanta ujo.</dd></div>
+          <div><dt data-i18n="feat.health.t">Sankontroloj</dt><dd data-i18n-html="feat.health.d"><code>dockan health</code> kaj <code>dockan compose health</code> kontrolas, ĉu viaj servoj pretas respondi.</dd></div>
+          <div><dt data-i18n="feat.langs.t">Ĉiu Linuksa rultempo</dt><dd data-i18n="feat.langs.d">PHP, Node.js, Python, Go, Rust, Java, Ruby, ŝelaj skriptoj kaj statikaj binaraĵoj.</dd></div>
+          <div><dt data-i18n="feat.net.t">Reto</dt><dd data-i18n-html="feat.net.d">Simplaj retoj kun kaŝnomoj, aŭ ponto kaj NAT kun publikigitaj pordoj (bezonas <code>sudo</code>).</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="security" class="band">
+      <div class="wrap">
+        <h2 data-i18n="sec.title">Kion Dockan kontrolas por vi</h2>
+        <p class="section-lead" data-i18n="sec.lead">Elŝutita bildo estas kodo, kiun vi ne verkis. Dockan traktas ĝin tiel.</p>
+        <ul class="checks">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-3 7.6-7 9-4-1.4-7-4.8-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            <div><h3 data-i18n="sec.1.t">Kontrolitaj haketaĵoj</h3><p data-i18n="sec.1.d">La manifesto, la agordo kaj ĉiu tavolo devas kongrui kun sia haketaĵo sha256 aŭ sha512 kaj kun sia deklarita grandeco. Alie la elŝuto ĉesas.</p></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+            <div><h3 data-i18n="sec.2.t">Malpakado ene de la bildo</h3><p data-i18n="sec.2.d">Simbolaj ligiloj kaj forviŝaj eroj de tavolo neniam povas skribi aŭ forigi dosierojn ekster la radiko de la bildo.</p></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 15.5l7-7"/></svg>
+            <div><h3 data-i18n="sec.3.t">Neniu kaŝita malizolado</h3><p data-i18n-html="sec.3.d">Se neniu izolilo disponeblas, Dockan rifuzas lanĉi la bildon. Ruli sen izolado ĉiam postulas eksplicitan <code>--isolation=none</code>.</p></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l3 2-3 2M13 14h4"/></svg>
+            <div><h3 data-i18n="sec.4.t">Apartaj nomspacoj</h3><p data-i18n="sec.4.d">Kun bubblewrap, ĉiu ujo havas proprajn nomspacojn PID, IPC kaj UTS, sen ajna Linuksa kapablo. Fonaj ujoj ne havas aliron al via terminalo.</p></div>
+          </li>
+        </ul>
+        <p data-i18n-html="sec.more">Detaloj kaj limoj troviĝas en la <a href="./production.html">gvidilo por produktado</a>.</p>
       </div>
     </section>
 
     <section id="compare">
-      <h2>Dockan vs Docker</h2>
-      <p class="lead">Dockan is a real Docker alternative for local Linux workflows. It focuses on simple commands, local files, no permanent daemon, and no required cloud registry.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Dockan</span>
-          <h3>Why choose Dockan</h3>
-          <ul>
-            <li>Daemonless local app runner</li>
-            <li>Folder-based local registry</li>
-            <li>Simple Dockanfile and Dockerfile-style builds</li>
-            <li>Native compose auto-start for servers</li>
-            <li>Readable files, archives, and checksums</li>
-            <li>Good fit for self-hosting, labs, education, and internal tools</li>
-          </ul>
+      <div class="wrap">
+        <h2 data-i18n="cmp.title">Dockan kaj Docker, honeste</h2>
+        <p class="section-lead" data-i18n="cmp.lead">Dockan ne celas anstataŭi Docker ĉie. Jen kie ĉiu el ili taŭgas.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col" data-i18n="cmp.need">Bezono</th><th scope="col">Dockan</th><th scope="col">Docker</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row" data-i18n="cmp.r1">Konstanta fona servo</th><td class="yes" data-i18n="cmp.r1.a">Ne</td><td data-i18n="cmp.r1.b">Jes, dockerd (defaŭlte kiel root)</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r2">Bildoj el Docker Hub, GHCR, Quay</th><td class="yes" data-i18n="cmp.r2.a">Jes (tavoloj gzip)</td><td data-i18n="cmp.r2.b">Jes</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r3">Compose</th><td class="yes" data-i18n="cmp.r3.a">Jes, la plej uzataj ŝlosiloj</td><td data-i18n="cmp.r3.b">Jes, kompleta</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r4">Starto kun la maŝino</th><td class="yes" data-i18n="cmp.r4.a">Denaskaj servoj de systemd</td><td data-i18n="cmp.r4.b">Per la demono kaj ĝiaj restart-reguloj</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r5">Loka registro</th><td class="yes" data-i18n="cmp.r5.a">Simpla dosierujo</td><td data-i18n="cmp.r5.b">Aparta registra ujo</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r6">Tavola kaŝmemoro por CI/CD</th><td data-i18n="cmp.r6.a">Baza</td><td class="yes" data-i18n="cmp.r6.b">Altnivela (BuildKit)</td></tr>
+              <tr><th scope="row">Swarm, Kubernetes</th><td data-i18n="cmp.r7.a">Ne</td><td class="yes" data-i18n="cmp.r7.b">Jes</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r8">macOS kaj Windows</th><td data-i18n="cmp.r8.a">Linukso; aparta denaska projekto por Windows</td><td class="yes">Docker Desktop</td></tr>
+              <tr><th scope="row" data-i18n="cmp.r9">Permesilo</th><td class="yes" data-i18n="cmp.r9.a">AGPL-3.0, tute libera</td><td data-i18n="cmp.r9.b">Engine: Apache-2.0. Desktop: paga abono por grandaj entreprenoj</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="card">
-          <span class="badge amber">Docker / Podman</span>
-          <h3>Where Docker &amp; Podman fit</h3>
-          <ul>
-            <li>Large enterprise production fleets</li>
-            <li>Advanced multi-stage layer caching across CI/CD</li>
-            <li>Full dynamic internal DNS routing</li>
-            <li>Docker Swarm / Kubernetes orchestrators</li>
-          </ul>
+        <div class="choose">
+          <p data-i18n="cmp.dockan">Elektu Dockan por memgastigado, serviloj de asocioj kaj kolektivoj, laboratorioj, instruado kaj internaj iloj.</p>
+          <p data-i18n="cmp.docker">Elektu Docker aŭ Podman por grandaj flotoj jam normigitaj sur ili, por Swarm aŭ por Kubernetes.</p>
         </div>
-      </div>
-      <p class="lead">Short version: Dockan gives you daemonless, lightweight OCI container execution with native Docker Hub pull and local-first privacy.</p>
-    </section>
-
-    <section>
-      <h2>Available Features</h2>
-      <div class="grid">
-        <article class="card">
-          <span class="badge">Images</span>
-          <h3>Dockanfile and simple Dockerfile</h3>
-          <p>Common instructions, `.dockerignore`, local bases, and simple multi-stage builds with `COPY --from`.</p>
-        </article>
-        <article class="card">
-          <span class="badge green">OCI Native</span>
-          <h3>Docker Hub &amp; GHCR</h3>
-          <p>Directly pull and run any OCI image from Docker Hub, GHCR, or Quay in pure Go with zero external dependencies.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Registry</span>
-          <h3>Local push and pull</h3>
-          <p>Use a folder as a local registry with image archives, checksums, and `dockan push` / `dockan pull`.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Languages</span>
-          <h3>Any Linux runtime</h3>
-          <p>PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts, and static binaries through host runtimes, local bases, or shipped binaries.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Containers</span>
-          <h3>Run, logs and exec</h3>
-          <p>Foreground or detached runs, inspection, stop, remove, and commands inside a running container.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Volumes</span>
-          <h3>Persistent data</h3>
-          <p>Named volumes, local folder mounts, and tar.gz backup/restore for app data.</p>
-        </article>
-        <article class="card">
-          <span class="badge blue">Compose</span>
-          <h3>Multiple services</h3>
-          <p>`dockan compose up` reads a `dockan.yml` or `docker-compose.yml` with build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory, and cpus.</p>
-        </article>
-        <article class="card">
-          <span class="badge">Health</span>
-          <h3>Healthchecks</h3>
-          <p>Use `dockan health` or `dockan compose health` to run service readiness checks.</p>
-        </article>
-        <article class="card">
-          <span class="badge blue">Service</span>
-          <h3>systemd</h3>
-          <p>Use <code>dockan compose autostart</code> so an app starts on boot without a Dockan daemon.</p>
-        </article>
       </div>
     </section>
 
-    <section>
-      <h2>Known App Example</h2>
-      <p class="lead">A WordPress-style PHP app with a MariaDB/MySQL database shows the practical Dockan workflow: local images, compose, network aliases, volumes, healthchecks, and backup.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">WordPress</span>
-          <h3>Local app + DB</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="name: wordpress&#10;services:&#10;  web:&#10;    image: wordpress:local&#10;    ports:&#10;      - 8080:8080&#10;    env:&#10;      - DB_HOST=db&#10;      - DB_NAME=wordpress&#10;      - DB_USER=wordpress&#10;      - DB_PASSWORD=change-me&#10;    volumes:&#10;      - wp-data:/var/www/html&#10;    network: wpnet&#10;    aliases:&#10;      - web&#10;    depends_on:&#10;      - db&#10;    restart: always&#10;    healthcheck: CMD-SHELL curl -f http://127.0.0.1:8080/&#10;  db:&#10;    image: mariadb:local&#10;    env:&#10;      - DB_NAME=wordpress&#10;      - DB_USER=wordpress&#10;      - DB_PASSWORD=change-me&#10;      - DB_ROOT_PASSWORD=change-root&#10;    volumes:&#10;      - db-data:/var/lib/mysql&#10;    network: wpnet&#10;    aliases:&#10;      - db&#10;    restart: always&#10;    healthcheck: CMD-SHELL test -d /var/lib/mysql&#10;networks:&#10;  - wpnet">Copy</button>
+    <section id="install">
+      <div class="wrap">
+        <h2 data-i18n="inst.title">Instali</h2>
+        <p class="section-lead" data-i18n="inst.lead">Dockan instaliĝas el la eldonoj sur GitHub. La instalilo elektas la pakaĵon por via arkitekturo kaj kontrolas ĝiajn kontrolsumojn.</p>
+        <div class="cols">
+          <div>
+            <h3 data-i18n="inst.user">Por via uzanto, sen sudo</h3>
+            <div class="code"><pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre><button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh" data-i18n="ui.copy">Kopii</button></div>
+            <p class="small" data-i18n-html="inst.path">Se Dockan instaliĝas en <code>~/.local/bin</code>, aldonu tiun dosierujon al via <code>PATH</code> kaj kontrolu la instalon:</p>
+            <div class="code"><pre><code>export PATH="$HOME/.local/bin:$PATH"
+dockan version
+dockan doctor
+dockan ps -a --scope all</code></pre><button class="copy" type="button" data-copy='export PATH="$HOME/.local/bin:$PATH"
+dockan version
+dockan doctor
+dockan ps -a --scope all' data-i18n="ui.copy">Kopii</button></div>
+            <p class="small muted" data-i18n-html="inst.scope"><code>dockan ps -a</code> legas la aktualan deponejon. Aldonu <code>--system</code> por <code>/var/lib/dockan</code>, <code>--user</code> por la uzanta deponejo, aŭ <code>--scope all</code> por vidi ambaŭ.</p>
+          </div>
+          <div>
+            <h3 data-i18n="inst.system">Por la tuta sistemo</h3>
+            <div class="code"><pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh</code></pre><button class="copy" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sudo sh" data-i18n="ui.copy">Kopii</button></div>
+            <h3 data-i18n="inst.update">Ĝisdatigi</h3>
+            <div class="code"><pre><code>dockan update
+dockan update --version vX.Y.Z
+dockan update --system</code></pre><button class="copy" type="button" data-copy="dockan update
+dockan update --version vX.Y.Z
+dockan update --system" data-i18n="ui.copy">Kopii</button></div>
+            <p class="small" data-i18n="inst.source">Aŭ el loka kopio de la fontkodo:</p>
+            <div class="code"><pre><code>cd /path/to/Dockan &amp;&amp; git pull &amp;&amp; make install PREFIX="$HOME/.local"</code></pre><button class="copy" type="button" data-copy='cd /path/to/Dockan &amp;&amp; git pull &amp;&amp; make install PREFIX="$HOME/.local"' data-i18n="ui.copy">Kopii</button></div>
+          </div>
+        </div>
+
+        <details class="more">
+          <summary data-i18n="deps.summary">Gastigaj dependaĵoj: apt, dnf, apk, pacman, zypper</summary>
+          <div class="inner">
+            <p data-i18n-html="deps.lead">Dockan instalas la pakaĵojn, kiujn ĝi bezonas, nur kiam vi eksplicite lanĉas komandon <code>deps</code>. Provu unue per <code>--dry-run</code>.</p>
+            <div class="cols">
+              <div>
+                <p data-i18n-html="deps.core"><code>core</code>: la bazaj iloj (ŝelo, curl, atestiloj, arkivoj, procezaj kaj retaj iloj).</p>
+                <div class="code"><pre><code>dockan deps install --dry-run core
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y</code></pre><button class="copy" type="button" data-copy='dockan deps install --dry-run core
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install core -y' data-i18n="ui.copy">Kopii</button></div>
+                <p data-i18n-html="deps.full"><code>full</code>: la rekomendita kompleta agordo (ĉiuj grupoj ĉi-sube).</p>
+                <div class="code"><pre><code>dockan deps install --dry-run full
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y</code></pre><button class="copy" type="button" data-copy='dockan deps install --dry-run full
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install full -y' data-i18n="ui.copy">Kopii</button></div>
+                <p data-i18n-html="deps.frank"><code>frankenphp</code> por PHP-aplikaĵoj: sur Fedora, Dockan agordas la statikan PHP-deponejon kaj instalas ĝin per <code>dnf</code>.</p>
+                <div class="code"><pre><code>sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+command -v frankenphp</code></pre><button class="copy" type="button" data-copy='sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+command -v frankenphp' data-i18n="ui.copy">Kopii</button></div>
+              </div>
+              <div>
+                <h3 data-i18n="deps.groups">Pakaĵgrupoj</h3>
+                <ul>
+                  <li data-i18n-html="deps.g.tools"><code>tools</code>: git, jq, arkivoj, rsync, OpenSSL, GPG, lsof kaj dosieriloj</li>
+                  <li data-i18n-html="deps.g.frontend"><code>frontend</code>: Node.js kaj npm por React, Vue, Vite kaj aliaj</li>
+                  <li data-i18n-html="deps.g.network"><code>network</code>: retaj kaj procezaj helpiloj</li>
+                  <li data-i18n-html="deps.g.database"><code>database</code>: kutimaj klientoj de datumbazoj</li>
+                  <li data-i18n-html="deps.g.web"><code>web</code>: Nginx kaj Caddy por lokaj inversaj prokuriloj</li>
+                  <li data-i18n-html="deps.g.build"><code>build</code>: kompililoj kaj pkg-config</li>
+                  <li data-i18n-html="deps.g.debug"><code>debug</code>: strace, psmisc, htop kaj tcpdump</li>
+                  <li data-i18n-html="deps.g.isolation"><code>isolation</code>: izolaj helpiloj, se disponeblaj</li>
+                </ul>
+                <div class="code"><pre><code>dockan deps install --dry-run frontend
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y</code></pre><button class="copy" type="button" data-copy='dockan deps install --dry-run frontend
+sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps install frontend database web build debug -y' data-i18n="ui.copy">Kopii</button></div>
+                <p data-i18n="deps.version">Profiloj instalas la defaŭltajn versiojn de via distribuo. Por specifa versio, uzu la denaskan sintakson de la pakaĵadministrilo:</p>
+                <div class="code"><pre><code>sudo dockan deps install --manager apt -y 'nodejs=20.*'
+sudo dockan deps install --manager dnf -y nodejs-20.11.1
+sudo dockan deps install --manager apk -y 'nodejs=20.11.1-r0'
+sudo dockan deps install --manager zypper -y nodejs-20.11.1</code></pre></div>
+              </div>
             </div>
-            <pre><code>name: wordpress
+            <p class="small muted" data-i18n-html="deps.base">Por striktaj rultempaj versioj, importu pretan lokan bazon, ekzemple <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. Se <code>sudo dockan</code> ne trovas la komandon post uzanta instalo, uzu la formon <code>sudo env "PATH=$HOME/.local/bin:$PATH"</code> aŭ la absolutan vojon.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="example">
+      <div class="wrap">
+        <h2 data-i18n="ex.title">Ekzemplo: WordPress kun MariaDB</h2>
+        <p class="section-lead" data-i18n="ex.lead">PHP-aplikaĵo kun datumbazo montras la tutan laborfluon: bildoj, compose, retaj kaŝnomoj, volumoj, sankontroloj kaj sekurkopio.</p>
+        <div class="cols">
+          <div>
+            <div class="code"><pre><code>name: wordpress
 services:
   web:
     image: wordpress:local
@@ -975,188 +1021,772 @@ services:
     restart: always
     healthcheck: CMD-SHELL test -d /var/lib/mysql
 networks:
-  - wpnet</code></pre>
+  - wpnet</code></pre></div>
           </div>
-        </div>
-        <div class="card">
-          <span class="badge blue">Run</span>
-          <h3>Operate locally</h3>
-          <p>Use prepared local images such as <code>wordpress:local</code> and <code>mariadb:local</code>. Dockan does not pull them from Docker Hub automatically.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="dockan compose up&#10;dockan compose health&#10;dockan volume backup db-data wordpress-db-backup.tar.gz">Copy</button>
-            </div>
-            <pre><code>dockan compose up
+          <div>
+            <p data-i18n-html="ex.note">Ĉi tie <code>wordpress:local</code> kaj <code>mariadb:local</code> estas bildoj preparitaj loke. Vi povas ankaŭ elŝuti bildojn el registro per <code>dockan pull</code>. Ŝanĝu la pasvortojn antaŭ ajna uzo.</p>
+            <h3 data-i18n="ex.ops">Funkciigi</h3>
+            <div class="code"><pre><code>dockan compose up
 dockan compose health
-dockan volume backup db-data wordpress-db-backup.tar.gz</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
+dockan volume backup db-data wordpress-db-backup.tar.gz</code></pre><button class="copy" type="button" data-copy="dockan compose up
+dockan compose health
+dockan volume backup db-data wordpress-db-backup.tar.gz" data-i18n="ui.copy">Kopii</button></div>
 
-    <section id="network">
-      <h2>Network</h2>
-      <p class="lead">Dockan can create simple networks. Bridge/NAT with veth and published ports requires `sudo`.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Simple</span>
-          <h3>Local network</h3>
-          <div class="code-block">
-            <pre><code>dockan network create appnet
+            <details class="more">
+              <summary data-i18n="more.net">Reto</summary>
+              <div class="inner">
+                <p data-i18n="more.net.simple">Simpla loka reto kun kaŝnomoj:</p>
+                <div class="code"><pre><code>dockan network create appnet
 dockan run -d --name web --network appnet --alias web.local web:latest
 dockan network refresh appnet
 dockan network hosts appnet
-dockan network doctor</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge amber">Bridge</span>
-          <h3>Bridge/NAT with ports</h3>
-          <div class="code-block">
-            <pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
+dockan network doctor</code></pre></div>
+                <p data-i18n-html="more.net.bridge">Ponto kaj NAT kun publikigitaj pordoj (bezonas <code>sudo</code>):</p>
+                <div class="code"><pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
 sudo dockan network enable appnet
-sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="prod">
-      <h2>Production</h2>
-      <p class="lead">Dockan is usable as a simple local container tool. For serious production use, publish releases with checksums, back up volumes, run healthchecks, and test root-level features on a clean Linux machine.</p>
-      <div class="split">
-        <div class="card">
-          <span class="badge">Release</span>
-          <h3>Publish a version</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="git tag v0.1.0&#10;git push origin v0.1.0">Copy</button>
-            </div>
-            <pre><code>git tag v0.1.0
-git push origin v0.1.0</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge">Operate</span>
-          <h3>Health and backup</h3>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="dockan compose health -f /srv/myapp/dockan.yml&#10;dockan volume backup data /srv/backups/data.tar.gz">Copy</button>
-            </div>
-            <pre><code>dockan compose health -f /srv/myapp/dockan.yml
-dockan volume backup data /srv/backups/data.tar.gz</code></pre>
-          </div>
-        </div>
-        <div class="card">
-          <span class="badge blue">Install</span>
-          <h3>Copy-ready command</h3>
-          <p>Visitors can copy the install command directly from this page.</p>
-          <div class="code-block">
-            <div class="code-actions">
-              <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh">Copy</button>
-            </div>
-            <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Local Registry</h2>
-      <p class="lead">Push and pull images through a local folder. No Docker Hub, no daemon, no cloud service.</p>
-      <div class="code-block">
-        <div class="code-actions">
-          <button class="copy-button" type="button" data-copy="dockan push myapp:latest /srv/dockan-registry&#10;dockan registry ls /srv/dockan-registry&#10;dockan pull myapp:latest /srv/dockan-registry">Copy</button>
-        </div>
-        <pre><code>dockan push myapp:latest /srv/dockan-registry
+sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre></div>
+              </div>
+            </details>
+            <details class="more">
+              <summary data-i18n="more.reg">Loka registro</summary>
+              <div class="inner">
+                <p data-i18n="more.reg.d">Elsendi kaj elŝuti bildojn tra dosierujo: sen Docker Hub, sen demono, sen nuba servo.</p>
+                <div class="code"><pre><code>dockan push myapp:latest /srv/dockan-registry
 dockan registry ls /srv/dockan-registry
-dockan pull myapp:latest /srv/dockan-registry</code></pre>
+dockan pull myapp:latest /srv/dockan-registry</code></pre></div>
+              </div>
+            </details>
+            <details class="more">
+              <summary data-i18n="more.ops">Sur servilo</summary>
+              <div class="inner">
+                <p data-i18n="more.ops.d">Kontroli la sanon de la servoj kaj savi volumon:</p>
+                <div class="code"><pre><code>dockan compose health -f /srv/myapp/dockan.yml
+dockan volume backup data /srv/backups/data.tar.gz</code></pre></div>
+              </div>
+            </details>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section>
-      <h2>Documentation</h2>
-      <div class="grid">
-        <a class="card" href="./format.html">
-          <span class="badge">Doc</span>
-          <h3>Dockan Format</h3>
-          <p>Dockanfile, simple Dockerfile, local bases, and the legacy `.dockan` format.</p>
-        </a>
-        <a class="card" href="./exemples/python.html">
-          <span class="badge">Example</span>
-          <h3>Python</h3>
-          <p>Create and run a small Python app with a local base.</p>
-        </a>
-        <a class="card" href="./languages.html">
-          <span class="badge">Languages</span>
-          <h3>PHP, Node, Go...</h3>
-          <p>Use Dockan with many languages and generate starter apps with `dockan new`.</p>
-        </a>
-        <a class="card" href="https://dockan-windows.netlify.app/" target="_blank" rel="noopener">
-          <span class="badge blue">Windows</span>
-          <h3>Native Windows port</h3>
-          <p>HCS/HNS backend, Windows image metadata, release binaries, and validation steps.</p>
-        </a>
-        <a class="card" href="./developer.html">
-          <span class="badge">Developer</span>
-          <h3>Share apps</h3>
-          <p>Package a Dockan app so admins can run it locally as a Linux service.</p>
-        </a>
-        <a class="card" href="./production.html">
-          <span class="badge">Production</span>
-          <h3>Server checklist</h3>
-          <p>Updates, rollback, load testing, isolation, and bridge/NAT validation.</p>
-        </a>
-        <a class="card" href="#panel">
-          <span class="badge blue">Panel</span>
-          <h3>Web UI</h3>
-          <p>Manage containers, stacks, users, 2FA, passkeys, and persistent panel storage.</p>
-        </a>
-        <a class="card" href="./faq.html">
-          <span class="badge">FAQ</span>
-          <h3>Common questions</h3>
-          <p>Root, Dockerfile, network, dependencies, GUI, VPS, and Raspberry Pi.</p>
-        </a>
+    <section id="panel">
+      <div class="wrap">
+        <h2 data-i18n="panel.title">Dockan Panel, por tiuj, kiuj preferas retumilon</h2>
+        <p class="section-lead" data-i18n="panel.lead">Nedeviga interfaco por ujoj, bildoj, volumoj, stakoj, sekurkopioj kaj vivaj terminaloj.</p>
+        <div class="cols">
+          <div>
+            <p data-i18n-html="panel.run">Dockan Panel ruliĝas per la gastiga binaraĵo <code>frankenphp</code>. Malfermu <code>http://127.0.0.1:9090</code>, poste kreu la unuan administran konton: ne ekzistas defaŭlta pasvorto nek ĵetono.</p>
+            <div class="code"><pre><code>command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+cd /path/to/Dockan-Panel
+dockan compose up</code></pre><button class="copy" type="button" data-copy='command -v frankenphp || sudo env "PATH=$HOME/.local/bin:$PATH" dockan deps runtime frankenphp -y
+cd /path/to/Dockan-Panel
+dockan compose up' data-i18n="ui.copy">Kopii</button></div>
+            <p><a href="https://github.com/Dockan-Conteneurisation-libre/Dockan-Panel" rel="noopener" data-i18n="panel.repo">Malfermi la deponejon de Dockan Panel</a></p>
+          </div>
+          <div>
+            <p data-i18n-html="panel.storage">La panelo konservas uzantojn, pasvortajn haketaĵojn, sekretojn 2FA/TOTP, publikajn ŝlosilojn de passkeys, stakojn kaj sekurkopiojn en la volumo <code>dockan-panel-data</code>. Forigi tiun volumon forigas ĉiujn tiujn datumojn.</p>
+            <div class="code"><pre><code>/app/storage/auth-users.json
+~/.local/share/dockan/volumes/dockan-panel-data</code></pre></div>
+            <p data-i18n-html="panel.https">Por publika aliro, metu inversan prokurilon HTTPS antaŭ la panelo, kaj neniam elmetu la pordon <code>9090</code> per simpla HTTP. Passkeys funkcias nur sur <code>localhost</code>, <code>127.0.0.1</code> aŭ per HTTPS.</p>
+          </div>
+        </div>
+        <details class="more">
+          <summary data-i18n="panel.prod.summary">Instali la panelon por produktado</summary>
+          <div class="inner">
+            <p data-i18n-html="panel.prod">Por produktado, instalu la panelon el sistema vojo kiel <code>/srv/dockan-panel</code>. Tio evitas la blokadojn de SELinux sur hejmaj dosierujoj kaj startigas la panelon per systemd, por ke la paĝo <code>Packages</code> povu instali dependaĵojn kaj ĝisdatigi rultempojn.</p>
+            <div class="code"><pre><code>sudo install -m 0755 "$HOME/.local/bin/dockan" /usr/local/bin/dockan
+sudo mkdir -p /srv/dockan-panel /var/lib/dockan
+sudo cp -a /path/to/Dockan-Panel/index.php /path/to/Dockan-Panel/README.md /path/to/Dockan-Panel/dockan-logo.svg /path/to/Dockan-Panel/Caddyfile /path/to/Dockan-Panel/Dockanfile /path/to/Dockan-Panel/dockan.yml /path/to/Dockan-Panel/restore-prod-storage.sh /srv/dockan-panel/
+sudo restorecon -RFv /srv/dockan-panel /var/lib/dockan /usr/local/bin/dockan 2&gt;/dev/null || true
+cd /srv/dockan-panel
+sudo env DOCKAN_HOME=/var/lib/dockan /usr/local/bin/dockan compose autostart -f dockan.yml --name dockan-panel</code></pre></div>
+            <p data-i18n-html="panel.migrate">Se la panelo jam havas uzantojn aŭ stakojn en loka <code>storage/</code>, migru ilin al la produkta volumo. La skripto konservas datitan sekurkopion de la ekzistanta volumo en <code>/var/lib/dockan/volumes/</code>, kopias la datumojn, riparas la etikedojn de SELinux kaj restartigas la servon.</p>
+            <div class="code"><pre><code>cd /path/to/Dockan-Panel
+sudo ./restore-prod-storage.sh</code></pre></div>
+          </div>
+        </details>
+        <div class="eco">
+          <a href="https://dockan-conteneurisation-libre.github.io/Dockan-store/" rel="noopener">
+            <h3>Dockan Store</h3>
+            <p data-i18n="eco.store">Katalogo de pretaj aplikaĵoj, kiujn vi povas instali per Dockan.</p>
+          </a>
+          <a href="https://dockan-windows.netlify.app/" rel="noopener">
+            <h3>Dockan Windows</h3>
+            <p data-i18n="eco.win">Denaska portado por Windows kun HCS kaj HNS, dokumentita aparte.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="docs">
+      <div class="wrap">
+        <h2 data-i18n="docs.title">Dokumentaro</h2>
+        <p class="section-lead" data-i18n="docs.lead">La detalaj gvidiloj estas nuntempe en la angla.</p>
+        <div class="links">
+          <a href="./format.html"><h3 data-i18n="docs.format.t">Formato de Dockan</h3><p data-i18n="docs.format.d">Dockanfile, simpla Dockerfile, lokaj bazoj kaj la malnova formato .dockan.</p></a>
+          <a href="./exemples/python.html"><h3 data-i18n="docs.python.t">Ekzemplo en Python</h3><p data-i18n="docs.python.d">Krei kaj ruli malgrandan Python-aplikaĵon kun loka bazo.</p></a>
+          <a href="./languages.html"><h3 data-i18n="docs.langs.t">Programlingvoj</h3><p data-i18n-html="docs.langs.d">PHP, Node, Go kaj aliaj, kun komencaj projektoj per <code>dockan new</code>.</p></a>
+          <a href="./developer.html"><h3 data-i18n="docs.dev.t">Kunhavigi aplikaĵon</h3><p data-i18n="docs.dev.d">Paki aplikaĵon, por ke administrantoj rulu ĝin kiel Linuksan servon.</p></a>
+          <a href="./production.html"><h3 data-i18n="docs.prod.t">Gvidilo por produktado</h3><p data-i18n="docs.prod.d">Ĝisdatigoj, malfaro, ŝarĝotestoj, izolado kaj ponto kun NAT.</p></a>
+          <a href="./faq.html"><h3 data-i18n="docs.faq.t">Oftaj demandoj</h3><p data-i18n="docs.faq.d">Root, Dockerfile, reto, dependaĵoj, grafikaj aplikaĵoj, VPS kaj Raspberry Pi.</p></a>
+        </div>
       </div>
     </section>
   </main>
 
   <footer>
-    Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+    <div class="wrap">
+      <a class="brand" href="#main"><img src="./dockan-logo.svg" alt="" width="28" height="28"><span>Dockan</span></a>
+      <span data-i18n="foot.license">Libera programaro sub la permesilo AGPL-3.0-or-later.</span>
+      <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener" data-i18n="foot.source">Fontkodo sur GitHub</a>
+    </div>
   </footer>
-  <script>
-    const mobileNav = document.querySelector(".mobile-nav");
-    for (const link of document.querySelectorAll(".mobile-nav-links a")) {
-      link.addEventListener("click", () => {
-        if (mobileNav) {
-          mobileNav.open = false;
-        }
-      });
-    }
 
-    for (const button of document.querySelectorAll("[data-copy]")) {
-      button.addEventListener("click", async () => {
-        const value = button.getAttribute("data-copy") || "";
-        try {
-          await navigator.clipboard.writeText(value);
-          button.textContent = "Copied";
-        } catch {
-          const input = document.createElement("textarea");
-          input.value = value;
-          input.setAttribute("readonly", "");
-          input.style.position = "fixed";
-          input.style.left = "-9999px";
-          document.body.appendChild(input);
-          input.select();
-          document.execCommand("copy");
-          input.remove();
-          button.textContent = "Copied";
+  <script type="application/json" id="i18n-data">
+{
+  "fr": {
+    "ui.skip": "Aller au contenu",
+    "ui.nav": "Navigation principale",
+    "ui.lang": "Langue",
+    "ui.menu": "Menu",
+    "ui.copy": "Copier",
+    "ui.copied": "Copié",
+    "ui.selected": "Sélectionné",
+    "nav.why": "Pourquoi",
+    "nav.security": "Sécurité",
+    "nav.compare": "Comparatif",
+    "nav.install": "Installer",
+    "nav.panel": "Panel",
+    "nav.docs": "Documentation",
+    "hero.title": "Des conteneurs pour Linux, sans démon.",
+    "hero.lead": "Dockan récupère les images sur Docker Hub, GHCR, Quay ou dans votre propre dossier, les vérifie, puis les lance comme de simples processus que vous voyez et contrôlez. Aucun service en arrière-plan, aucun compte, aucun cloud.",
+    "hero.install": "Installer Dockan",
+    "hero.docs": "Lire la documentation",
+    "hero.note": "S’installe dans <code>~/.local/bin</code> sans <code>sudo</code>. Logiciel libre sous AGPL-3.0.",
+    "term.label": "Exemple de session : récupérer nginx, le lancer, lister puis arrêter les conteneurs",
+    "term.replay": "Rejouer",
+    "why.title": "Rien entre vous et votre application",
+    "why.lead": "Docker fonctionne avec un démon permanent qui tourne par défaut en root et possède tous les conteneurs. Dockan lance votre application directement depuis votre shell ou depuis systemd, dans un bac à sable bubblewrap. Voici les arbres de processus, tels que ps les affiche.",
+    "why.always": "toujours actif, root",
+    "why.always2": "toujours actif",
+    "why.app": "votre application",
+    "why.docker": "Les démons restent actifs même quand aucun conteneur ne tourne.",
+    "why.shell": "systemd ou votre shell",
+    "why.sandbox": "bac à sable",
+    "why.dockan": "Quand vous arrêtez l’application, plus rien ne reste en mémoire.",
+    "how.title": "Du zéro au service en quatre étapes",
+    "how.lead": "Les mêmes commandes pour un essai sur votre portable et pour un service qui tourne durablement sur un serveur.",
+    "how.s1.t": "Installer",
+    "how.s1.d": "Un script installe le bon paquet ; <code>dockan doctor</code> indique l’isolation que votre système propose.",
+    "how.s2.t": "Obtenir une image",
+    "how.s2.d": "Récupérez-la depuis un registre ou construisez-la à partir d’un Dockanfile ou d’un Dockerfile.",
+    "how.s3.t": "Lancer",
+    "how.s3.d": "Au premier plan pour essayer, ou en arrière-plan avec journaux et commandes dans le conteneur.",
+    "how.s4.t": "Le garder actif",
+    "how.s4.d": "L’application devient un service systemd ordinaire, qui démarre avec la machine.",
+    "feat.title": "Tout pour auto-héberger des applications",
+    "feat.lead": "Un seul binaire en Go, sans dépendance externe. Des fichiers lisibles, des archives et des sommes de contrôle.",
+    "feat.oci.t": "Images Docker Hub, GHCR et Quay",
+    "feat.oci.d": "Chaque couche est vérifiée par son empreinte avant d’être extraite, directement en Go pur.",
+    "feat.build.t": "Dockanfile et Dockerfile",
+    "feat.build.d": "Les instructions courantes, <code>.dockerignore</code>, les bases locales et les constructions multi-étapes simples avec <code>COPY --from</code>.",
+    "feat.compose.t": "Compose",
+    "feat.compose.d": "<code>dockan compose up</code> lit <code>dockan.yml</code> ou <code>docker-compose.yml</code> : build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory et cpus.",
+    "feat.systemd.t": "Services systemd",
+    "feat.systemd.d": "<code>dockan compose autostart</code> installe votre application comme un service ordinaire, qui démarre avec la machine.",
+    "feat.volumes.t": "Données persistantes",
+    "feat.volumes.d": "Volumes nommés, montages de dossiers locaux et sauvegardes tar.gz que vous pouvez restaurer.",
+    "feat.registry.t": "Registre local",
+    "feat.registry.d": "Un dossier suffit comme registre : <code>dockan push</code> et <code>dockan pull</code> avec archives et sommes de contrôle, y compris sur un NAS hors ligne.",
+    "feat.run.t": "Lancer, lire les journaux, entrer",
+    "feat.run.d": "Lancement au premier plan ou en arrière-plan, inspection, arrêt, suppression et commandes dans un conteneur en marche.",
+    "feat.health.t": "Contrôles de santé",
+    "feat.health.d": "<code>dockan health</code> et <code>dockan compose health</code> vérifient que vos services sont prêts à répondre.",
+    "feat.langs.t": "Tout environnement Linux",
+    "feat.langs.d": "PHP, Node.js, Python, Go, Rust, Java, Ruby, scripts shell et binaires statiques.",
+    "feat.net.t": "Réseau",
+    "feat.net.d": "Réseaux simples avec alias, ou pont et NAT avec ports publiés (nécessite <code>sudo</code>).",
+    "sec.title": "Ce que Dockan vérifie pour vous",
+    "sec.lead": "Une image téléchargée, c’est du code que vous n’avez pas écrit. Dockan la traite comme tel.",
+    "sec.1.t": "Empreintes vérifiées",
+    "sec.1.d": "Le manifeste, la configuration et chaque couche doivent correspondre à leur empreinte sha256 ou sha512 et à leur taille déclarée. Sinon, le téléchargement s’arrête.",
+    "sec.2.t": "Extraction dans l’image",
+    "sec.2.d": "Les liens symboliques et les entrées de suppression d’une couche ne peuvent jamais écrire ni effacer de fichiers hors de la racine de l’image.",
+    "sec.3.t": "Aucune désisolation cachée",
+    "sec.3.d": "Si aucun outil d’isolation n’est disponible, Dockan refuse de lancer l’image. Lancer sans isolation exige toujours un <code>--isolation=none</code> explicite.",
+    "sec.4.t": "Espaces de noms séparés",
+    "sec.4.d": "Avec bubblewrap, chaque conteneur a ses propres espaces de noms PID, IPC et UTS, sans aucune capacité Linux. Les conteneurs en arrière-plan n’ont pas accès à votre terminal.",
+    "sec.more": "Détails et limites dans le <a href=\"./production.html\">guide de production</a>.",
+    "cmp.title": "Dockan et Docker, honnêtement",
+    "cmp.lead": "Dockan ne cherche pas à remplacer Docker partout. Voici où chacun a sa place.",
+    "cmp.need": "Besoin",
+    "cmp.r1": "Service permanent en arrière-plan",
+    "cmp.r1.a": "Non",
+    "cmp.r1.b": "Oui, dockerd (en root par défaut)",
+    "cmp.r2": "Images Docker Hub, GHCR, Quay",
+    "cmp.r2.a": "Oui (couches gzip)",
+    "cmp.r2.b": "Oui",
+    "cmp.r3": "Compose",
+    "cmp.r3.a": "Oui, les clés les plus utilisées",
+    "cmp.r3.b": "Oui, complet",
+    "cmp.r4": "Démarrage avec la machine",
+    "cmp.r4.a": "Services systemd natifs",
+    "cmp.r4.b": "Par le démon et ses règles restart",
+    "cmp.r5": "Registre local",
+    "cmp.r5.a": "Un simple dossier",
+    "cmp.r5.b": "Un conteneur de registre dédié",
+    "cmp.r6": "Cache de couches pour la CI/CD",
+    "cmp.r6.a": "Basique",
+    "cmp.r6.b": "Avancé (BuildKit)",
+    "cmp.r7.a": "Non",
+    "cmp.r7.b": "Oui",
+    "cmp.r8": "macOS et Windows",
+    "cmp.r8.a": "Linux ; projet natif séparé pour Windows",
+    "cmp.r9": "Licence",
+    "cmp.r9.a": "AGPL-3.0, entièrement libre",
+    "cmp.r9.b": "Engine : Apache-2.0. Desktop : abonnement payant pour les grandes entreprises",
+    "cmp.dockan": "Choisissez Dockan pour l’auto-hébergement, les serveurs d’associations et de collectifs, les labos, l’enseignement et les outils internes.",
+    "cmp.docker": "Choisissez Docker ou Podman pour les grands parcs déjà standardisés dessus, pour Swarm ou pour Kubernetes.",
+    "inst.title": "Installer",
+    "inst.lead": "Dockan s’installe depuis les versions publiées sur GitHub. L’installateur choisit le paquet adapté à votre architecture et vérifie ses sommes de contrôle.",
+    "inst.user": "Pour votre utilisateur, sans sudo",
+    "inst.path": "Si Dockan s’installe dans <code>~/.local/bin</code>, ajoutez ce dossier à votre <code>PATH</code> et vérifiez l’installation :",
+    "inst.scope": "<code>dockan ps -a</code> lit le dépôt courant. Ajoutez <code>--system</code> pour <code>/var/lib/dockan</code>, <code>--user</code> pour le dépôt utilisateur, ou <code>--scope all</code> pour voir les deux.",
+    "inst.system": "Pour tout le système",
+    "inst.update": "Mettre à jour",
+    "inst.source": "Ou depuis une copie locale du code source :",
+    "deps.summary": "Dépendances de l’hôte : apt, dnf, apk, pacman, zypper",
+    "deps.lead": "Dockan installe les paquets dont il a besoin uniquement quand vous lancez explicitement une commande <code>deps</code>. Essayez d’abord avec <code>--dry-run</code>.",
+    "deps.core": "<code>core</code> : les outils de base (shell, curl, certificats, archives, outils de processus et de réseau).",
+    "deps.full": "<code>full</code> : la configuration complète recommandée (tous les groupes ci-dessous).",
+    "deps.frank": "<code>frankenphp</code> pour les applications PHP : sur Fedora, Dockan configure le dépôt PHP statique et l’installe avec <code>dnf</code>.",
+    "deps.groups": "Groupes de paquets",
+    "deps.g.tools": "<code>tools</code> : git, jq, archives, rsync, OpenSSL, GPG, lsof et outils de fichiers",
+    "deps.g.frontend": "<code>frontend</code> : Node.js et npm pour React, Vue, Vite et les autres",
+    "deps.g.network": "<code>network</code> : outils réseau et de processus",
+    "deps.g.database": "<code>database</code> : clients de bases de données courants",
+    "deps.g.web": "<code>web</code> : Nginx et Caddy pour des proxys inverses locaux",
+    "deps.g.build": "<code>build</code> : compilateurs et pkg-config",
+    "deps.g.debug": "<code>debug</code> : strace, psmisc, htop et tcpdump",
+    "deps.g.isolation": "<code>isolation</code> : outils de bac à sable, quand ils sont disponibles",
+    "deps.version": "Les profils installent les versions par défaut de votre distribution. Pour une version précise, utilisez la syntaxe native du gestionnaire de paquets :",
+    "deps.base": "Pour des versions d’environnement strictes, importez une base locale prête, par exemple <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. Si <code>sudo dockan</code> ne trouve pas la commande après une installation utilisateur, utilisez la forme <code>sudo env \"PATH=$HOME/.local/bin:$PATH\"</code> ou le chemin absolu.",
+    "ex.title": "Exemple : WordPress avec MariaDB",
+    "ex.lead": "Une application PHP avec sa base de données montre tout le parcours : images, compose, alias réseau, volumes, contrôles de santé et sauvegarde.",
+    "ex.note": "Ici, <code>wordpress:local</code> et <code>mariadb:local</code> sont des images préparées localement. Vous pouvez aussi récupérer des images depuis un registre avec <code>dockan pull</code>. Changez les mots de passe avant tout usage.",
+    "ex.ops": "Exploiter",
+    "more.net": "Réseau",
+    "more.net.simple": "Réseau local simple avec alias :",
+    "more.net.bridge": "Pont et NAT avec ports publiés (nécessite <code>sudo</code>) :",
+    "more.reg": "Registre local",
+    "more.reg.d": "Pousser et récupérer des images via un dossier : sans Docker Hub, sans démon, sans service cloud.",
+    "more.ops": "Sur un serveur",
+    "more.ops.d": "Vérifier la santé des services et sauvegarder un volume :",
+    "panel.title": "Dockan Panel, pour qui préfère le navigateur",
+    "panel.lead": "Une interface facultative pour les conteneurs, images, volumes, stacks, sauvegardes et terminaux en direct.",
+    "panel.run": "Dockan Panel tourne avec le binaire <code>frankenphp</code> de l’hôte. Ouvrez <code>http://127.0.0.1:9090</code>, puis créez le premier compte d’administration : il n’existe ni mot de passe ni jeton par défaut.",
+    "panel.repo": "Ouvrir le dépôt de Dockan Panel",
+    "panel.storage": "Le panel conserve les comptes, les empreintes de mots de passe, les secrets 2FA/TOTP, les clés publiques des passkeys, les stacks et les sauvegardes dans le volume <code>dockan-panel-data</code>. Supprimer ce volume supprime toutes ces données.",
+    "panel.https": "Pour un accès public, placez un proxy inverse HTTPS devant le panel, et n’exposez jamais le port <code>9090</code> en HTTP simple. Les passkeys ne fonctionnent que sur <code>localhost</code>, <code>127.0.0.1</code> ou en HTTPS.",
+    "panel.prod.summary": "Installer le panel en production",
+    "panel.prod": "En production, installez le panel depuis un chemin système comme <code>/srv/dockan-panel</code>. Cela évite les blocages SELinux sur les dossiers personnels et démarre le panel via systemd, pour que la page <code>Packages</code> puisse installer des dépendances et mettre à jour les environnements.",
+    "panel.migrate": "Si le panel a déjà des comptes ou des stacks dans un <code>storage/</code> local, migrez-les vers le volume de production. Le script garde une sauvegarde datée du volume existant dans <code>/var/lib/dockan/volumes/</code>, copie les données, corrige les étiquettes SELinux et redémarre le service.",
+    "eco.store": "Un catalogue d’applications prêtes à installer avec Dockan.",
+    "eco.win": "Un portage natif pour Windows avec HCS et HNS, documenté à part.",
+    "docs.title": "Documentation",
+    "docs.lead": "Les guides détaillés sont pour l’instant en anglais.",
+    "docs.format.t": "Format Dockan",
+    "docs.format.d": "Dockanfile, Dockerfile simple, bases locales et l’ancien format .dockan.",
+    "docs.python.t": "Exemple en Python",
+    "docs.python.d": "Créer et lancer une petite application Python avec une base locale.",
+    "docs.langs.t": "Langages",
+    "docs.langs.d": "PHP, Node, Go et les autres, avec des projets de départ via <code>dockan new</code>.",
+    "docs.dev.t": "Partager une application",
+    "docs.dev.d": "Empaqueter une application pour que les admins la lancent comme un service Linux.",
+    "docs.prod.t": "Guide de production",
+    "docs.prod.d": "Mises à jour, retour arrière, tests de charge, isolation et pont avec NAT.",
+    "docs.faq.t": "Questions fréquentes",
+    "docs.faq.d": "Root, Dockerfile, réseau, dépendances, applications graphiques, VPS et Raspberry Pi.",
+    "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
+    "foot.source": "Code source sur GitHub"
+  },
+  "en": {
+    "ui.skip": "Skip to content",
+    "ui.nav": "Main navigation",
+    "ui.lang": "Language",
+    "ui.menu": "Menu",
+    "ui.copy": "Copy",
+    "ui.copied": "Copied",
+    "ui.selected": "Selected",
+    "nav.why": "Why",
+    "nav.security": "Security",
+    "nav.compare": "Compare",
+    "nav.install": "Install",
+    "nav.panel": "Panel",
+    "nav.docs": "Docs",
+    "hero.title": "Containers for Linux, without a daemon.",
+    "hero.lead": "Dockan pulls images from Docker Hub, GHCR, Quay or your own folder, verifies them, and runs them as plain processes you can see and control. No background service, no account, no cloud.",
+    "hero.install": "Install Dockan",
+    "hero.docs": "Read the docs",
+    "hero.note": "Installs into <code>~/.local/bin</code> without <code>sudo</code>. Free software under AGPL-3.0.",
+    "term.label": "Example session: pull nginx, run it, list and stop containers",
+    "term.replay": "Replay",
+    "why.title": "Nothing between you and your app",
+    "why.lead": "Docker runs through a permanent daemon that runs as root by default and owns every container. Dockan starts your app straight from your shell or from systemd, inside a bubblewrap sandbox. Here are the process trees, as ps shows them.",
+    "why.always": "always running, root",
+    "why.always2": "always running",
+    "why.app": "your app",
+    "why.docker": "The daemons keep running even when no container does.",
+    "why.shell": "systemd or your shell",
+    "why.sandbox": "sandbox",
+    "why.dockan": "When you stop the app, nothing is left in memory.",
+    "how.title": "From zero to a service in four steps",
+    "how.lead": "The same commands for a quick try on your laptop and for a service that keeps running on a server.",
+    "how.s1.t": "Install",
+    "how.s1.d": "One script installs the right package; <code>dockan doctor</code> shows which isolation your system offers.",
+    "how.s2.t": "Get an image",
+    "how.s2.d": "Pull it from a registry or build it from a Dockanfile or a Dockerfile.",
+    "how.s3.t": "Run",
+    "how.s3.d": "In the foreground to try it, or in the background with logs and commands inside the container.",
+    "how.s4.t": "Keep it running",
+    "how.s4.d": "The app becomes a regular systemd service that starts with the machine.",
+    "feat.title": "Everything you need to self-host apps",
+    "feat.lead": "A single Go binary with no external dependencies. Readable files, archives and checksums.",
+    "feat.oci.t": "Images from Docker Hub, GHCR and Quay",
+    "feat.oci.d": "Every layer is verified against its digest before extraction, directly in pure Go.",
+    "feat.build.t": "Dockanfile and Dockerfile",
+    "feat.build.d": "Common instructions, <code>.dockerignore</code>, local bases and simple multi-stage builds with <code>COPY --from</code>.",
+    "feat.compose.t": "Compose",
+    "feat.compose.d": "<code>dockan compose up</code> reads <code>dockan.yml</code> or <code>docker-compose.yml</code>: build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory and cpus.",
+    "feat.systemd.t": "systemd services",
+    "feat.systemd.d": "<code>dockan compose autostart</code> installs your app as a regular service that starts with the machine.",
+    "feat.volumes.t": "Persistent data",
+    "feat.volumes.d": "Named volumes, local folder mounts and tar.gz backups you can restore.",
+    "feat.registry.t": "Local registry",
+    "feat.registry.d": "A folder is enough for a registry: <code>dockan push</code> and <code>dockan pull</code> with archives and checksums, even on an offline NAS.",
+    "feat.run.t": "Run, read logs, step inside",
+    "feat.run.d": "Foreground or background runs, inspection, stop, removal and commands inside a running container.",
+    "feat.health.t": "Health checks",
+    "feat.health.d": "<code>dockan health</code> and <code>dockan compose health</code> check that your services are ready to answer.",
+    "feat.langs.t": "Any Linux runtime",
+    "feat.langs.d": "PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts and static binaries.",
+    "feat.net.t": "Networking",
+    "feat.net.d": "Simple networks with aliases, or bridge and NAT with published ports (requires <code>sudo</code>).",
+    "sec.title": "What Dockan checks for you",
+    "sec.lead": "A downloaded image is code you did not write. Dockan treats it that way.",
+    "sec.1.t": "Verified digests",
+    "sec.1.d": "The manifest, the configuration and every layer must match their sha256 or sha512 digest and their declared size. Otherwise the pull stops.",
+    "sec.2.t": "Extraction stays inside the image",
+    "sec.2.d": "Symbolic links and whiteout entries in a layer can never write or delete files outside the image root.",
+    "sec.3.t": "No hidden fallback to no isolation",
+    "sec.3.d": "When no isolation tool is available, Dockan refuses to run the image. Running without isolation always takes an explicit <code>--isolation=none</code>.",
+    "sec.4.t": "Separate namespaces",
+    "sec.4.d": "With bubblewrap, each container gets its own PID, IPC and UTS namespaces, with no Linux capability. Background containers cannot reach your terminal.",
+    "sec.more": "Details and limits are in the <a href=\"./production.html\">production guide</a>.",
+    "cmp.title": "Dockan and Docker, honestly",
+    "cmp.lead": "Dockan does not try to replace Docker everywhere. Here is where each one fits.",
+    "cmp.need": "Need",
+    "cmp.r1": "Permanent background service",
+    "cmp.r1.a": "No",
+    "cmp.r1.b": "Yes, dockerd (as root by default)",
+    "cmp.r2": "Images from Docker Hub, GHCR, Quay",
+    "cmp.r2.a": "Yes (gzip layers)",
+    "cmp.r2.b": "Yes",
+    "cmp.r3": "Compose",
+    "cmp.r3.a": "Yes, the most used keys",
+    "cmp.r3.b": "Yes, complete",
+    "cmp.r4": "Start on boot",
+    "cmp.r4.a": "Native systemd services",
+    "cmp.r4.b": "Through the daemon and its restart policies",
+    "cmp.r5": "Local registry",
+    "cmp.r5.a": "A plain folder",
+    "cmp.r5.b": "A dedicated registry container",
+    "cmp.r6": "Layer cache for CI/CD",
+    "cmp.r6.a": "Basic",
+    "cmp.r6.b": "Advanced (BuildKit)",
+    "cmp.r7.a": "No",
+    "cmp.r7.b": "Yes",
+    "cmp.r8": "macOS and Windows",
+    "cmp.r8.a": "Linux; separate native project for Windows",
+    "cmp.r9": "License",
+    "cmp.r9.a": "AGPL-3.0, fully free",
+    "cmp.r9.b": "Engine: Apache-2.0. Desktop: paid subscription for large companies",
+    "cmp.dockan": "Choose Dockan for self-hosting, servers run by associations and collectives, labs, teaching and internal tools.",
+    "cmp.docker": "Choose Docker or Podman for large fleets already standardized on them, for Swarm or for Kubernetes.",
+    "inst.title": "Install",
+    "inst.lead": "Dockan installs from the releases published on GitHub. The installer picks the package for your architecture and verifies its checksums.",
+    "inst.user": "For your user, without sudo",
+    "inst.path": "If Dockan installs into <code>~/.local/bin</code>, add that folder to your <code>PATH</code> and check the install:",
+    "inst.scope": "<code>dockan ps -a</code> reads the current store. Add <code>--system</code> for <code>/var/lib/dockan</code>, <code>--user</code> for the user store, or <code>--scope all</code> to see both.",
+    "inst.system": "System-wide",
+    "inst.update": "Update",
+    "inst.source": "Or from a local copy of the source code:",
+    "deps.summary": "Host dependencies: apt, dnf, apk, pacman, zypper",
+    "deps.lead": "Dockan installs the packages it needs only when you explicitly run a <code>deps</code> command. Try it with <code>--dry-run</code> first.",
+    "deps.core": "<code>core</code>: the base tools (shell, curl, certificates, archives, process and network tools).",
+    "deps.full": "<code>full</code>: the recommended complete setup (every group below).",
+    "deps.frank": "<code>frankenphp</code> for PHP apps: on Fedora, Dockan configures the static PHP repository and installs it with <code>dnf</code>.",
+    "deps.groups": "Package groups",
+    "deps.g.tools": "<code>tools</code>: git, jq, archives, rsync, OpenSSL, GPG, lsof and file tools",
+    "deps.g.frontend": "<code>frontend</code>: Node.js and npm for React, Vue, Vite and others",
+    "deps.g.network": "<code>network</code>: network and process helpers",
+    "deps.g.database": "<code>database</code>: common database clients",
+    "deps.g.web": "<code>web</code>: Nginx and Caddy for local reverse proxies",
+    "deps.g.build": "<code>build</code>: compilers and pkg-config",
+    "deps.g.debug": "<code>debug</code>: strace, psmisc, htop and tcpdump",
+    "deps.g.isolation": "<code>isolation</code>: sandbox helpers, when available",
+    "deps.version": "Profiles install your distribution’s default versions. For a specific version, use the package manager’s native syntax:",
+    "deps.base": "For strict runtime versions, import a prepared local base, for example <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. If <code>sudo dockan</code> cannot find the command after a user install, use the <code>sudo env \"PATH=$HOME/.local/bin:$PATH\"</code> form or the absolute path.",
+    "ex.title": "Example: WordPress with MariaDB",
+    "ex.lead": "A PHP app with its database shows the whole workflow: images, compose, network aliases, volumes, health checks and backup.",
+    "ex.note": "Here <code>wordpress:local</code> and <code>mariadb:local</code> are images prepared locally. You can also pull images from a registry with <code>dockan pull</code>. Change the passwords before any real use.",
+    "ex.ops": "Operate",
+    "more.net": "Networking",
+    "more.net.simple": "A simple local network with aliases:",
+    "more.net.bridge": "Bridge and NAT with published ports (requires <code>sudo</code>):",
+    "more.reg": "Local registry",
+    "more.reg.d": "Push and pull images through a folder: no Docker Hub, no daemon, no cloud service.",
+    "more.ops": "On a server",
+    "more.ops.d": "Check the health of the services and back up a volume:",
+    "panel.title": "Dockan Panel, for those who prefer a browser",
+    "panel.lead": "An optional interface for containers, images, volumes, stacks, backups and live terminals.",
+    "panel.run": "Dockan Panel runs with the host <code>frankenphp</code> binary. Open <code>http://127.0.0.1:9090</code>, then create the first admin account: there is no default password and no default token.",
+    "panel.repo": "Open the Dockan Panel repository",
+    "panel.storage": "The panel keeps accounts, password hashes, 2FA/TOTP secrets, passkey public keys, stacks and backups in the <code>dockan-panel-data</code> volume. Removing that volume removes all of this data.",
+    "panel.https": "For public access, put an HTTPS reverse proxy in front of the panel, and never expose port <code>9090</code> over plain HTTP. Passkeys only work on <code>localhost</code>, <code>127.0.0.1</code> or over HTTPS.",
+    "panel.prod.summary": "Install the panel for production",
+    "panel.prod": "In production, install the panel from a system path such as <code>/srv/dockan-panel</code>. This avoids SELinux blocks on home folders and starts the panel through systemd, so the <code>Packages</code> page can install dependencies and update runtimes.",
+    "panel.migrate": "If the panel already has accounts or stacks in a local <code>storage/</code>, migrate them to the production volume. The script keeps a dated backup of the existing volume in <code>/var/lib/dockan/volumes/</code>, copies the data, fixes SELinux labels and restarts the service.",
+    "eco.store": "A catalog of ready-made apps you can install with Dockan.",
+    "eco.win": "A native Windows port with HCS and HNS, documented separately.",
+    "docs.title": "Documentation",
+    "docs.lead": "The detailed guides are in English for now.",
+    "docs.format.t": "Dockan format",
+    "docs.format.d": "Dockanfile, simple Dockerfile, local bases and the legacy .dockan format.",
+    "docs.python.t": "Python example",
+    "docs.python.d": "Create and run a small Python app with a local base.",
+    "docs.langs.t": "Languages",
+    "docs.langs.d": "PHP, Node, Go and more, with starter projects through <code>dockan new</code>.",
+    "docs.dev.t": "Share an app",
+    "docs.dev.d": "Package an app so admins can run it as a Linux service.",
+    "docs.prod.t": "Production guide",
+    "docs.prod.d": "Updates, rollback, load tests, isolation and bridge with NAT.",
+    "docs.faq.t": "FAQ",
+    "docs.faq.d": "Root, Dockerfile, networking, dependencies, desktop apps, VPS and Raspberry Pi.",
+    "foot.license": "Free software under the AGPL-3.0-or-later license.",
+    "foot.source": "Source code on GitHub"
+  },
+  "es": {
+    "ui.skip": "Ir al contenido",
+    "ui.nav": "Navegación principal",
+    "ui.lang": "Idioma",
+    "ui.menu": "Menú",
+    "ui.copy": "Copiar",
+    "ui.copied": "Copiado",
+    "ui.selected": "Seleccionado",
+    "nav.why": "Por qué",
+    "nav.security": "Seguridad",
+    "nav.compare": "Comparativa",
+    "nav.install": "Instalar",
+    "nav.panel": "Panel",
+    "nav.docs": "Documentación",
+    "hero.title": "Contenedores para Linux, sin demonio.",
+    "hero.lead": "Dockan descarga imágenes de Docker Hub, GHCR, Quay o de tu propia carpeta, las verifica y las ejecuta como procesos normales que ves y controlas. Sin servicio en segundo plano, sin cuenta, sin nube.",
+    "hero.install": "Instalar Dockan",
+    "hero.docs": "Leer la documentación",
+    "hero.note": "Se instala en <code>~/.local/bin</code> sin <code>sudo</code>. Software libre bajo AGPL-3.0.",
+    "term.label": "Sesión de ejemplo: descargar nginx, ejecutarlo, listar y detener contenedores",
+    "term.replay": "Repetir",
+    "why.title": "Nada entre tú y tu aplicación",
+    "why.lead": "Docker funciona con un demonio permanente que por defecto se ejecuta como root y es dueño de todos los contenedores. Dockan lanza tu aplicación directamente desde tu shell o desde systemd, dentro de un entorno aislado de bubblewrap. Estos son los árboles de procesos, tal como los muestra ps.",
+    "why.always": "siempre activo, root",
+    "why.always2": "siempre activo",
+    "why.app": "tu aplicación",
+    "why.docker": "Los demonios siguen activos aunque no haya ningún contenedor en marcha.",
+    "why.shell": "systemd o tu shell",
+    "why.sandbox": "entorno aislado",
+    "why.dockan": "Cuando detienes la aplicación, no queda nada en memoria.",
+    "how.title": "De cero a un servicio en cuatro pasos",
+    "how.lead": "Los mismos comandos para una prueba en tu portátil y para un servicio que sigue funcionando en un servidor.",
+    "how.s1.t": "Instalar",
+    "how.s1.d": "Un script instala el paquete adecuado; <code>dockan doctor</code> muestra qué aislamiento ofrece tu sistema.",
+    "how.s2.t": "Obtener una imagen",
+    "how.s2.d": "Descárgala de un registro o constrúyela a partir de un Dockanfile o un Dockerfile.",
+    "how.s3.t": "Ejecutar",
+    "how.s3.d": "En primer plano para probar, o en segundo plano con registros y comandos dentro del contenedor.",
+    "how.s4.t": "Mantenerlo activo",
+    "how.s4.d": "La aplicación se convierte en un servicio normal de systemd que arranca con la máquina.",
+    "feat.title": "Todo para autoalojar aplicaciones",
+    "feat.lead": "Un único binario en Go, sin dependencias externas. Archivos legibles, paquetes comprimidos y sumas de control.",
+    "feat.oci.t": "Imágenes de Docker Hub, GHCR y Quay",
+    "feat.oci.d": "Cada capa se verifica con su huella antes de extraerse, directamente en Go puro.",
+    "feat.build.t": "Dockanfile y Dockerfile",
+    "feat.build.d": "Las instrucciones habituales, <code>.dockerignore</code>, bases locales y compilaciones multietapa sencillas con <code>COPY --from</code>.",
+    "feat.compose.t": "Compose",
+    "feat.compose.d": "<code>dockan compose up</code> lee <code>dockan.yml</code> o <code>docker-compose.yml</code>: build, image, ports, env, volumes, aliases, depends_on, restart, healthcheck, memory y cpus.",
+    "feat.systemd.t": "Servicios de systemd",
+    "feat.systemd.d": "<code>dockan compose autostart</code> instala tu aplicación como un servicio normal que arranca con la máquina.",
+    "feat.volumes.t": "Datos persistentes",
+    "feat.volumes.d": "Volúmenes con nombre, montajes de carpetas locales y copias de seguridad tar.gz que puedes restaurar.",
+    "feat.registry.t": "Registro local",
+    "feat.registry.d": "Una carpeta basta como registro: <code>dockan push</code> y <code>dockan pull</code> con archivos y sumas de control, incluso en un NAS sin conexión.",
+    "feat.run.t": "Ejecutar, leer registros, entrar",
+    "feat.run.d": "Ejecución en primer o segundo plano, inspección, parada, eliminación y comandos dentro de un contenedor en marcha.",
+    "feat.health.t": "Comprobaciones de salud",
+    "feat.health.d": "<code>dockan health</code> y <code>dockan compose health</code> comprueban que tus servicios están listos para responder.",
+    "feat.langs.t": "Cualquier entorno de Linux",
+    "feat.langs.d": "PHP, Node.js, Python, Go, Rust, Java, Ruby, scripts de shell y binarios estáticos.",
+    "feat.net.t": "Red",
+    "feat.net.d": "Redes sencillas con alias, o puente y NAT con puertos publicados (requiere <code>sudo</code>).",
+    "sec.title": "Lo que Dockan comprueba por ti",
+    "sec.lead": "Una imagen descargada es código que no has escrito. Dockan la trata como tal.",
+    "sec.1.t": "Huellas verificadas",
+    "sec.1.d": "El manifiesto, la configuración y cada capa deben coincidir con su huella sha256 o sha512 y con su tamaño declarado. Si no, la descarga se detiene.",
+    "sec.2.t": "Extracción dentro de la imagen",
+    "sec.2.d": "Los enlaces simbólicos y las entradas de borrado de una capa nunca pueden escribir ni borrar archivos fuera de la raíz de la imagen.",
+    "sec.3.t": "Ninguna pérdida de aislamiento oculta",
+    "sec.3.d": "Si no hay ninguna herramienta de aislamiento disponible, Dockan se niega a ejecutar la imagen. Ejecutar sin aislamiento siempre exige un <code>--isolation=none</code> explícito.",
+    "sec.4.t": "Espacios de nombres separados",
+    "sec.4.d": "Con bubblewrap, cada contenedor tiene sus propios espacios de nombres PID, IPC y UTS, sin ninguna capacidad de Linux. Los contenedores en segundo plano no tienen acceso a tu terminal.",
+    "sec.more": "Detalles y límites en la <a href=\"./production.html\">guía de producción</a>.",
+    "cmp.title": "Dockan y Docker, con honestidad",
+    "cmp.lead": "Dockan no pretende sustituir a Docker en todas partes. Aquí está dónde encaja cada uno.",
+    "cmp.need": "Necesidad",
+    "cmp.r1": "Servicio permanente en segundo plano",
+    "cmp.r1.a": "No",
+    "cmp.r1.b": "Sí, dockerd (como root por defecto)",
+    "cmp.r2": "Imágenes de Docker Hub, GHCR, Quay",
+    "cmp.r2.a": "Sí (capas gzip)",
+    "cmp.r2.b": "Sí",
+    "cmp.r3": "Compose",
+    "cmp.r3.a": "Sí, las claves más usadas",
+    "cmp.r3.b": "Sí, completo",
+    "cmp.r4": "Arranque con la máquina",
+    "cmp.r4.a": "Servicios nativos de systemd",
+    "cmp.r4.b": "A través del demonio y sus reglas restart",
+    "cmp.r5": "Registro local",
+    "cmp.r5.a": "Una carpeta normal",
+    "cmp.r5.b": "Un contenedor de registro dedicado",
+    "cmp.r6": "Caché de capas para CI/CD",
+    "cmp.r6.a": "Básica",
+    "cmp.r6.b": "Avanzada (BuildKit)",
+    "cmp.r7.a": "No",
+    "cmp.r7.b": "Sí",
+    "cmp.r8": "macOS y Windows",
+    "cmp.r8.a": "Linux; proyecto nativo aparte para Windows",
+    "cmp.r9": "Licencia",
+    "cmp.r9.a": "AGPL-3.0, totalmente libre",
+    "cmp.r9.b": "Engine: Apache-2.0. Desktop: suscripción de pago para grandes empresas",
+    "cmp.dockan": "Elige Dockan para el autoalojamiento, los servidores de asociaciones y colectivos, los laboratorios, la enseñanza y las herramientas internas.",
+    "cmp.docker": "Elige Docker o Podman para grandes flotas ya estandarizadas en ellos, para Swarm o para Kubernetes.",
+    "inst.title": "Instalar",
+    "inst.lead": "Dockan se instala desde las versiones publicadas en GitHub. El instalador elige el paquete para tu arquitectura y verifica sus sumas de control.",
+    "inst.user": "Para tu usuario, sin sudo",
+    "inst.path": "Si Dockan se instala en <code>~/.local/bin</code>, añade esa carpeta a tu <code>PATH</code> y comprueba la instalación:",
+    "inst.scope": "<code>dockan ps -a</code> lee el almacén actual. Añade <code>--system</code> para <code>/var/lib/dockan</code>, <code>--user</code> para el almacén de usuario, o <code>--scope all</code> para ver ambos.",
+    "inst.system": "Para todo el sistema",
+    "inst.update": "Actualizar",
+    "inst.source": "O desde una copia local del código fuente:",
+    "deps.summary": "Dependencias del sistema: apt, dnf, apk, pacman, zypper",
+    "deps.lead": "Dockan instala los paquetes que necesita solo cuando ejecutas explícitamente un comando <code>deps</code>. Pruébalo primero con <code>--dry-run</code>.",
+    "deps.core": "<code>core</code>: las herramientas básicas (shell, curl, certificados, archivos comprimidos, herramientas de procesos y de red).",
+    "deps.full": "<code>full</code>: la configuración completa recomendada (todos los grupos de abajo).",
+    "deps.frank": "<code>frankenphp</code> para aplicaciones PHP: en Fedora, Dockan configura el repositorio de PHP estático y lo instala con <code>dnf</code>.",
+    "deps.groups": "Grupos de paquetes",
+    "deps.g.tools": "<code>tools</code>: git, jq, archivos comprimidos, rsync, OpenSSL, GPG, lsof y herramientas de archivos",
+    "deps.g.frontend": "<code>frontend</code>: Node.js y npm para React, Vue, Vite y otros",
+    "deps.g.network": "<code>network</code>: herramientas de red y de procesos",
+    "deps.g.database": "<code>database</code>: clientes habituales de bases de datos",
+    "deps.g.web": "<code>web</code>: Nginx y Caddy para proxis inversos locales",
+    "deps.g.build": "<code>build</code>: compiladores y pkg-config",
+    "deps.g.debug": "<code>debug</code>: strace, psmisc, htop y tcpdump",
+    "deps.g.isolation": "<code>isolation</code>: herramientas de aislamiento, cuando están disponibles",
+    "deps.version": "Los perfiles instalan las versiones por defecto de tu distribución. Para una versión concreta, usa la sintaxis nativa del gestor de paquetes:",
+    "deps.base": "Para versiones de entorno estrictas, importa una base local preparada, por ejemplo <code>dockan base runtime node:20 --from ./node20-rootfs.tar.gz</code>. Si <code>sudo dockan</code> no encuentra el comando tras una instalación de usuario, usa la forma <code>sudo env \"PATH=$HOME/.local/bin:$PATH\"</code> o la ruta absoluta.",
+    "ex.title": "Ejemplo: WordPress con MariaDB",
+    "ex.lead": "Una aplicación PHP con su base de datos muestra todo el flujo: imágenes, compose, alias de red, volúmenes, comprobaciones de salud y copia de seguridad.",
+    "ex.note": "Aquí <code>wordpress:local</code> y <code>mariadb:local</code> son imágenes preparadas localmente. También puedes descargar imágenes de un registro con <code>dockan pull</code>. Cambia las contraseñas antes de cualquier uso real.",
+    "ex.ops": "Operar",
+    "more.net": "Red",
+    "more.net.simple": "Una red local sencilla con alias:",
+    "more.net.bridge": "Puente y NAT con puertos publicados (requiere <code>sudo</code>):",
+    "more.reg": "Registro local",
+    "more.reg.d": "Enviar y descargar imágenes a través de una carpeta: sin Docker Hub, sin demonio, sin servicio en la nube.",
+    "more.ops": "En un servidor",
+    "more.ops.d": "Comprobar la salud de los servicios y hacer copia de un volumen:",
+    "panel.title": "Dockan Panel, para quien prefiere el navegador",
+    "panel.lead": "Una interfaz opcional para contenedores, imágenes, volúmenes, stacks, copias de seguridad y terminales en vivo.",
+    "panel.run": "Dockan Panel funciona con el binario <code>frankenphp</code> del sistema. Abre <code>http://127.0.0.1:9090</code> y crea la primera cuenta de administración: no existe contraseña ni token por defecto.",
+    "panel.repo": "Abrir el repositorio de Dockan Panel",
+    "panel.storage": "El panel guarda las cuentas, las huellas de contraseñas, los secretos 2FA/TOTP, las claves públicas de passkeys, los stacks y las copias de seguridad en el volumen <code>dockan-panel-data</code>. Borrar ese volumen borra todos esos datos.",
+    "panel.https": "Para acceso público, pon un proxy inverso HTTPS delante del panel, y nunca expongas el puerto <code>9090</code> por HTTP simple. Las passkeys solo funcionan en <code>localhost</code>, <code>127.0.0.1</code> o por HTTPS.",
+    "panel.prod.summary": "Instalar el panel en producción",
+    "panel.prod": "En producción, instala el panel desde una ruta del sistema como <code>/srv/dockan-panel</code>. Así evitas los bloqueos de SELinux en las carpetas personales y el panel arranca con systemd, para que la página <code>Packages</code> pueda instalar dependencias y actualizar entornos.",
+    "panel.migrate": "Si el panel ya tiene cuentas o stacks en un <code>storage/</code> local, migra esos datos al volumen de producción. El script guarda una copia fechada del volumen existente en <code>/var/lib/dockan/volumes/</code>, copia los datos, corrige las etiquetas de SELinux y reinicia el servicio.",
+    "eco.store": "Un catálogo de aplicaciones listas para instalar con Dockan.",
+    "eco.win": "Una versión nativa para Windows con HCS y HNS, documentada aparte.",
+    "docs.title": "Documentación",
+    "docs.lead": "Por ahora, las guías detalladas están en inglés.",
+    "docs.format.t": "Formato Dockan",
+    "docs.format.d": "Dockanfile, Dockerfile sencillo, bases locales y el antiguo formato .dockan.",
+    "docs.python.t": "Ejemplo en Python",
+    "docs.python.d": "Crear y ejecutar una pequeña aplicación Python con una base local.",
+    "docs.langs.t": "Lenguajes",
+    "docs.langs.d": "PHP, Node, Go y otros, con proyectos iniciales mediante <code>dockan new</code>.",
+    "docs.dev.t": "Compartir una aplicación",
+    "docs.dev.d": "Empaquetar una aplicación para que las personas administradoras la ejecuten como servicio de Linux.",
+    "docs.prod.t": "Guía de producción",
+    "docs.prod.d": "Actualizaciones, vuelta atrás, pruebas de carga, aislamiento y puente con NAT.",
+    "docs.faq.t": "Preguntas frecuentes",
+    "docs.faq.d": "Root, Dockerfile, red, dependencias, aplicaciones gráficas, VPS y Raspberry Pi.",
+    "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
+    "foot.source": "Código fuente en GitHub"
+  }
+}
+  </script>
+  <script>
+    "use strict";
+    (() => {
+      const LANGS = ["eo", "fr", "en", "es"];
+      const STORAGE_KEY = "dockan-lang";
+      const dict = JSON.parse(document.getElementById("i18n-data").textContent);
+
+      // Esperanto is the text written in the page itself: capture it once so
+      // switching back never relies on a second copy of the strings.
+      const textNodes = [...document.querySelectorAll("[data-i18n]")];
+      const htmlNodes = [...document.querySelectorAll("[data-i18n-html]")];
+      const ariaNodes = [...document.querySelectorAll("[data-i18n-aria]")];
+      dict.eo = {};
+      for (const el of textNodes) dict.eo[el.dataset.i18n] = el.textContent;
+      for (const el of htmlNodes) dict.eo[el.dataset.i18nHtml] = el.innerHTML;
+      for (const el of ariaNodes) dict.eo[el.dataset.i18nAria] = el.getAttribute("aria-label");
+      dict.eo["ui.copied"] = "Kopiita";
+      dict.eo["ui.selected"] = "Elektita";
+
+      let current = "eo";
+      const t = (key) => dict[current][key] ?? dict.eo[key];
+
+      function applyLang(lang) {
+        current = LANGS.includes(lang) ? lang : "eo";
+        document.documentElement.lang = current;
+        for (const el of textNodes) el.textContent = t(el.dataset.i18n);
+        for (const el of htmlNodes) el.innerHTML = t(el.dataset.i18nHtml);
+        for (const el of ariaNodes) el.setAttribute("aria-label", t(el.dataset.i18nAria));
+        for (const b of document.querySelectorAll(".langs button")) {
+          b.setAttribute("aria-pressed", String(b.dataset.lang === current));
         }
-        setTimeout(() => {
-          button.textContent = "Copy";
-        }, 1600);
-      });
-    }
+        document.querySelector(".lang-select").value = current;
+      }
+
+      function chooseLang(lang) {
+        applyLang(lang);
+        try { localStorage.setItem(STORAGE_KEY, current); } catch (err) {
+          console.warn("Language choice not saved:", err);
+        }
+      }
+
+      for (const b of document.querySelectorAll(".langs button")) {
+        b.addEventListener("click", () => chooseLang(b.dataset.lang));
+      }
+      document.querySelector(".lang-select").addEventListener("change", (e) => chooseLang(e.target.value));
+
+      let saved = null;
+      try { saved = localStorage.getItem(STORAGE_KEY); } catch (err) {
+        console.warn("Language choice not readable:", err);
+      }
+      applyLang(saved ?? "eo");
+
+      // Mobile menu closes after a jump.
+      const menu = document.querySelector(".menu");
+      for (const a of document.querySelectorAll(".menu-links a")) {
+        a.addEventListener("click", () => { menu.open = false; });
+      }
+
+      // Copy buttons. When the clipboard is refused, select the command so it
+      // can be copied by hand, and say so.
+      for (const btn of document.querySelectorAll("[data-copy]")) {
+        btn.addEventListener("click", async () => {
+          let state = "ui.copied";
+          try {
+            await navigator.clipboard.writeText(btn.dataset.copy);
+          } catch (err) {
+            const code = btn.parentElement.querySelector("pre");
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            state = "ui.selected";
+            console.warn("Clipboard unavailable, command selected instead:", err);
+          }
+          btn.textContent = t(state);
+          btn.dataset.state = "done";
+          setTimeout(() => {
+            btn.textContent = t("ui.copy");
+            delete btn.dataset.state;
+          }, 1800);
+        });
+      }
+
+      // Terminal replay: commands are typed, output appears at once. The full
+      // session stays in the HTML for readers without JavaScript or with
+      // reduced motion.
+      const lines = [...document.querySelectorAll("#session .l")];
+      const replay = document.querySelector(".replay");
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let timer = 0;
+
+      function showAll() {
+        clearTimeout(timer);
+        for (const l of lines) {
+          l.classList.remove("hidden", "caret");
+          if (l.dataset.full !== undefined) l.textContent = l.dataset.full;
+        }
+      }
+
+      function play() {
+        clearTimeout(timer);
+        for (const l of lines) {
+          if (l.classList.contains("c")) {
+            l.dataset.full = l.dataset.full ?? l.textContent;
+            l.textContent = "";
+          }
+          l.classList.add("hidden");
+          l.classList.remove("caret");
+        }
+        let i = 0;
+        const next = () => {
+          if (i >= lines.length) return;
+          const l = lines[i++];
+          l.classList.remove("hidden");
+          if (!l.classList.contains("c")) {
+            timer = setTimeout(next, 260);
+            return;
+          }
+          const full = l.dataset.full;
+          let n = 0;
+          l.classList.add("caret");
+          const type = () => {
+            l.textContent = full.slice(0, ++n);
+            if (n < full.length) {
+              timer = setTimeout(type, 32);
+            } else {
+              l.classList.remove("caret");
+              timer = setTimeout(next, 420);
+            }
+          };
+          timer = setTimeout(type, 300);
+        };
+        next();
+      }
+
+      if (!reduced.matches) {
+        replay.hidden = false;
+        replay.addEventListener("click", play);
+        play();
+      }
+      reduced.addEventListener("change", () => { if (reduced.matches) showAll(); });
+    })();
   </script>
 </body>
 </html>
