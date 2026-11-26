@@ -20,6 +20,7 @@ type Container struct {
 	PID      int
 	PIDStart uint64
 	RunID    string
+	Scope    string
 	Status   string
 	Ports    string
 	Network  string
@@ -84,7 +85,11 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	if err != nil {
 		return err
 	}
-	cmd, err = ApplyRunLimits(cmd, opts)
+	runID, err := newRunID()
+	if err != nil {
+		return err
+	}
+	cmd, scopeUnit, err := applyDetachedLaunch(cmd, opts, scopeUnitName(opts.Name, runID))
 	if err != nil {
 		return err
 	}
@@ -102,10 +107,6 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.Stdin = nil
-	runID, err := newRunID()
-	if err != nil {
-		return err
-	}
 	cmd.Env = append(imageEnv(img, opts), runIDEnv+"="+runID)
 	cmd.SysProcAttr = detachedSysProcAttr(bridgeNetwork)
 	if err := cmd.Start(); err != nil {
@@ -123,6 +124,23 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 			_ = cmd.Process.Kill()
 			_ = CleanupContainerNetwork(map[string]string{"vethHost": networkAttachment.HostInterface})
 			_ = os.RemoveAll(containerDir)
+			return err
+		}
+	}
+	if scopeUnit != "" {
+		if err := confirmScope(cmd.Process.Pid, scopeUnit, opts); err != nil {
+			// The container never ran as requested: stop what started and
+			// report the reason with the end of its log.
+			_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL) // own session: the group is the container
+			_ = cmd.Process.Kill()
+			if bridgeNetwork {
+				_ = CleanupContainerNetwork(map[string]string{"vethHost": networkAttachment.HostInterface})
+			}
+			logTail := lastLogLines(filepath.Join(containerDir, "dockan.log"), 5)
+			_ = os.RemoveAll(containerDir)
+			if logTail != "" {
+				return fmt.Errorf("%w\n%s", err, logTail)
+			}
 			return err
 		}
 	}
@@ -153,6 +171,7 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 		"pid":        strconv.Itoa(cmd.Process.Pid),
 		"pidStart":   strconv.FormatUint(recordedStartTime(cmd.Process.Pid), 10),
 		"runId":      runID,
+		"scope":      scopeUnit,
 		"status":     "running",
 		"isolation":  isolation,
 		"ports":      strings.Join(opts.Ports, ","),
@@ -341,7 +360,7 @@ func LoadContainersFromRoot(root string) ([]Container, error) {
 		pidStart, _ := strconv.ParseUint(meta["pidStart"], 10, 64)
 		status := meta["status"]
 		if pid > 0 && status == "running" && !processRunning(pid) &&
-			!containerAlive(Container{PID: pid, PIDStart: pidStart, RunID: meta["runId"]}) {
+			!containerAlive(Container{PID: pid, PIDStart: pidStart, RunID: meta["runId"], Scope: meta["scope"]}) {
 			status = "exited"
 			meta["status"] = status
 			_ = CleanupPortProxies(meta)
@@ -593,6 +612,7 @@ func loadContainer(name string) (Container, map[string]string, error) {
 		PID:      pid,
 		PIDStart: pidStart,
 		RunID:    meta["runId"],
+		Scope:    meta["scope"],
 		Status:   meta["status"],
 		Ports:    meta["ports"],
 		Network:  meta["network"],

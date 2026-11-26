@@ -42,22 +42,33 @@ func applyPrlimitMemory(cmd *exec.Cmd, memory string) (*exec.Cmd, error) {
 	return wrapped, nil
 }
 
-func applySystemdRunLimits(cmd *exec.Cmd, opts RunOptions) (*exec.Cmd, error) {
-	args := []string{"--quiet", "--scope"}
+// systemdLimitProperties turns the memory and CPU options into systemd-run
+// properties for the container's scope.
+func systemdLimitProperties(opts RunOptions) ([]string, error) {
+	var props []string
 	if opts.Memory != "" {
 		bytes, err := parseMemoryBytes(opts.Memory)
 		if err != nil {
 			return nil, err
 		}
-		args = append(args, "-p", "MemoryMax="+strconv.FormatInt(bytes, 10))
+		props = append(props, "-p", "MemoryMax="+strconv.FormatInt(bytes, 10))
 	}
 	if opts.CPUs != "" {
 		quota, err := cpuQuotaPercent(opts.CPUs)
 		if err != nil {
 			return nil, err
 		}
-		args = append(args, "-p", "CPUQuota="+quota)
+		props = append(props, "-p", "CPUQuota="+quota)
 	}
+	return props, nil
+}
+
+func applySystemdRunLimits(cmd *exec.Cmd, opts RunOptions) (*exec.Cmd, error) {
+	props, err := systemdLimitProperties(opts)
+	if err != nil {
+		return nil, err
+	}
+	args := append([]string{"--quiet", "--scope"}, props...)
 	args = append(args, "--")
 	args = append(args, cmd.Args...)
 	wrapped := exec.Command("systemd-run", args...)

@@ -37,6 +37,7 @@ type procInfo struct {
 	start  uint64
 	pidNS  string
 	tagged bool // carries the container's run id in its environment
+	scoped bool // belongs to the container's systemd scope (cgroup)
 }
 
 // procStat holds the fields read from /proc/<pid>/stat.
@@ -99,10 +100,11 @@ func environHas(environ []byte, want string) bool {
 }
 
 // scanProcs lists live (non-zombie) processes. When marker is not empty, it
-// also reports which processes carry it in their environment. Processes that
-// exit during the scan, or whose details are not readable for this user, are
-// kept with what could be read.
-func scanProcs(marker string) ([]procInfo, error) {
+// also reports which processes carry it in their environment; when unit is
+// not empty, which belong to that systemd scope. Processes that exit during
+// the scan, or whose details are not readable for this user, are kept with
+// what could be read.
+func scanProcs(marker, unit string) ([]procInfo, error) {
 	entries, err := os.ReadDir("/proc")
 	if err != nil {
 		return nil, err
@@ -126,18 +128,22 @@ func scanProcs(marker string) ([]procInfo, error) {
 				p.tagged = environHas(env, marker)
 			}
 		}
+		if unit != "" {
+			p.scoped = procInScope(pid, unit)
+		}
 		procs = append(procs, p)
 	}
 	return procs, nil
 }
 
 // containerScope identifies every process of one container run: processes
-// carrying its run id, its leader's process group, the leader's descendants
+// in its systemd scope, processes carrying its run id, its leader's process group, the leader's descendants
 // and the PID namespaces they own. It grows with every scan, so a process
 // forked while the container stops is not lost when its parent exits.
 type containerScope struct {
 	leader     int
 	marker     string
+	unit       string
 	namespaces map[string]bool
 	members    map[int]uint64 // pid -> start time
 	// cutoff is the latest start time seen at capture. A process that only
@@ -157,7 +163,8 @@ func captureContainerScope(c Container) (*containerScope, error) {
 	if c.RunID != "" {
 		s.marker = runIDEnv + "=" + c.RunID
 	}
-	procs, err := scanProcs(s.marker)
+	s.unit = c.Scope
+	procs, err := scanProcs(s.marker, s.unit)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +199,7 @@ func (s *containerScope) match(procs []procInfo, withLeader bool) []procInfo {
 		children[p.ppid] = append(children[p.ppid], p.pid)
 		start, known := s.members[p.pid]
 		inGroup := p.pgrp == s.leader && p.start <= s.cutoff
-		if p.tagged || inGroup || (known && start == p.start) || s.namespaces[p.pidNS] ||
+		if p.tagged || p.scoped || inGroup || (known && start == p.start) || s.namespaces[p.pidNS] ||
 			(withLeader && p.pid == s.leader) {
 			in[p.pid] = true
 			queue = append(queue, p.pid)
@@ -218,7 +225,7 @@ func (s *containerScope) match(procs []procInfo, withLeader bool) []procInfo {
 // alive rescans /proc, returns the container's live processes and records
 // them as members.
 func (s *containerScope) alive() ([]procInfo, error) {
-	procs, err := scanProcs(s.marker)
+	procs, err := scanProcs(s.marker, s.unit)
 	if err != nil {
 		return nil, err
 	}

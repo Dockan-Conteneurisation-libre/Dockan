@@ -36,7 +36,7 @@ func TestEnvironHasMatchesWholeEntries(t *testing.T) {
 // "sleep <marker>".
 func processesRunning(t *testing.T, marker string) []int {
 	t.Helper()
-	procs, err := scanProcs("")
+	procs, err := scanProcs("", "")
 	if err != nil {
 		t.Fatalf("scanProcs: %v", err)
 	}
