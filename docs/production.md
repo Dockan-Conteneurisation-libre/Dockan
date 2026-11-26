@@ -201,6 +201,8 @@ The `bubblewrap` mode gives each container its own PID, IPC, UTS and (when the k
 
 Images pulled from a registry are checked before use: the platform manifest, the configuration and every layer must match their `sha256` (or `sha512`) digest and declared size, otherwise the pull is rejected. A tag is not content-addressed, so the manifest it points to is only checked against the digest announced by the registry: you trust the registry for that first step. Layer extraction stays confined to the image rootfs, even when a layer contains symbolic links or whiteout entries.
 
+`dockan stop` signals every process of the container: its process group, the descendants of its launcher, its own PID namespace and every process that inherited the container's `DOCKAN_RUN_ID` environment variable, so a workload that leaves its group or double-forks is stopped too. With `none`, `chroot` or `firejail` (no PID namespace), a process that both clears its environment and double-forks cannot be tracked: prefer `bubblewrap` for untrusted workloads. Dockan also records each container's start time, so it never signals an unrelated process that later reused a container's pid.
+
 On kernels older than 6.2, or when `dev.tty.legacy_tiocsti` is set to `1`, a foreground `dockan run` keeps access to your terminal: run untrusted images with `-d`.
 
 For production, prefer:
