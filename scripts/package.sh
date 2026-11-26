@@ -4,6 +4,7 @@ set -eu
 VERSION="${VERSION:-dev}"
 DEB_VERSION="$VERSION"
 case "$DEB_VERSION" in
+  v[0-9]*) DEB_VERSION="${DEB_VERSION#v}" ;; # release tag v1.2.3 -> 1.2.3
   [0-9]*) ;;
   *) DEB_VERSION="0.0.0-$DEB_VERSION" ;;
 esac
