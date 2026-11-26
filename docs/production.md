@@ -195,6 +195,14 @@ Review the selected isolation mode:
 | `chroot` | basic rootfs isolation | Requires root, weaker than full container isolation. |
 | `none` | testing only | Not recommended for untrusted apps. |
 
+Since v0.2.2, the default `auto` mode never falls back to `none`: when no isolation tool is available, `dockan run` stops with an error. Running an image without isolation always requires an explicit `--isolation=none` or `--no-isolation`.
+
+The `bubblewrap` mode gives each container its own PID, IPC, UTS and (when the kernel allows it) cgroup namespaces, and keeps no Linux capability inside the sandbox. The network namespace is managed by Dockan's network layer: with the default host network, the container shares the host network. Background containers (`dockan run -d`) start in their own session, without access to your terminal.
+
+Images pulled from a registry are checked before use: the platform manifest, the configuration and every layer must match their `sha256` (or `sha512`) digest and declared size, otherwise the pull is rejected. A tag is not content-addressed, so the manifest it points to is only checked against the digest announced by the registry: you trust the registry for that first step. Layer extraction stays confined to the image rootfs, even when a layer contains symbolic links or whiteout entries.
+
+On kernels older than 6.2, or when `dev.tty.legacy_tiocsti` is set to `1`, a foreground `dockan run` keeps access to your terminal: run untrusted images with `-d`.
+
 For production, prefer:
 
 ```bash

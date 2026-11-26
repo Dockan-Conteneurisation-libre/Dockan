@@ -287,6 +287,10 @@ wrk -t4 -c64 -d60s http://127.0.0.1:8080/</code></pre>
         <tr><td><code>chroot</code></td><td>Basic rootfs isolation</td><td>Requires root, weaker than full container isolation.</td></tr>
         <tr><td><code>none</code></td><td>Testing only</td><td>Do not use for untrusted apps.</td></tr>
       </table>
+      <p>Since v0.2.2, the default <code>auto</code> mode never falls back to <code>none</code>: when no isolation tool is available, <code>dockan run</code> stops with an error. Running an image without isolation always requires an explicit <code>--isolation=none</code> or <code>--no-isolation</code>.</p>
+      <p>The <code>bubblewrap</code> mode gives each container its own PID, IPC, UTS and (when the kernel allows it) cgroup namespaces, and keeps no Linux capability inside the sandbox. The network namespace is managed by Dockan's network layer: with the default host network, the container shares the host network. Background containers (<code>dockan run -d</code>) start in their own session, without access to your terminal.</p>
+      <p>Images pulled from a registry are checked before use: the platform manifest, the configuration and every layer must match their <code>sha256</code> (or <code>sha512</code>) digest and declared size, otherwise the pull is rejected. A tag is not content-addressed, so the manifest it points to is only checked against the digest announced by the registry: you trust the registry for that first step. Layer extraction stays confined to the image rootfs, even when a layer contains symbolic links or whiteout entries.</p>
+      <p>On kernels older than 6.2, or when <code>dev.tty.legacy_tiocsti</code> is set to <code>1</code>, a foreground <code>dockan run</code> keeps access to your terminal: run untrusted images with <code>-d</code>.</p>
     </section>
 
     <section>
