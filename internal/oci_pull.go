@@ -2,8 +2,8 @@ package internal
 
 import (
 	"archive/tar"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,29 +14,36 @@ import (
 	"sort"
 	"strings"
 	"syscall"
-	"time"
 )
 
-var ociHTTPClient = &http.Client{
-	Timeout: 600 * time.Second,
-}
+var ociHTTPClient = newOCIHTTPClient()
 
 type OCIRef struct {
 	Registry   string
 	Repository string
+	// Tag is what the manifest is requested by: a tag, or the digest when
+	// the reference is pinned (name@sha256:...).
 	Tag        string
+	Digest     string
 	Normalized string
 }
 
 func parseOCIRef(raw string) OCIRef {
 	raw = strings.TrimSpace(raw)
+	namePart, digest, pinned := strings.Cut(raw, "@")
+	if !pinned {
+		digest = ""
+	}
 	tag := "latest"
-	imagePart := raw
-	if idx := strings.LastIndex(raw, ":"); idx != -1 {
-		if slashIdx := strings.LastIndex(raw, "/"); slashIdx == -1 || idx > slashIdx {
-			tag = raw[idx+1:]
-			imagePart = raw[:idx]
+	imagePart := namePart
+	if idx := strings.LastIndex(namePart, ":"); idx != -1 {
+		if slashIdx := strings.LastIndex(namePart, "/"); slashIdx == -1 || idx > slashIdx {
+			tag = namePart[idx+1:]
+			imagePart = namePart[:idx]
 		}
+	}
+	if pinned {
+		tag = digest
 	}
 
 	var registry, repository string
@@ -85,6 +92,7 @@ func parseOCIRef(raw string) OCIRef {
 		Registry:   registry,
 		Repository: repository,
 		Tag:        tag,
+		Digest:     digest,
 		Normalized: norm,
 	}
 }
@@ -173,7 +181,8 @@ func PullOCIImage(ref string, targetTag string) (*StoredImage, error) {
 		}
 	}
 
-	name := strings.Split(targetTag, ":")[0]
+	namePart, _, _ := strings.Cut(targetTag, "@")
+	name := strings.Split(namePart, ":")[0]
 	if lastSlash := strings.LastIndex(name, "/"); lastSlash >= 0 {
 		name = name[lastSlash+1:]
 	}
@@ -183,6 +192,9 @@ func PullOCIImage(ref string, targetTag string) (*StoredImage, error) {
 		"tag":         targetTag,
 		"source":      ref,
 		"rootfs.mode": "oci",
+	}
+	if parsed.Digest != "" {
+		meta["digest"] = parsed.Digest // verified against the pinned reference
 	}
 
 	if config.Config.WorkingDir != "" {
@@ -239,6 +251,11 @@ func PullOCIImage(ref string, targetTag string) (*StoredImage, error) {
 }
 
 func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
+	if ref.Digest != "" {
+		if err := validateOCIDigest(ref.Digest); err != nil {
+			return nil, "", err
+		}
+	}
 	manifestURL := fmt.Sprintf("https://%s/v2/%s/manifests/%s", ref.Registry, ref.Repository, ref.Tag)
 	accept := "application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json"
 
@@ -256,9 +273,14 @@ func fetchOCIManifest(ref OCIRef) (*OCIManifest, string, error) {
 	if err != nil {
 		return nil, token, err
 	}
+	// A pinned reference (name@sha256:...) names the exact content expected.
 	// A tag is not content-addressed: the registry's announced digest is the
 	// only reference available (trust on first use). Check it when present.
-	if announced := resp.Header.Get("Docker-Content-Digest"); announced != "" {
+	if ref.Digest != "" {
+		if err := verifyOCIMetadata(body, ref.Digest); err != nil {
+			return nil, token, fmt.Errorf("manifeste épinglé rejeté: %w", err)
+		}
+	} else if announced := resp.Header.Get("Docker-Content-Digest"); announced != "" {
 		if err := verifyOCIMetadata(body, announced); err != nil {
 			return nil, token, fmt.Errorf("manifeste rejeté: %w", err)
 		}
@@ -366,21 +388,17 @@ func downloadAndExtractLayer(ref OCIRef, layerDigest string, layerSize int64, to
 	return token, extractLayerBlob(blob, destDir)
 }
 
-func extractLayerBlob(blob io.Reader, destDir string) error {
-	stream, closeStream, err := openLayerStream(blob)
+// newOCIRequest builds a registry request. Its context carries the network
+// policy: a registry on a public address may only lead to public addresses.
+func newOCIRequest(reqURL, token, accept string) (*http.Request, error) {
+	u, err := url.Parse(reqURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := extractTarStream(stream, destDir); err != nil {
-		return errors.Join(err, closeStream())
-	}
-	return closeStream()
-}
-
-func ociGet(reqURL, token, accept string) (*http.Response, string, error) {
-	req, err := http.NewRequest("GET", reqURL, nil)
+	ctx := withNetworkPolicy(context.Background(), registryIsLocal(u.Host))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
-		return nil, token, err
+		return nil, err
 	}
 	if accept != "" {
 		req.Header.Set("Accept", accept)
@@ -388,40 +406,42 @@ func ociGet(reqURL, token, accept string) (*http.Response, string, error) {
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
+	return req, nil
+}
 
+func ociGet(reqURL, token, accept string) (*http.Response, string, error) {
+	req, err := newOCIRequest(reqURL, token, accept)
+	if err != nil {
+		return nil, token, err
+	}
 	resp, err := ociHTTPClient.Do(req)
 	if err != nil {
 		return nil, token, err
 	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		authHdr := resp.Header.Get("Www-Authenticate")
-		resp.Body.Close()
-
-		realm, service, scope := parseBearerAuth(authHdr)
-		if realm == "" {
-			return nil, token, fmt.Errorf("requête 401 sans challenge Bearer valide")
-		}
-		newToken, err := fetchRegistryToken(realm, service, scope)
-		if err != nil {
-			return nil, token, fmt.Errorf("échec d'authentification Bearer: %w", err)
-		}
-		token = newToken
-
-		retryReq, err := http.NewRequest("GET", reqURL, nil)
-		if err != nil {
-			return nil, token, err
-		}
-		if accept != "" {
-			retryReq.Header.Set("Accept", accept)
-		}
-		retryReq.Header.Set("Authorization", "Bearer "+token)
-		resp, err = ociHTTPClient.Do(retryReq)
-		if err != nil {
-			return nil, token, err
-		}
+	if resp.StatusCode != http.StatusUnauthorized {
+		return resp, token, nil
 	}
 
+	authHdr := resp.Header.Get("Www-Authenticate")
+	resp.Body.Close()
+	realm, service, scope := parseBearerAuth(authHdr)
+	if realm == "" {
+		return nil, token, fmt.Errorf("requête 401 sans challenge Bearer valide")
+	}
+	newToken, err := fetchRegistryToken(req.Context(), realm, service, scope)
+	if err != nil {
+		return nil, token, fmt.Errorf("échec d'authentification Bearer: %w", err)
+	}
+	token = newToken
+
+	retryReq, err := newOCIRequest(reqURL, token, accept)
+	if err != nil {
+		return nil, token, err
+	}
+	resp, err = ociHTTPClient.Do(retryReq)
+	if err != nil {
+		return nil, token, err
+	}
 	return resp, token, nil
 }
 
@@ -449,10 +469,16 @@ func parseBearerAuth(header string) (realm, service, scope string) {
 	return
 }
 
-func fetchRegistryToken(realm, service, scope string) (string, error) {
+// fetchRegistryToken asks the token server named by the registry's Bearer
+// challenge. ctx carries the registry's network policy: a public registry
+// cannot point Dockan at an internal or plain-HTTP token server.
+func fetchRegistryToken(ctx context.Context, realm, service, scope string) (string, error) {
 	u, err := url.Parse(realm)
 	if err != nil {
 		return "", err
+	}
+	if err := checkOutboundURL(ctx, u); err != nil {
+		return "", fmt.Errorf("serveur d'authentification: %w", err)
 	}
 	q := u.Query()
 	if service != "" {
@@ -463,7 +489,11 @@ func fetchRegistryToken(realm, service, scope string) (string, error) {
 	}
 	u.RawQuery = q.Encode()
 
-	resp, err := ociHTTPClient.Get(u.String())
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := ociHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -477,7 +507,11 @@ func fetchRegistryToken(realm, service, scope string) (string, error) {
 		Token       string `json:"token"`
 		AccessToken string `json:"access_token"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	body, err := readOCIMetadata(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if err := json.Unmarshal(body, &data); err != nil {
 		return "", err
 	}
 	if data.Token != "" {

@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"bufio"
-	"compress/gzip"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -137,22 +135,4 @@ func discardTempFile(f *os.File) {
 	if err := os.Remove(name); err != nil && !os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "[dockan] suppression de %s: %v\n", name, err)
 	}
-}
-
-// openLayerStream returns the tar stream of a layer, decompressing it when
-// it starts with the gzip magic bytes.
-func openLayerStream(r io.Reader) (io.Reader, func() error, error) {
-	br := bufio.NewReader(r)
-	magic, err := br.Peek(2)
-	if err != nil && err != io.EOF {
-		return nil, nil, err
-	}
-	if len(magic) == 2 && magic[0] == 0x1f && magic[1] == 0x8b {
-		gz, err := gzip.NewReader(br)
-		if err != nil {
-			return nil, nil, err
-		}
-		return gz, gz.Close, nil
-	}
-	return br, func() error { return nil }, nil
 }

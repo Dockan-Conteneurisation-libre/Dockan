@@ -185,6 +185,10 @@ func safeTag(tag string) string {
 			b.WriteRune(r)
 		case r == '.', r == '-', r == '_':
 			b.WriteRune(r)
+		case r == '@':
+			// Kept as is: a tag cannot contain '@', so a pinned image
+			// (name@sha256:...) never shares a path with a tagged one.
+			b.WriteRune(r)
 		default:
 			b.WriteByte('_')
 		}
