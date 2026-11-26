@@ -189,8 +189,8 @@ Review the selected isolation mode:
 
 | Mode | Typical use | Notes |
 | --- | --- | --- |
-| `firejail` | rootless app isolation | Good default when installed. |
-| `bubblewrap` | rootless sandboxing | Useful on many desktop/server distros. |
+| `bubblewrap` | rootless sandboxing | Recommended: own PID, IPC and UTS namespaces, no Linux capability. |
+| `firejail` | rootless app isolation | setuid tool; OCI images fall back to bubblewrap. |
 | `systemd-nspawn` | stronger root-based container style | Requires root and a suitable rootfs. |
 | `chroot` | basic rootfs isolation | Requires root, weaker than full container isolation. |
 | `none` | testing only | Not recommended for untrusted apps. |
@@ -199,19 +199,37 @@ Since v0.2.2, the default `auto` mode never falls back to `none`: when no isolat
 
 The `bubblewrap` mode gives each container its own PID, IPC, UTS and (when the kernel allows it) cgroup namespaces, and keeps no Linux capability inside the sandbox. The network namespace is managed by Dockan's network layer: with the default host network, the container shares the host network. Background containers (`dockan run -d`) start in their own session, without access to your terminal.
 
-Images pulled from a registry are checked before use: the platform manifest, the configuration and every layer must match their `sha256` (or `sha512`) digest and declared size, otherwise the pull is rejected. A tag is not content-addressed, so the manifest it points to is only checked against the digest announced by the registry: you trust the registry for that first step. Layer extraction stays confined to the image rootfs, even when a layer contains symbolic links or whiteout entries.
+### Pulled images
 
-`dockan stop` signals every process of the container: its process group, the descendants of its launcher, its own PID namespace and every process that inherited the container's `DOCKAN_RUN_ID` environment variable, so a workload that leaves its group or double-forks is stopped too. With `none`, `chroot` or `firejail` (no PID namespace), a process that both clears its environment and double-forks cannot be tracked: prefer `bubblewrap` for untrusted workloads. Dockan also records each container's start time, so it never signals an unrelated process that later reused a container's pid.
+Images pulled from a registry are checked before use: the platform manifest, the configuration and every layer must match their `sha256` (or `sha512`) digest and declared size, otherwise the pull is rejected. A tag is not content-addressed: pin an image by digest (`dockan pull alpine@sha256:...`) to get exactly that content, otherwise the manifest a tag points to is checked against the digest announced by the registry, which you trust for that first step. Layer extraction stays confined to the image rootfs, even when a layer contains symbolic links or whiteout entries, and an uncompressed layer may not exceed 64 GiB.
+
+Layers compressed with zstd are decoded by the host `zstd` tool: install it (`dnf install zstd`, `apt install zstd`) to pull such images.
+
+A registry on a public address can only lead Dockan to public HTTPS addresses (its token server, blob downloads): it cannot make Dockan reach your local network. A registry you address by IP on a private network, or as `localhost`, is trusted with private addresses. For a private registry reached by name, list it explicitly:
+
+```bash
+export DOCKAN_PRIVATE_REGISTRIES=registry.lan,nas.home:5000
+```
+
+### Stopping containers
+
+When systemd is available, each background container runs in its own systemd scope (a cgroup), with `--memory` and `--cpus` applied to that scope: `dockan stop` then finds every process of the container, whatever it does. For a regular user this requires lingering, otherwise the user's systemd manager stops at logout and would take the containers with it:
+
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
+Without a scope, `dockan stop` signals the container's process group, the descendants of its launcher, its own PID namespace and every process that inherited its `DOCKAN_RUN_ID` environment variable. In that case, with `none`, `chroot` or `firejail` (no PID namespace), a process that both clears its environment and double-forks cannot be tracked. Dockan also records each container's start time, so it never signals an unrelated process that later reused a container's pid.
 
 On kernels older than 6.2, or when `dev.tty.legacy_tiocsti` is set to `1`, a foreground `dockan run` keeps access to your terminal: run untrusted images with `-d`.
 
 For production, prefer:
 
 ```bash
-dockan run --isolation=firejail myapp:stable
+dockan run --isolation=bubblewrap myapp:stable
 ```
 
-or:
+or, as root:
 
 ```bash
 sudo dockan run --isolation=systemd-nspawn myapp:stable
