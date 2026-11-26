@@ -1,290 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="eo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dockan Developer Guide</title>
-  <meta name="description" content="Developer guide for Dockan apps: package an app, share it with admins, and run it locally as a Linux service.">
-  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
-  <style>
-    :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17201b;
-      --muted: #56635c;
-      --line: #dfe5df;
-      --green: #176b48;
-      --green-dark: #0e4932;
-      --blue: #1d5f89;
-      --amber: #a56110;
-      --code: #eef2ee;
-      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-
-    a {
-      color: var(--green);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .topbar {
-      max-width: 1060px;
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--ink);
-      font-weight: 800;
-      font-size: 1.08rem;
-    }
-
-    .brand img {
-      width: 40px;
-      height: 40px;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      font-size: 0.95rem;
-    }
-
-    main {
-      max-width: 1060px;
-      margin: 0 auto;
-      padding: 48px 24px;
-    }
-
-    h1 {
-      margin: 0 0 14px;
-      font-size: clamp(2.1rem, 5vw, 3.8rem);
-      line-height: 1;
-      letter-spacing: 0;
-    }
-
-    h2 {
-      margin: 0 0 16px;
-      font-size: 1.7rem;
-      letter-spacing: 0;
-    }
-
-    h3 {
-      margin: 0 0 8px;
-      font-size: 1.05rem;
-    }
-
-    .lead {
-      margin: 0 0 28px;
-      color: var(--muted);
-      font-size: 1.12rem;
-      max-width: 820px;
-    }
-
-    .flow {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin: 26px 0 34px;
-    }
-
-    .step,
-    section {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-    }
-
-    .step {
-      padding: 18px;
-    }
-
-    .step strong {
-      display: block;
-      color: var(--green-dark);
-      margin-bottom: 6px;
-    }
-
-    .step p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    section {
-      padding: 22px;
-      margin: 16px 0;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      background: #eef6f1;
-      color: var(--green-dark);
-      font-weight: 800;
-      font-size: 0.86rem;
-      margin-bottom: 12px;
-    }
-
-    .badge.blue {
-      background: #edf5fa;
-      color: var(--blue);
-    }
-
-    .badge.amber {
-      background: #fff4e4;
-      color: var(--amber);
-    }
-
-    p {
-      color: var(--muted);
-    }
-
-    ul {
-      margin: 0 0 14px;
-      padding-left: 20px;
-      color: var(--muted);
-    }
-
-    pre {
-      margin: 12px 0;
-      padding: 16px;
-      overflow-x: auto;
-      background: #101812;
-      color: #eaf6ef;
-      border-radius: 8px;
-      border: 1px solid #24342a;
-      font-size: 0.94rem;
-    }
-
-    code {
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    }
-
-    p code,
-    li code {
-      background: var(--code);
-      border-radius: 6px;
-      padding: 2px 6px;
-      color: var(--ink);
-    }
-
-    .split {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 16px;
-    }
-
-    footer {
-      max-width: 1060px;
-      margin: 0 auto;
-      padding: 28px 24px 46px;
-      color: var(--muted);
-      border-top: 1px solid var(--line);
-    }
-
-    @media (max-width: 820px) {
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .flow,
-      .split {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Kunhavigi aplikaĵon | Dockan</title>
+  <meta name="description" content="Kiel paki aplikaĵon Dockan, por ke administrantoj konstruu kaj rulu ĝin loke kiel Linuksan servon.">
+  <link rel="canonical" href="https://dockan-conteneurisation-libre.github.io/Dockan/developer.html">
+  <link rel="icon" type="image/svg+xml" href="dockan-logo.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Kunhavigi aplikaĵon | Dockan">
+  <meta property="og:description" content="Kiel paki aplikaĵon Dockan, por ke administrantoj konstruu kaj rulu ĝin loke kiel Linuksan servon.">
+  <meta property="og:image" content="https://dockan-conteneurisation-libre.github.io/Dockan/assets/og-dockan.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0e2a1e">
+  <link rel="stylesheet" href="assets/doc.css">
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <a class="brand" href="./index.html" aria-label="Dockan home">
-        <img src="./dockan-logo.svg" alt="">
-        <span>Dockan</span>
-      </a>
-      <nav aria-label="Navigation">
-        <a href="./index.html#install">Install</a>
-        <a href="./index.html#usage">Usage</a>
-        <a href="./developer.html">Developer</a>
-        <a href="./faq.html">FAQ</a>
+  <a class="skip" href="#main" data-i18n="ui.skip">Iri al la enhavo</a>
+  <div class="masthead">
+    <header class="wrap topbar">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="34" height="34"><span>Dockan</span></a>
+      <nav class="nav" data-i18n-aria="ui.nav" aria-label="Ĉefa navigado">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" aria-current="page" class="opt" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" class="opt" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
       </nav>
+      <div class="langs" role="group" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <button type="button" data-lang="eo" aria-pressed="true" lang="eo" title="Esperanto">EO</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+        <button type="button" data-lang="es" aria-pressed="false" lang="es" title="Español">ES</button>
+      </div>
+      <select class="lang-select" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <option value="eo">EO</option><option value="fr">FR</option><option value="en">EN</option><option value="es">ES</option>
+      </select>
+      <details class="menu">
+        <summary data-i18n-aria="ui.menu" aria-label="Menuo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" aria-current="page" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
+        </div>
+      </details>
+    </header>
+    <div class="wrap page-head">
+      <p class="crumb"><a href="index.html#docs" data-i18n="crumb.docs">Dokumentaro</a></p>
+      <h1 data-i18n="page.title">Kunhavigi aplikaĵon</h1>
+      <p data-i18n="page.lead">Kiel paki aplikaĵon Dockan, por ke administrantoj konstruu kaj rulu ĝin loke kiel Linuksan servon.</p>
     </div>
-  </header>
-
-  <main>
-    <h1>Developer Guide</h1>
-    <p class="lead">Prepare a Dockan app so an admin can install Dockan, build the app locally, and run it as a Linux service.</p>
-
-    <div class="flow">
-      <div class="step">
-        <strong>1. Developer</strong>
-        <p>Prepare `Dockanfile`, `dockan.yml`, code, and README.</p>
-      </div>
-      <div class="step">
-        <strong>2. Share</strong>
-        <p>Publish through Git, a `.tar.gz` archive, an internal server, or offline media.</p>
-      </div>
-      <div class="step">
-        <strong>3. Admin</strong>
-        <p>Install Dockan, build locally, run the app, and create the service.</p>
-      </div>
-    </div>
-
-    <section>
-      <span class="badge">Developer</span>
-      <h2>Prepare The Project</h2>
-      <p>Recommended structure:</p>
-      <pre><code>myapp/
+  </div>
+  <div class="wrap layout">
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title" data-i18n="toc.title">En ĉi tiu paĝo</h2>
+      <ol>
+        <li><a href="#roles" data-i18n="roles.t">Du roloj</a></li>
+        <li><a href="#developer" data-i18n="developer.t">Ĉe la programisto</a></li>
+        <li><a href="#admin" data-i18n="admin.t">Ĉe la administranto</a></li>
+        <li><a href="#boot" data-i18n="boot.t">Starti kun la maŝino</a></li>
+        <li><a href="#bases" data-i18n="bases.t">Lokaj bazaj bildoj</a></li>
+        <li><a href="#network" data-i18n="network.t">Reto kaj pordoj</a></li>
+      </ol>
+    </nav>
+    <main id="main">
+      <article>
+<section id="roles">
+<h2 data-i18n="roles.t">Du roloj</h2>
+<ul><li data-i18n-html="roles.0.0">La programisto preparas la aplikaĵon: <code>Dockanfile</code>, <code>dockan.yml</code>, la kodon kaj README.</li><li data-i18n="roles.0.1">La administranto instalas Dockan sur la cela maŝino, konstruas la aplikaĵon loke kaj rulas ĝin loke.</li></ul>
+</section>
+<section id="developer">
+<h2 data-i18n="developer.t">Ĉe la programisto</h2>
+<p data-i18n="developer.0">Rekomendita strukturo:</p>
+<div class="code"><pre><code>myapp/
   Dockanfile
   dockan.yml
   README.md
   app.sh
-  src/</code></pre>
-      <div class="split">
-        <div>
-          <h3>Dockanfile</h3>
-          <pre><code>FROM scratch
+  src/</code></pre></div>
+<p data-i18n-html="developer.2">Ekzemplo de <code>Dockanfile</code>:</p>
+<div class="code"><pre><code>FROM scratch
 LABEL org.opencontainers.image.title=MyApp
 COPY app.sh /app.sh
 RUN chmod +x /app.sh
-CMD ./app.sh</code></pre>
-        </div>
-        <div>
-          <h3>dockan.yml</h3>
-          <pre><code>name: myapp
+CMD ./app.sh</code></pre></div>
+<p data-i18n-html="developer.4">Ekzemplo de <code>dockan.yml</code>:</p>
+<div class="code"><pre><code>name: myapp
 services:
   web:
     build: .
@@ -293,77 +100,231 @@ services:
       - 8080:8080
     volumes:
       - data:/data
-    restart: always</code></pre>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <span class="badge blue">Admin</span>
-      <h2>Install And Run Locally</h2>
-      <p>Install Dockan on the Linux machine:</p>
-      <pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh
-dockan doctor</code></pre>
-      <p>Fetch the app, build it, and run it:</p>
-      <pre><code>tar -xzf myapp-dockan-v1.tar.gz
+    restart: always</code></pre></div>
+<p data-i18n-html="developer.6">Vi povas kunhavigi la aplikaĵon per Codeberg, GitLab, GitHub, arkivo <code>.tar.gz</code>, interna servilo aŭ eksterreta portilo.</p>
+</section>
+<section id="admin">
+<h2 data-i18n="admin.t">Ĉe la administranto</h2>
+<p data-i18n="admin.0">Instali Dockan:</p>
+<div class="code"><pre><code>curl -fsSL https://raw.githubusercontent.com/Dockan-Conteneurisation-libre/Dockan/main/scripts/install.sh | sh</code></pre></div>
+<p data-i18n="admin.2">Akiri la aplikaĵon, konstrui kaj lanĉi ĝin:</p>
+<div class="code"><pre><code>tar -xzf myapp-dockan-v1.tar.gz
 cd myapp
 dockan build -t myapp:v1 .
-dockan compose up</code></pre>
-      <p>Check status and logs:</p>
-      <pre><code>dockan ps -a
-dockan logs myapp-web</code></pre>
-      <p>Use <code>dockan ps -a --scope all</code> when user and system stores may both contain containers.</p>
-    </section>
-
-    <section>
-      <span class="badge blue">Service</span>
-      <h2>Start On Boot</h2>
-      <p>Native system auto-start:</p>
-      <pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>
-      <p>User service:</p>
-      <pre><code>dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp</code></pre>
-      <p>Disable auto-start:</p>
-      <pre><code>sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp</code></pre>
-    </section>
-
-    <section>
-      <span class="badge amber">Local Bases</span>
-      <h2>Share A Full Base</h2>
-      <p>If the app needs an Ubuntu, Alpine, or Python base, the developer can provide a rootfs archive.</p>
-      <pre><code>dockan base import ubuntu:local ./ubuntu-rootfs.tar.gz
-dockan build -t myapp:v1 .</code></pre>
-      <p>The `Dockanfile` can then use the local base:</p>
-      <pre><code>FROM ubuntu:local
+dockan compose up</code></pre></div>
+<p data-i18n="admin.4">Kontroli la protokolojn:</p>
+<div class="code"><pre><code>dockan ps -a
+dockan logs myapp-web</code></pre></div>
+<p class="note" data-i18n-html="admin.6">Uzu <code>dockan ps -a --scope all</code>, kiam kaj la uzanta kaj la sistema deponejoj povas enhavi ujojn.</p>
+</section>
+<section id="boot">
+<h2 data-i18n="boot.t">Starti kun la maŝino</h2>
+<p data-i18n="boot.0">Aktivigi la aŭtomatan starton per systemd:</p>
+<div class="code"><pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre></div>
+<p data-i18n="boot.2">Uzanta servo, sen sudo:</p>
+<div class="code"><pre><code>dockan compose autostart --user -f ~/myapp/dockan.yml --name myapp</code></pre></div>
+<p data-i18n="boot.4">Malaktivigi la aŭtomatan starton:</p>
+<div class="code"><pre><code>sudo dockan compose no-autostart -f /srv/myapp/dockan.yml --name myapp</code></pre></div>
+</section>
+<section id="bases">
+<h2 data-i18n="bases.t">Lokaj bazaj bildoj</h2>
+<p data-i18n="bases.0">Se la aplikaĵo bezonas kompletan bazon Ubuntu, Alpine aŭ Python, provizu arkivon de rootfs:</p>
+<div class="code"><pre><code>dockan base import ubuntu:local ./ubuntu-rootfs.tar.gz
+dockan build -t myapp:v1 .</code></pre></div>
+<p data-i18n-html="bases.2">La <code>Dockanfile</code> tiam uzas la lokan bazon:</p>
+<div class="code"><pre><code>FROM ubuntu:local
 COPY app.sh /app.sh
-CMD ./app.sh</code></pre>
-    </section>
-
-    <section>
-      <span class="badge">Network</span>
-      <h2>Ports And Network</h2>
-      <p>Simple network:</p>
-      <pre><code>dockan network create appnet
-dockan run -d --name web --network appnet myapp:v1</code></pre>
-      <p>Bridge/NAT with port publishing:</p>
-      <pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
+CMD ./app.sh</code></pre></div>
+</section>
+<section id="network">
+<h2 data-i18n="network.t">Reto kaj pordoj</h2>
+<p data-i18n="network.0">Simpla reto:</p>
+<div class="code"><pre><code>dockan network create appnet
+dockan run -d --name web --network appnet myapp:v1</code></pre></div>
+<p data-i18n="network.2">Ponto kaj NAT kun publikigitaj pordoj:</p>
+<div class="code"><pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
 sudo dockan network enable appnet
-sudo dockan run -d --name web --network appnet -p 8080:80 myapp:v1</code></pre>
-    </section>
-
-    <section>
-      <span class="badge blue">Summary</span>
-      <h2>What To Remember</h2>
-      <ul>
-        <li>The developer shares the app: `Dockanfile`, `dockan.yml`, code, and README.</li>
-        <li>The admin installs Dockan, builds locally, and runs locally.</li>
-        <li>For automatic startup, Dockan creates and enables a native systemd service.</li>
-        <li>GitHub Actions release packages build Dockan itself, not user apps.</li>
-      </ul>
-    </section>
-  </main>
-
+sudo dockan run -d --name web --network appnet -p 8080:80 myapp:v1</code></pre></div>
+<p class="note" data-i18n="network.4">Dockan mem disvastiĝas per siaj eldonoj; aplikaĵoj Dockan estas ordinaraj projektoj, kiujn oni povas libere kunhavigi.</p>
+</section>
+      </article>
+    </main>
+  </div>
   <footer>
-    Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="28" height="28"><span>Dockan</span></a>
+      <span data-i18n="foot.license">Libera programaro sub la permesilo AGPL-3.0-or-later.</span>
+      <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener" data-i18n="foot.source">Fontkodo sur GitHub</a>
+    </div>
   </footer>
+  <script type="application/json" id="i18n-common">
+{
+ "eo": {
+  "ui.skip": "Iri al la enhavo",
+  "ui.nav": "Ĉefa navigado",
+  "ui.lang": "Lingvo",
+  "ui.menu": "Menuo",
+  "ui.copy": "Kopii",
+  "ui.copied": "Kopiita",
+  "ui.selected": "Elektita",
+  "nav.home": "Hejmo",
+  "nav.format": "Formato",
+  "nav.langs": "Programlingvoj",
+  "nav.dev": "Kunhavigi",
+  "nav.prod": "Produktado",
+  "nav.faq": "Demandoj",
+  "crumb.docs": "Dokumentaro",
+  "toc.title": "En ĉi tiu paĝo",
+  "foot.license": "Libera programaro sub la permesilo AGPL-3.0-or-later.",
+  "foot.source": "Fontkodo sur GitHub"
+ },
+ "fr": {
+  "ui.skip": "Aller au contenu",
+  "ui.nav": "Navigation principale",
+  "ui.lang": "Langue",
+  "ui.menu": "Menu",
+  "ui.copy": "Copier",
+  "ui.copied": "Copié",
+  "ui.selected": "Sélectionné",
+  "nav.home": "Accueil",
+  "nav.format": "Format",
+  "nav.langs": "Langages",
+  "nav.dev": "Partager",
+  "nav.prod": "Production",
+  "nav.faq": "Questions",
+  "crumb.docs": "Documentation",
+  "toc.title": "Sur cette page",
+  "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
+  "foot.source": "Code source sur GitHub"
+ },
+ "en": {
+  "ui.skip": "Skip to content",
+  "ui.nav": "Main navigation",
+  "ui.lang": "Language",
+  "ui.menu": "Menu",
+  "ui.copy": "Copy",
+  "ui.copied": "Copied",
+  "ui.selected": "Selected",
+  "nav.home": "Home",
+  "nav.format": "Format",
+  "nav.langs": "Languages",
+  "nav.dev": "Share",
+  "nav.prod": "Production",
+  "nav.faq": "FAQ",
+  "crumb.docs": "Documentation",
+  "toc.title": "On this page",
+  "foot.license": "Free software under the AGPL-3.0-or-later license.",
+  "foot.source": "Source code on GitHub"
+ },
+ "es": {
+  "ui.skip": "Ir al contenido",
+  "ui.nav": "Navegación principal",
+  "ui.lang": "Idioma",
+  "ui.menu": "Menú",
+  "ui.copy": "Copiar",
+  "ui.copied": "Copiado",
+  "ui.selected": "Seleccionado",
+  "nav.home": "Inicio",
+  "nav.format": "Formato",
+  "nav.langs": "Lenguajes",
+  "nav.dev": "Compartir",
+  "nav.prod": "Producción",
+  "nav.faq": "Preguntas",
+  "crumb.docs": "Documentación",
+  "toc.title": "En esta página",
+  "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
+  "foot.source": "Código fuente en GitHub"
+ }
+}
+  </script>
+  <script type="application/json" id="i18n-data">
+{
+ "fr": {
+  "roles.0.0": "Côté développement, on prépare l’application : <code>Dockanfile</code>, <code>dockan.yml</code>, le code et un README.",
+  "roles.0.1": "Côté administration, on installe Dockan sur la machine cible, puis on construit et lance l’application localement.",
+  "roles.t": "Deux rôles",
+  "developer.0": "Structure recommandée :",
+  "developer.2": "Exemple de <code>Dockanfile</code> :",
+  "developer.4": "Exemple de <code>dockan.yml</code> :",
+  "developer.6": "Vous pouvez partager l’application via Codeberg, GitLab, GitHub, une archive <code>.tar.gz</code>, un serveur interne ou un support hors ligne.",
+  "developer.t": "Côté développement",
+  "admin.0": "Installer Dockan :",
+  "admin.2": "Récupérer l’application, la construire et la lancer :",
+  "admin.4": "Consulter les journaux :",
+  "admin.6": "Utilisez <code>dockan ps -a --scope all</code> quand les dépôts utilisateur et système peuvent tous deux contenir des conteneurs.",
+  "admin.t": "Côté administration",
+  "boot.0": "Activer le démarrage automatique par systemd :",
+  "boot.2": "Service utilisateur, sans sudo :",
+  "boot.4": "Désactiver le démarrage automatique :",
+  "boot.t": "Démarrer avec la machine",
+  "bases.0": "Si l’application a besoin d’une base complète Ubuntu, Alpine ou Python, fournissez une archive rootfs :",
+  "bases.2": "Le <code>Dockanfile</code> utilise alors la base locale :",
+  "bases.t": "Images de base locales",
+  "network.0": "Réseau simple :",
+  "network.2": "Pont et NAT avec ports publiés :",
+  "network.4": "Dockan lui-même est distribué par ses versions publiées ; les applications Dockan sont des projets ordinaires, librement partageables.",
+  "network.t": "Réseau et ports",
+  "page.title": "Partager une application",
+  "page.lead": "Comment empaqueter une application Dockan pour que les personnes qui administrent la construisent et la lancent localement comme un service Linux."
+ },
+ "en": {
+  "roles.0.0": "Developers prepare the app: <code>Dockanfile</code>, <code>dockan.yml</code>, the code and a README.",
+  "roles.0.1": "Admins install Dockan on the target machine, then build and run the app locally.",
+  "roles.t": "Two roles",
+  "developer.0": "Recommended structure:",
+  "developer.2": "Example <code>Dockanfile</code>:",
+  "developer.4": "Example <code>dockan.yml</code>:",
+  "developer.6": "You can share the app through Codeberg, GitLab, GitHub, a <code>.tar.gz</code> archive, an internal server or offline media.",
+  "developer.t": "Developer side",
+  "admin.0": "Install Dockan:",
+  "admin.2": "Fetch the app, build it and start it:",
+  "admin.4": "Check the logs:",
+  "admin.6": "Use <code>dockan ps -a --scope all</code> when both the user and system stores may hold containers.",
+  "admin.t": "Admin side",
+  "boot.0": "Enable start on boot through systemd:",
+  "boot.2": "User service, without sudo:",
+  "boot.4": "Disable start on boot:",
+  "boot.t": "Start on boot",
+  "bases.0": "If the app needs a full Ubuntu, Alpine or Python base, provide a rootfs archive:",
+  "bases.2": "The <code>Dockanfile</code> then uses the local base:",
+  "bases.t": "Local base images",
+  "network.0": "Simple network:",
+  "network.2": "Bridge and NAT with published ports:",
+  "network.4": "Dockan itself is distributed through its releases; Dockan apps are regular projects that can be shared freely.",
+  "network.t": "Network and ports",
+  "page.title": "Share an app",
+  "page.lead": "How to package a Dockan app so admins can build it and run it locally as a Linux service."
+ },
+ "es": {
+  "roles.0.0": "Quien desarrolla prepara la aplicación: <code>Dockanfile</code>, <code>dockan.yml</code>, el código y un README.",
+  "roles.0.1": "Quien administra instala Dockan en la máquina de destino y luego compila y ejecuta la aplicación localmente.",
+  "roles.t": "Dos papeles",
+  "developer.0": "Estructura recomendada:",
+  "developer.2": "Ejemplo de <code>Dockanfile</code>:",
+  "developer.4": "Ejemplo de <code>dockan.yml</code>:",
+  "developer.6": "Puedes compartir la aplicación mediante Codeberg, GitLab, GitHub, un archivo <code>.tar.gz</code>, un servidor interno o un soporte sin conexión.",
+  "developer.t": "Del lado de desarrollo",
+  "admin.0": "Instalar Dockan:",
+  "admin.2": "Obtener la aplicación, compilarla y arrancarla:",
+  "admin.4": "Consultar los registros:",
+  "admin.6": "Usa <code>dockan ps -a --scope all</code> cuando tanto el almacén de usuario como el del sistema pueden contener contenedores.",
+  "admin.t": "Del lado de la administración",
+  "boot.0": "Activar el arranque automático con systemd:",
+  "boot.2": "Servicio de usuario, sin sudo:",
+  "boot.4": "Desactivar el arranque automático:",
+  "boot.t": "Arrancar con la máquina",
+  "bases.0": "Si la aplicación necesita una base completa de Ubuntu, Alpine o Python, proporciona un archivo rootfs:",
+  "bases.2": "El <code>Dockanfile</code> usa entonces la base local:",
+  "bases.t": "Imágenes base locales",
+  "network.0": "Red sencilla:",
+  "network.2": "Puente y NAT con puertos publicados:",
+  "network.4": "Dockan se distribuye mediante sus versiones publicadas; las aplicaciones Dockan son proyectos normales que se pueden compartir libremente.",
+  "network.t": "Red y puertos",
+  "page.title": "Compartir una aplicación",
+  "page.lead": "Cómo empaquetar una aplicación Dockan para que quienes administran la compilen y la ejecuten localmente como un servicio de Linux."
+ }
+}
+  </script>
+  <script src="assets/doc.js"></script>
 </body>
 </html>

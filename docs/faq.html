@@ -1,334 +1,320 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="eo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dockan FAQ</title>
-  <meta name="description" content="Frequently asked questions about Dockan: install, daemon, root, Dockerfile, volumes, networking, GUI, and releases.">
-  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
-  <style>
-    :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17201b;
-      --muted: #56635c;
-      --line: #dfe5df;
-      --green: #176b48;
-      --green-dark: #0e4932;
-      --blue: #1d5f89;
-      --code: #eef2ee;
-      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-
-    a {
-      color: var(--green);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    header {
-      background: #ffffff;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .topbar {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--ink);
-      font-weight: 800;
-      font-size: 1.08rem;
-    }
-
-    .brand img {
-      width: 40px;
-      height: 40px;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      font-size: 0.95rem;
-    }
-
-    main {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 48px 24px;
-    }
-
-    h1 {
-      margin: 0 0 14px;
-      font-size: clamp(2.1rem, 5vw, 3.6rem);
-      line-height: 1;
-      letter-spacing: 0;
-    }
-
-    .lead {
-      margin: 0 0 28px;
-      color: var(--muted);
-      font-size: 1.12rem;
-      max-width: 760px;
-    }
-
-    .faq-list {
-      display: grid;
-      gap: 14px;
-    }
-
-    details {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    summary {
-      cursor: pointer;
-      padding: 18px 20px;
-      font-weight: 800;
-      color: var(--green-dark);
-    }
-
-    details[open] summary {
-      border-bottom: 1px solid var(--line);
-      background: #fbfcfa;
-    }
-
-    .answer {
-      padding: 18px 20px 20px;
-      color: var(--muted);
-    }
-
-    .answer p {
-      margin: 0 0 12px;
-    }
-
-    .answer p:last-child {
-      margin-bottom: 0;
-    }
-
-    ul {
-      margin: 0 0 12px;
-      padding-left: 20px;
-    }
-
-    code {
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-      background: var(--code);
-      border-radius: 6px;
-      padding: 2px 6px;
-      color: var(--ink);
-    }
-
-    pre {
-      margin: 12px 0;
-      padding: 16px;
-      overflow-x: auto;
-      background: #101812;
-      color: #eaf6ef;
-      border-radius: 8px;
-      border: 1px solid #24342a;
-    }
-
-    pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-    }
-
-    footer {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 28px 24px 46px;
-      color: var(--muted);
-      border-top: 1px solid var(--line);
-    }
-
-    @media (max-width: 720px) {
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Oftaj demandoj | Dockan</title>
+  <meta name="description" content="Respondoj pri demonoj, root, Docker Hub, dependaĵoj, volumoj, reto kaj subtenataj maŝinoj.">
+  <link rel="canonical" href="https://dockan-conteneurisation-libre.github.io/Dockan/faq.html">
+  <link rel="icon" type="image/svg+xml" href="dockan-logo.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Oftaj demandoj | Dockan">
+  <meta property="og:description" content="Respondoj pri demonoj, root, Docker Hub, dependaĵoj, volumoj, reto kaj subtenataj maŝinoj.">
+  <meta property="og:image" content="https://dockan-conteneurisation-libre.github.io/Dockan/assets/og-dockan.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0e2a1e">
+  <link rel="stylesheet" href="assets/doc.css">
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <a class="brand" href="./index.html" aria-label="Dockan home">
-        <img src="./dockan-logo.svg" alt="">
-        <span>Dockan</span>
-      </a>
-      <nav aria-label="Navigation">
-        <a href="./index.html#install">Install</a>
-        <a href="./index.html#usage">Usage</a>
-        <a href="https://dockan-windows.netlify.app/" target="_blank" rel="noopener">Windows</a>
-        <a href="./developer.html">Developer</a>
-        <a href="./production.html">Production</a>
-        <a href="./faq.html">FAQ</a>
+  <a class="skip" href="#main" data-i18n="ui.skip">Iri al la enhavo</a>
+  <div class="masthead">
+    <header class="wrap topbar">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="34" height="34"><span>Dockan</span></a>
+      <nav class="nav" data-i18n-aria="ui.nav" aria-label="Ĉefa navigado">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" class="opt" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" aria-current="page" class="opt" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
       </nav>
+      <div class="langs" role="group" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <button type="button" data-lang="eo" aria-pressed="true" lang="eo" title="Esperanto">EO</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+        <button type="button" data-lang="es" aria-pressed="false" lang="es" title="Español">ES</button>
+      </div>
+      <select class="lang-select" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <option value="eo">EO</option><option value="fr">FR</option><option value="en">EN</option><option value="es">ES</option>
+      </select>
+      <details class="menu">
+        <summary data-i18n-aria="ui.menu" aria-label="Menuo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" aria-current="page" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
+        </div>
+      </details>
+    </header>
+    <div class="wrap page-head">
+      <p class="crumb"><a href="index.html#docs" data-i18n="crumb.docs">Dokumentaro</a></p>
+      <h1 data-i18n="page.title">Oftaj demandoj</h1>
+      <p data-i18n="page.lead">Respondoj pri demonoj, root, Docker Hub, dependaĵoj, volumoj, reto kaj subtenataj maŝinoj.</p>
     </div>
-  </header>
-
-  <main>
-    <h1>Dockan FAQ</h1>
-    <p class="lead">Quick answers for installing, running, and understanding Dockan without opening raw Markdown.</p>
-
-    <div class="faq-list">
-      <details open>
-        <summary>Does Dockan replace Docker?</summary>
-        <div class="answer">
-          <p>Dockan aims to be a local and simple Docker alternative for Linux.</p>
-          <p>It already covers important workflows: build, run, logs, exec, volumes, networks, simple compose, and systemd services.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Does Dockan need a daemon?</summary>
-        <div class="answer">
-          <p>No. Dockan does not run a permanent daemon like <code>dockerd</code>.</p>
-          <p>Each command does its work directly.</p>
-          <p>For apps that must return after a reboot, Dockan can create a native systemd service with <code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code>.</p>
-          <p>That keeps Dockan daemonless while letting the operating system handle boot startup.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Can Dockan run without root?</summary>
-        <div class="answer">
-          <p>Yes for simple workflows.</p>
-          <p>Some advanced features require <code>sudo</code>, especially:</p>
-          <ul>
-            <li>bridge/NAT</li>
-            <li>network namespaces and veth</li>
-            <li>some mounts</li>
-            <li>system-wide installation in <code>/usr/local/bin</code></li>
-          </ul>
-        </div>
-      </details>
-
-      <details>
-        <summary>Does Dockan download from Docker Hub?</summary>
-        <div class="answer">
-          <p><strong>Yes!</strong> Since v0.2.0, Dockan features native OCI distribution compatibility without requiring Docker or any background daemon.</p>
-          <p>You can pull and run images directly from Docker Hub, GHCR, or Quay:</p>
-          <pre><code>dockan pull alpine:latest
-dockan pull nginx:alpine
-dockan run -d -p 8080:80 nginx:alpine</code></pre>
-          <p>Local images (<code>:local</code>) and folder registries continue to work offline and take priority.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>How do dependencies work?</summary>
-        <div class="answer">
-          <p>Dockan can explicitly call the package manager of the local machine:</p>
-          <pre><code>dockan deps check
-sudo dockan deps install -y curl git</code></pre>
-          <p>Supported managers: <code>apt</code>, <code>dnf</code>, <code>apk</code>, <code>pacman</code>, <code>zypper</code>.</p>
-          <p>Dockan does not install anything secretly.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Can I use a Dockerfile?</summary>
-        <div class="answer">
-          <p>Yes, for simple Dockerfiles.</p>
-          <p>Dockan understands common instructions like <code>FROM</code>, <code>COPY</code>, <code>RUN</code>, <code>CMD</code>, <code>ENTRYPOINT</code>, <code>ENV</code>, <code>WORKDIR</code>, <code>EXPOSE</code>, <code>VOLUME</code>, <code>LABEL</code>, <code>ARG</code>, <code>USER</code>, <code>SHELL</code>, <code>STOPSIGNAL</code>, and <code>HEALTHCHECK</code>.</p>
-          <p>Use <code>LABEL</code> instead of the older Dockan-only <code>META</code> instruction.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Where are images stored?</summary>
-        <div class="answer">
-          <p>Images and containers are stored locally in the user’s Dockan store.</p>
-          <pre><code>dockan images</code></pre>
-        </div>
-      </details>
-
-      <details>
-        <summary>How do volumes work?</summary>
-        <div class="answer">
-          <p>Create a volume:</p>
-          <pre><code>dockan volume create data</code></pre>
-          <p>Use the volume:</p>
-          <pre><code>dockan run -d --name app -v data:/data app:latest</code></pre>
-          <p>Mount a local folder:</p>
-          <pre><code>dockan run -d --name app -v ./data:/data app:latest</code></pre>
-        </div>
-      </details>
-
-      <details>
-        <summary>Is bridge/NAT networking available?</summary>
-        <div class="answer">
-          <p>Yes, with <code>sudo</code>.</p>
-          <pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
+  </div>
+  <div class="wrap layout">
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title" data-i18n="toc.title">En ĉi tiu paĝo</h2>
+      <ol>
+        <li><a href="#replace" data-i18n="replace.t">Ĉu Dockan anstataŭas Docker?</a></li>
+        <li><a href="#daemon" data-i18n="daemon.t">Ĉu Dockan bezonas demonon?</a></li>
+        <li><a href="#root" data-i18n="root.t">Ĉu Dockan funkcias sen root?</a></li>
+        <li><a href="#hub" data-i18n="hub.t">Ĉu Dockan elŝutas el Docker Hub?</a></li>
+        <li><a href="#deps" data-i18n="deps.t">Kiel funkcias dependaĵoj?</a></li>
+        <li><a href="#dockerfile" data-i18n="dockerfile.t">Ĉu mi povas uzi Dockerfile?</a></li>
+        <li><a href="#storage" data-i18n="storage.t">Kie estas konservataj bildoj kaj volumoj?</a></li>
+        <li><a href="#bridge" data-i18n="bridge.t">Ĉu ponto kaj NAT disponeblas?</a></li>
+        <li><a href="#gui" data-i18n="gui.t">Ĉu Dockan rulas grafikajn aplikaĵojn?</a></li>
+        <li><a href="#machines" data-i18n="machines.t">Ĉu Dockan funkcias sur VPS aŭ Raspberry Pi?</a></li>
+      </ol>
+    </nav>
+    <main id="main">
+      <article>
+<section id="replace">
+<h2 data-i18n="replace.t">Ĉu Dockan anstataŭas Docker?</h2>
+<p data-i18n="replace.0">Dockan celas esti loka kaj simpla alternativo al Docker por Linukso. Ĝi jam kovras la ĉefajn laborfluojn: konstrui, ruli, protokoloj, exec, volumoj, retoj, simpla compose kaj servoj de systemd.</p>
+</section>
+<section id="daemon">
+<h2 data-i18n="daemon.t">Ĉu Dockan bezonas demonon?</h2>
+<p data-i18n-html="daemon.0">Ne. Dockan ne rulas konstantan demonon kiel <code>dockerd</code>: ĉiu komando faras sian laboron rekte. Por aplikaĵoj, kiuj devas reveni post restarto, Dockan kreas denaskan servon de systemd:</p>
+<div class="code"><pre><code>sudo dockan compose autostart -f /srv/myapp/dockan.yml --name myapp</code></pre></div>
+</section>
+<section id="root">
+<h2 data-i18n="root.t">Ĉu Dockan funkcias sen root?</h2>
+<p data-i18n-html="root.0">Jes, por la simplaj laborfluoj. Kelkaj altnivelaj funkcioj bezonas <code>sudo</code>:</p>
+<ul><li data-i18n="root.1.0">ponto kaj NAT</li><li data-i18n="root.1.1">retaj nomspacoj kaj veth</li><li data-i18n="root.1.2">kelkaj muntadoj</li><li data-i18n-html="root.1.3">sisteme larĝa instalo en <code>/usr/local/bin</code></li></ul>
+</section>
+<section id="hub">
+<h2 data-i18n="hub.t">Ĉu Dockan elŝutas el Docker Hub?</h2>
+<p data-i18n="hub.0">Jes. Ekde v0.2.0, Dockan elŝutas OCI-bildojn el Docker Hub, GHCR aŭ Quay en pura Go, sen Docker kaj sen demono. Ĉiu tavolo estas kontrolata per sia haketaĵo, kaj vi povas fiksi bildon per ĝia haketaĵo.</p>
+<div class="code"><pre><code>dockan pull alpine:latest
+dockan pull alpine@sha256:...
+dockan run -d -p 8080:80 nginx:alpine</code></pre></div>
+<p data-i18n-html="hub.2">Lokaj bildoj (<code>:local</code>), lokaj dosierujaj registroj kaj rultempaj bazoj de la gastiganto funkcias sen reto kaj havas prioritaton.</p>
+<p class="note" data-i18n-html="hub.3">Bildoj kun tavoloj zstd bezonas la ilon <code>zstd</code> sur la maŝino.</p>
+</section>
+<section id="deps">
+<h2 data-i18n="deps.t">Kiel funkcias dependaĵoj?</h2>
+<p data-i18n="deps.0">Dockan povas eksplicite voki la pakaĵadministrilon de la maŝino: apt, dnf, apk, pacman aŭ zypper. Ĝi neniam instalas ion sekrete.</p>
+<div class="code"><pre><code>dockan deps check
+sudo dockan deps install -y curl git</code></pre></div>
+</section>
+<section id="dockerfile">
+<h2 data-i18n="dockerfile.t">Ĉu mi povas uzi Dockerfile?</h2>
+<p data-i18n-html="dockerfile.0">Jes, por simplaj Dockerfile. Dockan komprenas la oftajn instrukciojn; vidu la <a href="format.html">paĝon pri la formato</a>.</p>
+</section>
+<section id="storage">
+<h2 data-i18n="storage.t">Kie estas konservataj bildoj kaj volumoj?</h2>
+<p data-i18n="storage.0">Loke, en la deponejo de Dockan de la uzanto. Listigi la bildojn kaj krei volumon:</p>
+<div class="code"><pre><code>dockan images
+dockan volume create data
+dockan run -d --name app -v data:/data app:latest
+dockan run -d --name app -v ./data:/data app:latest</code></pre></div>
+</section>
+<section id="bridge">
+<h2 data-i18n="bridge.t">Ĉu ponto kaj NAT disponeblas?</h2>
+<p data-i18n-html="bridge.0">Jes, kun <code>sudo</code>:</p>
+<div class="code"><pre><code>dockan network create appnet --driver bridge --subnet 10.89.0.0/24 --gateway 10.89.0.1/24 --bridge dockan0
 sudo dockan network enable appnet
-sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre>
-        </div>
-      </details>
-
-      <details>
-        <summary>Can Dockan run GUI apps?</summary>
-        <div class="answer">
-          <p>Yes for simple GUI apps:</p>
-          <pre><code>dockan run --gui app:latest</code></pre>
-          <p>Very complex GUI apps may need manual setup depending on Wayland, X11, audio, GPU, and permissions.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>Can Dockan run on a VPS or Raspberry Pi?</summary>
-        <div class="answer">
-          <p>Yes, if the machine runs Linux and has the required tools.</p>
-          <p>Release packages target Linux <code>amd64</code>, <code>arm64</code>, and <code>armv7</code>.</p>
-        </div>
-      </details>
-
-      <details>
-        <summary>How do I publish a clean version?</summary>
-        <div class="answer">
-          <p>Create a tag:</p>
-          <pre><code>git tag v0.1.0
-git push origin v0.1.0</code></pre>
-          <p>The GitHub Release workflow builds packages and checksums.</p>
-        </div>
-      </details>
-    </div>
-  </main>
-
+sudo dockan run -d --name web --network appnet -p 8080:80 web:latest</code></pre></div>
+</section>
+<section id="gui">
+<h2 data-i18n="gui.t">Ĉu Dockan rulas grafikajn aplikaĵojn?</h2>
+<p data-i18n-html="gui.0">Jes, la simplajn: <code>dockan run --gui app:latest</code>. Tre kompleksaj aplikaĵoj povas bezoni manan agordon laŭ Wayland, X11, sono, GPU kaj permesoj.</p>
+</section>
+<section id="machines">
+<h2 data-i18n="machines.t">Ĉu Dockan funkcias sur VPS aŭ Raspberry Pi?</h2>
+<p data-i18n-html="machines.0">Jes, se la maŝino uzas Linukson kaj havas la necesajn ilojn. La eldonoj celas Linukson <code>amd64</code>, <code>arm64</code>, <code>armv7</code>, <code>386</code> kaj <code>riscv64</code>.</p>
+</section>
+      </article>
+    </main>
+  </div>
   <footer>
-    Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="28" height="28"><span>Dockan</span></a>
+      <span data-i18n="foot.license">Libera programaro sub la permesilo AGPL-3.0-or-later.</span>
+      <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener" data-i18n="foot.source">Fontkodo sur GitHub</a>
+    </div>
   </footer>
+  <script type="application/json" id="i18n-common">
+{
+ "eo": {
+  "ui.skip": "Iri al la enhavo",
+  "ui.nav": "Ĉefa navigado",
+  "ui.lang": "Lingvo",
+  "ui.menu": "Menuo",
+  "ui.copy": "Kopii",
+  "ui.copied": "Kopiita",
+  "ui.selected": "Elektita",
+  "nav.home": "Hejmo",
+  "nav.format": "Formato",
+  "nav.langs": "Programlingvoj",
+  "nav.dev": "Kunhavigi",
+  "nav.prod": "Produktado",
+  "nav.faq": "Demandoj",
+  "crumb.docs": "Dokumentaro",
+  "toc.title": "En ĉi tiu paĝo",
+  "foot.license": "Libera programaro sub la permesilo AGPL-3.0-or-later.",
+  "foot.source": "Fontkodo sur GitHub"
+ },
+ "fr": {
+  "ui.skip": "Aller au contenu",
+  "ui.nav": "Navigation principale",
+  "ui.lang": "Langue",
+  "ui.menu": "Menu",
+  "ui.copy": "Copier",
+  "ui.copied": "Copié",
+  "ui.selected": "Sélectionné",
+  "nav.home": "Accueil",
+  "nav.format": "Format",
+  "nav.langs": "Langages",
+  "nav.dev": "Partager",
+  "nav.prod": "Production",
+  "nav.faq": "Questions",
+  "crumb.docs": "Documentation",
+  "toc.title": "Sur cette page",
+  "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
+  "foot.source": "Code source sur GitHub"
+ },
+ "en": {
+  "ui.skip": "Skip to content",
+  "ui.nav": "Main navigation",
+  "ui.lang": "Language",
+  "ui.menu": "Menu",
+  "ui.copy": "Copy",
+  "ui.copied": "Copied",
+  "ui.selected": "Selected",
+  "nav.home": "Home",
+  "nav.format": "Format",
+  "nav.langs": "Languages",
+  "nav.dev": "Share",
+  "nav.prod": "Production",
+  "nav.faq": "FAQ",
+  "crumb.docs": "Documentation",
+  "toc.title": "On this page",
+  "foot.license": "Free software under the AGPL-3.0-or-later license.",
+  "foot.source": "Source code on GitHub"
+ },
+ "es": {
+  "ui.skip": "Ir al contenido",
+  "ui.nav": "Navegación principal",
+  "ui.lang": "Idioma",
+  "ui.menu": "Menú",
+  "ui.copy": "Copiar",
+  "ui.copied": "Copiado",
+  "ui.selected": "Seleccionado",
+  "nav.home": "Inicio",
+  "nav.format": "Formato",
+  "nav.langs": "Lenguajes",
+  "nav.dev": "Compartir",
+  "nav.prod": "Producción",
+  "nav.faq": "Preguntas",
+  "crumb.docs": "Documentación",
+  "toc.title": "En esta página",
+  "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
+  "foot.source": "Código fuente en GitHub"
+ }
+}
+  </script>
+  <script type="application/json" id="i18n-data">
+{
+ "fr": {
+  "replace.0": "Dockan se veut une alternative locale et simple à Docker pour Linux. Il couvre déjà les usages essentiels : construire, lancer, journaux, exec, volumes, réseaux, compose simple et services systemd.",
+  "replace.t": "Dockan remplace-t-il Docker ?",
+  "daemon.0": "Non. Dockan ne fait tourner aucun démon permanent comme <code>dockerd</code> : chaque commande fait son travail directement. Pour les applications qui doivent revenir après un redémarrage, Dockan crée un service systemd natif :",
+  "daemon.t": "Dockan a-t-il besoin d’un démon ?",
+  "root.0": "Oui, pour les usages simples. Certaines fonctions avancées demandent <code>sudo</code> :",
+  "root.1.0": "pont et NAT",
+  "root.1.1": "espaces de noms réseau et veth",
+  "root.1.2": "certains montages",
+  "root.1.3": "l’installation pour tout le système dans <code>/usr/local/bin</code>",
+  "root.t": "Dockan fonctionne-t-il sans root ?",
+  "hub.0": "Oui. Depuis la v0.2.0, Dockan récupère les images OCI sur Docker Hub, GHCR ou Quay en Go pur, sans Docker ni démon. Chaque couche est vérifiée par son empreinte, et vous pouvez épingler une image par son empreinte.",
+  "hub.2": "Les images locales (<code>:local</code>), les registres en dossier local et les bases d’environnement de l’hôte fonctionnent hors ligne et restent prioritaires.",
+  "hub.3": "Les images à couches zstd demandent l’outil <code>zstd</code> sur la machine.",
+  "hub.t": "Dockan télécharge-t-il depuis Docker Hub ?",
+  "deps.0": "Dockan peut appeler explicitement le gestionnaire de paquets de la machine : apt, dnf, apk, pacman ou zypper. Il n’installe jamais rien en cachette.",
+  "deps.t": "Comment fonctionnent les dépendances ?",
+  "dockerfile.0": "Oui, pour les Dockerfile simples. Dockan comprend les instructions courantes ; voir la <a href=\"format.html\">page sur le format</a>.",
+  "dockerfile.t": "Puis-je utiliser un Dockerfile ?",
+  "storage.0": "Localement, dans le dépôt Dockan de l’utilisateur ou l’utilisatrice. Lister les images et créer un volume :",
+  "storage.t": "Où sont stockés les images et volumes ?",
+  "bridge.0": "Oui, avec <code>sudo</code> :",
+  "bridge.t": "Le pont et le NAT sont-ils disponibles ?",
+  "gui.0": "Oui, les applications simples : <code>dockan run --gui app:latest</code>. Les applications très complexes peuvent demander un réglage manuel selon Wayland, X11, le son, le GPU et les permissions.",
+  "gui.t": "Dockan lance-t-il des applications graphiques ?",
+  "machines.0": "Oui, si la machine tourne sous Linux et dispose des outils nécessaires. Les versions publiées visent Linux <code>amd64</code>, <code>arm64</code>, <code>armv7</code>, <code>386</code> et <code>riscv64</code>.",
+  "machines.t": "Dockan fonctionne-t-il sur un VPS ou un Raspberry Pi ?",
+  "page.title": "Questions fréquentes",
+  "page.lead": "Réponses sur le démon, root, Docker Hub, les dépendances, les volumes, le réseau et les machines prises en charge."
+ },
+ "en": {
+  "replace.0": "Dockan aims to be a local and simple Docker alternative for Linux. It already covers the main workflows: build, run, logs, exec, volumes, networks, simple compose and systemd services.",
+  "replace.t": "Does Dockan replace Docker?",
+  "daemon.0": "No. Dockan does not run a permanent daemon like <code>dockerd</code>: each command does its work directly. For apps that must come back after a reboot, Dockan creates a native systemd service:",
+  "daemon.t": "Does Dockan need a daemon?",
+  "root.0": "Yes, for simple workflows. Some advanced features need <code>sudo</code>:",
+  "root.1.0": "bridge and NAT",
+  "root.1.1": "network namespaces and veth",
+  "root.1.2": "some mounts",
+  "root.1.3": "system-wide installation in <code>/usr/local/bin</code>",
+  "root.t": "Can Dockan run without root?",
+  "hub.0": "Yes. Since v0.2.0, Dockan pulls OCI images from Docker Hub, GHCR or Quay in pure Go, without Docker or a daemon. Every layer is verified against its digest, and you can pin an image by digest.",
+  "hub.2": "Local images (<code>:local</code>), local folder registries and host runtime bases work offline and take priority.",
+  "hub.3": "Images with zstd layers need the <code>zstd</code> tool on the machine.",
+  "hub.t": "Does Dockan pull from Docker Hub?",
+  "deps.0": "Dockan can explicitly call the machine’s package manager: apt, dnf, apk, pacman or zypper. It never installs anything behind your back.",
+  "deps.t": "How do dependencies work?",
+  "dockerfile.0": "Yes, for simple Dockerfiles. Dockan understands the common instructions; see the <a href=\"format.html\">format page</a>.",
+  "dockerfile.t": "Can I use a Dockerfile?",
+  "storage.0": "Locally, in the user’s Dockan store. List images and create a volume:",
+  "storage.t": "Where are images and volumes stored?",
+  "bridge.0": "Yes, with <code>sudo</code>:",
+  "bridge.t": "Are bridge and NAT available?",
+  "gui.0": "Yes, simple ones: <code>dockan run --gui app:latest</code>. Very complex apps may need manual setup depending on Wayland, X11, audio, GPU and permissions.",
+  "gui.t": "Can Dockan run desktop apps?",
+  "machines.0": "Yes, if the machine runs Linux and has the required tools. Releases target Linux <code>amd64</code>, <code>arm64</code>, <code>armv7</code>, <code>386</code> and <code>riscv64</code>.",
+  "machines.t": "Does Dockan run on a VPS or a Raspberry Pi?",
+  "page.title": "Frequently asked questions",
+  "page.lead": "Answers about daemons, root, Docker Hub, dependencies, volumes, networking and supported machines."
+ },
+ "es": {
+  "replace.0": "Dockan quiere ser una alternativa local y sencilla a Docker para Linux. Ya cubre los usos principales: compilar, ejecutar, registros, exec, volúmenes, redes, compose sencillo y servicios de systemd.",
+  "replace.t": "¿Dockan sustituye a Docker?",
+  "daemon.0": "No. Dockan no ejecuta ningún demonio permanente como <code>dockerd</code>: cada comando hace su trabajo directamente. Para las aplicaciones que deben volver tras un reinicio, Dockan crea un servicio nativo de systemd:",
+  "daemon.t": "¿Dockan necesita un demonio?",
+  "root.0": "Sí, para los usos sencillos. Algunas funciones avanzadas necesitan <code>sudo</code>:",
+  "root.1.0": "puente y NAT",
+  "root.1.1": "espacios de nombres de red y veth",
+  "root.1.2": "algunos montajes",
+  "root.1.3": "la instalación para todo el sistema en <code>/usr/local/bin</code>",
+  "root.t": "¿Dockan funciona sin root?",
+  "hub.0": "Sí. Desde la v0.2.0, Dockan descarga imágenes OCI de Docker Hub, GHCR o Quay en Go puro, sin Docker ni demonio. Cada capa se verifica con su huella, y puedes fijar una imagen por su huella.",
+  "hub.2": "Las imágenes locales (<code>:local</code>), los registros en carpeta local y las bases de entorno del sistema funcionan sin conexión y tienen prioridad.",
+  "hub.3": "Las imágenes con capas zstd necesitan la herramienta <code>zstd</code> en la máquina.",
+  "hub.t": "¿Dockan descarga de Docker Hub?",
+  "deps.0": "Dockan puede llamar explícitamente al gestor de paquetes de la máquina: apt, dnf, apk, pacman o zypper. Nunca instala nada a escondidas.",
+  "deps.t": "¿Cómo funcionan las dependencias?",
+  "dockerfile.0": "Sí, para Dockerfile sencillos. Dockan entiende las instrucciones habituales; consulta la <a href=\"format.html\">página del formato</a>.",
+  "dockerfile.t": "¿Puedo usar un Dockerfile?",
+  "storage.0": "Localmente, en el almacén Dockan de la persona usuaria. Listar las imágenes y crear un volumen:",
+  "storage.t": "¿Dónde se guardan las imágenes y los volúmenes?",
+  "bridge.0": "Sí, con <code>sudo</code>:",
+  "bridge.t": "¿Están disponibles el puente y el NAT?",
+  "gui.0": "Sí, las sencillas: <code>dockan run --gui app:latest</code>. Las aplicaciones muy complejas pueden requerir ajustes manuales según Wayland, X11, el sonido, la GPU y los permisos.",
+  "gui.t": "¿Dockan ejecuta aplicaciones gráficas?",
+  "machines.0": "Sí, si la máquina usa Linux y tiene las herramientas necesarias. Las versiones publicadas apuntan a Linux <code>amd64</code>, <code>arm64</code>, <code>armv7</code>, <code>386</code> y <code>riscv64</code>.",
+  "machines.t": "¿Dockan funciona en un VPS o una Raspberry Pi?",
+  "page.title": "Preguntas frecuentes",
+  "page.lead": "Respuestas sobre el demonio, root, Docker Hub, dependencias, volúmenes, red y máquinas compatibles."
+ }
+}
+  </script>
+  <script src="assets/doc.js"></script>
 </body>
 </html>

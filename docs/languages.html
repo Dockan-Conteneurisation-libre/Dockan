@@ -1,170 +1,306 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="eo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Run Any Language - Dockan</title>
-  <meta name="description" content="Run PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts, and static binaries with Dockan.">
-  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
-  <style>
-    :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17201b;
-      --muted: #56635c;
-      --line: #dfe5df;
-      --green: #176b48;
-      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-    a { color: var(--green); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    header { background: #fff; border-bottom: 1px solid var(--line); }
-    .topbar {
-      max-width: 1020px;
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); font-weight: 800; }
-    .brand img { width: 40px; height: 40px; }
-    nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.95rem; }
-    main { max-width: 1020px; margin: 0 auto; padding: 48px 24px; }
-    h1 { margin: 0 0 14px; font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1; letter-spacing: 0; }
-    h2 { margin: 0 0 14px; font-size: 1.45rem; letter-spacing: 0; }
-    h3 { margin: 0 0 8px; font-size: 1.05rem; letter-spacing: 0; }
-    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    section, .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin: 16px 0;
-    }
-    .card { margin: 0; }
-    p, li { color: var(--muted); }
-    pre {
-      margin: 12px 0;
-      padding: 16px;
-      overflow-x: auto;
-      background: #101812;
-      color: #eaf6ef;
-      border-radius: 8px;
-      border: 1px solid #24342a;
-      font-size: 0.94rem;
-    }
-    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-    footer { max-width: 1020px; margin: 0 auto; padding: 28px 24px 46px; color: var(--muted); border-top: 1px solid var(--line); }
-    @media (max-width: 760px) {
-      .topbar { align-items: flex-start; flex-direction: column; }
-      .grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Ĉiu programlingvo | Dockan</title>
+  <meta name="description" content="Dockan rulas ĉiun Linuksan aplikaĵon, kiu havas tion, kion ĝi bezonas por starti: statikan binaraĵon, rultempon de la gastiganto aŭ lokan bazon.">
+  <link rel="canonical" href="https://dockan-conteneurisation-libre.github.io/Dockan/languages.html">
+  <link rel="icon" type="image/svg+xml" href="dockan-logo.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Ĉiu programlingvo | Dockan">
+  <meta property="og:description" content="Dockan rulas ĉiun Linuksan aplikaĵon, kiu havas tion, kion ĝi bezonas por starti: statikan binaraĵon, rultempon de la gastiganto aŭ lokan bazon.">
+  <meta property="og:image" content="https://dockan-conteneurisation-libre.github.io/Dockan/assets/og-dockan.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0e2a1e">
+  <link rel="stylesheet" href="assets/doc.css">
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <a class="brand" href="./index.html" aria-label="Dockan home">
-        <img src="./dockan-logo.svg" alt="">
-        <span>Dockan</span>
-      </a>
-      <nav aria-label="Navigation">
-        <a href="./index.html#install">Install</a>
-        <a href="./developer.html">Developer</a>
-        <a href="./production.html">Production</a>
-        <a href="./faq.html">FAQ</a>
+  <a class="skip" href="#main" data-i18n="ui.skip">Iri al la enhavo</a>
+  <div class="masthead">
+    <header class="wrap topbar">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="34" height="34"><span>Dockan</span></a>
+      <nav class="nav" data-i18n-aria="ui.nav" aria-label="Ĉefa navigado">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" aria-current="page" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" class="opt" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" class="opt" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
       </nav>
+      <div class="langs" role="group" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <button type="button" data-lang="eo" aria-pressed="true" lang="eo" title="Esperanto">EO</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+        <button type="button" data-lang="es" aria-pressed="false" lang="es" title="Español">ES</button>
+      </div>
+      <select class="lang-select" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <option value="eo">EO</option><option value="fr">FR</option><option value="en">EN</option><option value="es">ES</option>
+      </select>
+      <details class="menu">
+        <summary data-i18n-aria="ui.menu" aria-label="Menuo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" aria-current="page" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
+        </div>
+      </details>
+    </header>
+    <div class="wrap page-head">
+      <p class="crumb"><a href="index.html#docs" data-i18n="crumb.docs">Dokumentaro</a></p>
+      <h1 data-i18n="page.title">Ĉiu programlingvo</h1>
+      <p data-i18n="page.lead">Dockan rulas ĉiun Linuksan aplikaĵon, kiu havas tion, kion ĝi bezonas por starti: statikan binaraĵon, rultempon de la gastiganto aŭ lokan bazon.</p>
     </div>
-  </header>
-  <main>
-    <h1>Run Any Language</h1>
-    <p class="lead">Dockan can run PHP, Node.js, Python, Go, Rust, Java, Ruby, shell scripts, and static binaries when the runtime exists locally or the app ships as a Linux binary.</p>
-
-    <section>
-      <h2>Start A Project</h2>
-      <pre><code>dockan new python my-python-app
+  </div>
+  <div class="wrap layout">
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title" data-i18n="toc.title">En ĉi tiu paĝo</h2>
+      <ol>
+        <li><a href="#rule" data-i18n="rule.t">La regulo</a></li>
+        <li><a href="#start" data-i18n="start.t">Komenci projekton</a></li>
+        <li><a href="#examples" data-i18n="examples.t">PHP, Node.js kaj Python</a></li>
+        <li><a href="#compiled" data-i18n="compiled.t">Go kaj Rust</a></li>
+        <li><a href="#runtimes" data-i18n="runtimes.t">Lokaj bazoj kaj rultempoj de la gastiganto</a></li>
+      </ol>
+    </nav>
+    <main id="main">
+      <article>
+<section id="rule">
+<h2 data-i18n="rule.t">La regulo</h2>
+<p data-i18n="rule.0">Aplikaĵo ruliĝas, se unu el ĉi tiuj kondiĉoj veras:</p>
+<ul><li data-i18n-html="rule.1.0">ĝi estas statika Linuksa binaraĵo, kiu povas ruliĝi el <code>FROM scratch</code></li><li data-i18n="rule.1.1">ĝia rultempo ekzistas sur la maŝino en la elektita izolada reĝimo</li><li data-i18n-html="rule.1.2">loka baza bildo enhavas la rultempon, ekzemple <code>python:local</code>, <code>php:local</code> aŭ <code>node:local</code></li></ul>
+<p data-i18n-html="rule.2">Nomoj kiel <code>php:8.3</code>, <code>node:20</code>, <code>python:3.12</code>, <code>openjdk:21</code> aŭ <code>golang:1.22</code> funkcias ankaŭ sen Docker Hub, per la rultempo de via maŝino.</p>
+</section>
+<section id="start">
+<h2 data-i18n="start.t">Komenci projekton</h2>
+<div class="code"><pre><code>dockan new python my-python-app
 dockan new node my-node-app
 dockan new php my-php-app
 dockan new go my-go-app
 dockan new rust my-rust-app
 dockan new java my-java-app
 dockan new ruby my-ruby-app
-dockan new binary my-binary-app</code></pre>
-      <pre><code>cd my-python-app
+dockan new binary my-binary-app</code></pre></div>
+<p data-i18n="start.1">Poste:</p>
+<div class="code"><pre><code>cd my-python-app
 dockan build -t my-python-app:latest .
-dockan run -d --name my-python-app -p 8080:8000 my-python-app:latest</code></pre>
-    </section>
-
-    <section>
-      <h2>The Rule</h2>
-      <p>The rule is simple: the app must have what it needs to start. For local Dockerfile builds, Dockan prioritizes local bases and host runtimes to stay fast, deterministic, and offline-friendly.</p>
-      <p>If you write <code>FROM php:8.3</code> and no Dockan base exists, Dockan checks the host for <code>php</code>. If it exists, the build uses that local runtime. If it is missing, Dockan stops with a clear error.</p>
-      <pre><code>dockan deps install frontend --dry-run
-sudo dockan deps install frontend -y
-dockan deps runtime php:8.3 --dry-run
-sudo dockan deps runtime php:8.3 -y
-sudo dockan deps runtime node:20 -y
-sudo dockan deps runtime python:3.12 -y</code></pre>
-      <pre><code>dockan base runtime php:8.3 --from ./php83-rootfs
-dockan base runtime node:20 --from ./node20-rootfs.tar.gz
-dockan base import php:local ./php-rootfs
-dockan base import node:local ./node-rootfs.tar.gz
-dockan base import python:local ./python-rootfs.tar.gz</code></pre>
-    </section>
-
-    <div class="grid">
-      <article class="card">
-        <h3>PHP</h3>
-        <pre><code>FROM php:8.3
+dockan run -d --name my-python-app -p 8080:8000 my-python-app:latest</code></pre></div>
+</section>
+<section id="examples">
+<h2 data-i18n="examples.t">PHP, Node.js kaj Python</h2>
+<h3 data-i18n="examples.0">PHP</h3>
+<div class="code"><pre><code>FROM php:8.3
 WORKDIR /app
 COPY . /app
 EXPOSE 8000
-CMD php -S 0.0.0.0:8000 -t public</code></pre>
-      </article>
-      <article class="card">
-        <h3>Node.js</h3>
-        <pre><code>FROM node:20
+CMD php -S 0.0.0.0:8000 -t public</code></pre></div>
+<h3 data-i18n="examples.2">Node.js</h3>
+<div class="code"><pre><code>FROM node:20
 WORKDIR /app
 COPY . /app
 EXPOSE 3000
-CMD node server.js</code></pre>
-      </article>
-      <article class="card">
-        <h3>Python</h3>
-        <pre><code>FROM python:3.12
+CMD node server.js</code></pre></div>
+<h3 data-i18n="examples.4">Python</h3>
+<div class="code"><pre><code>FROM python:3.12
 WORKDIR /app
 COPY . /app
 EXPOSE 8000
-CMD python3 app.py</code></pre>
-      </article>
-      <article class="card">
-        <h3>Static Binary</h3>
-        <pre><code>FROM scratch
+CMD python3 app.py</code></pre></div>
+</section>
+<section id="compiled">
+<h2 data-i18n="compiled.t">Go kaj Rust</h2>
+<p data-i18n="compiled.0">Por produktado, la plej fortika vojo ofte estas unue kompili Linuksan binaraĵon, poste uzi:</p>
+<div class="code"><pre><code>FROM scratch
 COPY app /app
 EXPOSE 8080
-CMD ./app</code></pre>
+CMD ./app</code></pre></div>
+</section>
+<section id="runtimes">
+<h2 data-i18n="runtimes.t">Lokaj bazoj kaj rultempoj de la gastiganto</h2>
+<p data-i18n="runtimes.0">Por lokaj konstruoj, Dockan preferas lokajn bazojn kaj la rultempojn de via maŝino: konstruado restas rapida, antaŭvidebla kaj funkcias sen reto.</p>
+<p data-i18n-html="runtimes.1">Se vi skribas <code>FROM php:8.3</code> kaj neniu baza bildo <code>php:8.3</code> ekzistas, Dockan serĉas <code>php</code> sur la maŝino. Se ĝi trovas ĝin, la konstruado daŭras; alie ĝi haltas kun klara eraro.</p>
+<p data-i18n="runtimes.2">Instali mankantan rultempon, eksplicite:</p>
+<div class="code"><pre><code>dockan deps runtime php:8.3 --dry-run
+sudo dockan deps runtime php:8.3 -y
+sudo dockan deps runtime node:20 -y
+sudo dockan deps runtime python:3.12 -y</code></pre></div>
+<p data-i18n="runtimes.4">Aŭ importi lokan rootfs aŭ arkivon:</p>
+<div class="code"><pre><code>dockan base runtime php:8.3 --from ./php83-rootfs
+dockan base runtime node:20 --from ./node20-rootfs.tar.gz
+dockan base import python:local ./python-rootfs.tar.gz</code></pre></div>
+<p class="note" data-i18n="runtimes.6">Dockan ne povas ruli lingvon sen ĝia rultempo: PHP bezonas PHP, Node bezonas Node, Java bezonas JRE aŭ JDK, Python bezonas Python.</p>
+</section>
       </article>
-    </div>
-
-    <section>
-      <h2>Important</h2>
-      <p>Dockan can run many languages, but it cannot magically run a language if the runtime is missing. For PHP you need PHP, for Node you need Node, for Java you need a JRE/JDK, and for Python you need Python.</p>
-    </section>
-  </main>
+    </main>
+  </div>
   <footer>
-    Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="28" height="28"><span>Dockan</span></a>
+      <span data-i18n="foot.license">Libera programaro sub la permesilo AGPL-3.0-or-later.</span>
+      <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener" data-i18n="foot.source">Fontkodo sur GitHub</a>
+    </div>
   </footer>
+  <script type="application/json" id="i18n-common">
+{
+ "eo": {
+  "ui.skip": "Iri al la enhavo",
+  "ui.nav": "Ĉefa navigado",
+  "ui.lang": "Lingvo",
+  "ui.menu": "Menuo",
+  "ui.copy": "Kopii",
+  "ui.copied": "Kopiita",
+  "ui.selected": "Elektita",
+  "nav.home": "Hejmo",
+  "nav.format": "Formato",
+  "nav.langs": "Programlingvoj",
+  "nav.dev": "Kunhavigi",
+  "nav.prod": "Produktado",
+  "nav.faq": "Demandoj",
+  "crumb.docs": "Dokumentaro",
+  "toc.title": "En ĉi tiu paĝo",
+  "foot.license": "Libera programaro sub la permesilo AGPL-3.0-or-later.",
+  "foot.source": "Fontkodo sur GitHub"
+ },
+ "fr": {
+  "ui.skip": "Aller au contenu",
+  "ui.nav": "Navigation principale",
+  "ui.lang": "Langue",
+  "ui.menu": "Menu",
+  "ui.copy": "Copier",
+  "ui.copied": "Copié",
+  "ui.selected": "Sélectionné",
+  "nav.home": "Accueil",
+  "nav.format": "Format",
+  "nav.langs": "Langages",
+  "nav.dev": "Partager",
+  "nav.prod": "Production",
+  "nav.faq": "Questions",
+  "crumb.docs": "Documentation",
+  "toc.title": "Sur cette page",
+  "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
+  "foot.source": "Code source sur GitHub"
+ },
+ "en": {
+  "ui.skip": "Skip to content",
+  "ui.nav": "Main navigation",
+  "ui.lang": "Language",
+  "ui.menu": "Menu",
+  "ui.copy": "Copy",
+  "ui.copied": "Copied",
+  "ui.selected": "Selected",
+  "nav.home": "Home",
+  "nav.format": "Format",
+  "nav.langs": "Languages",
+  "nav.dev": "Share",
+  "nav.prod": "Production",
+  "nav.faq": "FAQ",
+  "crumb.docs": "Documentation",
+  "toc.title": "On this page",
+  "foot.license": "Free software under the AGPL-3.0-or-later license.",
+  "foot.source": "Source code on GitHub"
+ },
+ "es": {
+  "ui.skip": "Ir al contenido",
+  "ui.nav": "Navegación principal",
+  "ui.lang": "Idioma",
+  "ui.menu": "Menú",
+  "ui.copy": "Copiar",
+  "ui.copied": "Copiado",
+  "ui.selected": "Seleccionado",
+  "nav.home": "Inicio",
+  "nav.format": "Formato",
+  "nav.langs": "Lenguajes",
+  "nav.dev": "Compartir",
+  "nav.prod": "Producción",
+  "nav.faq": "Preguntas",
+  "crumb.docs": "Documentación",
+  "toc.title": "En esta página",
+  "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
+  "foot.source": "Código fuente en GitHub"
+ }
+}
+  </script>
+  <script type="application/json" id="i18n-data">
+{
+ "fr": {
+  "rule.0": "Une application tourne si l’une de ces conditions est remplie :",
+  "rule.1.0": "c’est un binaire Linux statique qui peut tourner depuis <code>FROM scratch</code>",
+  "rule.1.1": "son environnement d’exécution existe sur la machine dans le mode d’isolation choisi",
+  "rule.1.2": "une base locale contient l’environnement, par exemple <code>python:local</code>, <code>php:local</code> ou <code>node:local</code>",
+  "rule.2": "Des noms comme <code>php:8.3</code>, <code>node:20</code>, <code>python:3.12</code>, <code>openjdk:21</code> ou <code>golang:1.22</code> fonctionnent aussi sans Docker Hub, grâce à l’environnement de votre machine.",
+  "rule.t": "La règle",
+  "start.1": "Ensuite :",
+  "start.t": "Démarrer un projet",
+  "examples.0": "PHP",
+  "examples.2": "Node.js",
+  "examples.4": "Python",
+  "examples.t": "PHP, Node.js et Python",
+  "compiled.0": "En production, le plus solide est souvent de compiler d’abord un binaire Linux, puis d’utiliser :",
+  "compiled.t": "Go et Rust",
+  "runtimes.0": "Pour les constructions locales, Dockan privilégie les bases locales et les environnements de votre machine : la construction reste rapide, prévisible et fonctionne hors ligne.",
+  "runtimes.1": "Si vous écrivez <code>FROM php:8.3</code> et qu’aucune base <code>php:8.3</code> n’existe, Dockan cherche <code>php</code> sur la machine. S’il le trouve, la construction continue ; sinon il s’arrête avec une erreur claire.",
+  "runtimes.2": "Installer un environnement manquant, explicitement :",
+  "runtimes.4": "Ou importer un rootfs local ou une archive :",
+  "runtimes.6": "Dockan ne peut pas lancer un langage sans son environnement : PHP a besoin de PHP, Node de Node, Java d’un JRE ou JDK, Python de Python.",
+  "runtimes.t": "Bases locales et environnements de l’hôte",
+  "page.title": "Tous les langages",
+  "page.lead": "Dockan lance toute application Linux qui dispose de ce qu’il lui faut pour démarrer : un binaire statique, l’environnement de l’hôte ou une base locale."
+ },
+ "en": {
+  "rule.0": "An app runs when one of these is true:",
+  "rule.1.0": "it is a static Linux binary that can run from <code>FROM scratch</code>",
+  "rule.1.1": "its runtime exists on the machine in the selected isolation mode",
+  "rule.1.2": "a local base contains the runtime, for example <code>python:local</code>, <code>php:local</code> or <code>node:local</code>",
+  "rule.2": "Names such as <code>php:8.3</code>, <code>node:20</code>, <code>python:3.12</code>, <code>openjdk:21</code> or <code>golang:1.22</code> also work without Docker Hub, through your machine’s runtime.",
+  "rule.t": "The rule",
+  "start.1": "Then:",
+  "start.t": "Start a project",
+  "examples.0": "PHP",
+  "examples.2": "Node.js",
+  "examples.4": "Python",
+  "examples.t": "PHP, Node.js and Python",
+  "compiled.0": "For production, the strongest path is often to build a Linux binary first, then use:",
+  "compiled.t": "Go and Rust",
+  "runtimes.0": "For local builds, Dockan prefers local bases and your machine’s runtimes: builds stay fast, predictable and work offline.",
+  "runtimes.1": "If you write <code>FROM php:8.3</code> and no <code>php:8.3</code> base exists, Dockan looks for <code>php</code> on the machine. If it finds it, the build continues; otherwise it stops with a clear error.",
+  "runtimes.2": "Install a missing runtime, explicitly:",
+  "runtimes.4": "Or import a local rootfs or archive:",
+  "runtimes.6": "Dockan cannot run a language without its runtime: PHP needs PHP, Node needs Node, Java needs a JRE or JDK, Python needs Python.",
+  "runtimes.t": "Local bases and host runtimes",
+  "page.title": "Any language",
+  "page.lead": "Dockan runs any Linux app that has what it needs to start: a static binary, the host runtime or a local base."
+ },
+ "es": {
+  "rule.0": "Una aplicación funciona si se cumple una de estas condiciones:",
+  "rule.1.0": "es un binario estático de Linux que puede funcionar desde <code>FROM scratch</code>",
+  "rule.1.1": "su entorno de ejecución existe en la máquina en el modo de aislamiento elegido",
+  "rule.1.2": "una base local contiene el entorno, por ejemplo <code>python:local</code>, <code>php:local</code> o <code>node:local</code>",
+  "rule.2": "Nombres como <code>php:8.3</code>, <code>node:20</code>, <code>python:3.12</code>, <code>openjdk:21</code> o <code>golang:1.22</code> también funcionan sin Docker Hub, gracias al entorno de tu máquina.",
+  "rule.t": "La regla",
+  "start.1": "Después:",
+  "start.t": "Empezar un proyecto",
+  "examples.0": "PHP",
+  "examples.2": "Node.js",
+  "examples.4": "Python",
+  "examples.t": "PHP, Node.js y Python",
+  "compiled.0": "En producción, lo más sólido suele ser compilar primero un binario de Linux y luego usar:",
+  "compiled.t": "Go y Rust",
+  "runtimes.0": "Para compilaciones locales, Dockan prefiere las bases locales y los entornos de tu máquina: la compilación es rápida, predecible y funciona sin conexión.",
+  "runtimes.1": "Si escribes <code>FROM php:8.3</code> y no existe ninguna base <code>php:8.3</code>, Dockan busca <code>php</code> en la máquina. Si lo encuentra, la compilación continúa; si no, se detiene con un error claro.",
+  "runtimes.2": "Instalar un entorno que falta, de forma explícita:",
+  "runtimes.4": "O importar un rootfs local o un archivo comprimido:",
+  "runtimes.6": "Dockan no puede ejecutar un lenguaje sin su entorno: PHP necesita PHP, Node necesita Node, Java necesita un JRE o JDK, Python necesita Python.",
+  "runtimes.t": "Bases locales y entornos del sistema",
+  "page.title": "Cualquier lenguaje",
+  "page.lead": "Dockan ejecuta cualquier aplicación de Linux que tenga lo que necesita para arrancar: un binario estático, el entorno del sistema o una base local."
+ }
+}
+  </script>
+  <script src="assets/doc.js"></script>
 </body>
 </html>

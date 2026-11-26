@@ -1,137 +1,301 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="eo">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dockan Format</title>
-  <meta name="description" content="Dockanfile, simple Dockerfile support, local bases, and the legacy .dockan folder format.">
-  <link rel="icon" type="image/svg+xml" href="./dockan-logo.svg">
-  <style>
-    :root {
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #17201b;
-      --muted: #56635c;
-      --line: #dfe5df;
-      --green: #176b48;
-      --shadow: 0 16px 40px rgba(23, 32, 27, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.6;
-    }
-    a { color: var(--green); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    header { background: #fff; border-bottom: 1px solid var(--line); }
-    .topbar {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); font-weight: 800; }
-    .brand img { width: 40px; height: 40px; }
-    nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.95rem; }
-    main { max-width: 960px; margin: 0 auto; padding: 48px 24px; }
-    h1 { margin: 0 0 14px; font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1; letter-spacing: 0; }
-    h2 { margin: 0 0 14px; font-size: 1.55rem; letter-spacing: 0; }
-    .lead { margin: 0 0 28px; color: var(--muted); font-size: 1.12rem; }
-    section {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin: 16px 0;
-    }
-    p, li { color: var(--muted); }
-    pre {
-      margin: 12px 0;
-      padding: 16px;
-      overflow-x: auto;
-      background: #101812;
-      color: #eaf6ef;
-      border-radius: 8px;
-      border: 1px solid #24342a;
-      font-size: 0.94rem;
-    }
-    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
-    footer { max-width: 960px; margin: 0 auto; padding: 28px 24px 46px; color: var(--muted); border-top: 1px solid var(--line); }
-    @media (max-width: 720px) { .topbar { align-items: flex-start; flex-direction: column; } }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Formato de Dockan | Dockan</title>
+  <meta name="description" content="Kiel priskribi bildon: Dockanfile, simpla Dockerfile, lokaj bazoj kaj la malnova formato .dockan.">
+  <link rel="canonical" href="https://dockan-conteneurisation-libre.github.io/Dockan/format.html">
+  <link rel="icon" type="image/svg+xml" href="dockan-logo.svg">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Formato de Dockan | Dockan">
+  <meta property="og:description" content="Kiel priskribi bildon: Dockanfile, simpla Dockerfile, lokaj bazoj kaj la malnova formato .dockan.">
+  <meta property="og:image" content="https://dockan-conteneurisation-libre.github.io/Dockan/assets/og-dockan.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0e2a1e">
+  <link rel="stylesheet" href="assets/doc.css">
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <a class="brand" href="./index.html" aria-label="Dockan home">
-        <img src="./dockan-logo.svg" alt="">
-        <span>Dockan</span>
-      </a>
-      <nav aria-label="Navigation">
-        <a href="./index.html#install">Install</a>
-        <a href="./developer.html">Developer</a>
-        <a href="./production.html">Production</a>
-        <a href="./faq.html">FAQ</a>
+  <a class="skip" href="#main" data-i18n="ui.skip">Iri al la enhavo</a>
+  <div class="masthead">
+    <header class="wrap topbar">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="34" height="34"><span>Dockan</span></a>
+      <nav class="nav" data-i18n-aria="ui.nav" aria-label="Ĉefa navigado">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" aria-current="page" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" class="opt" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" class="opt" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
       </nav>
+      <div class="langs" role="group" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <button type="button" data-lang="eo" aria-pressed="true" lang="eo" title="Esperanto">EO</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en" title="English">EN</button>
+        <button type="button" data-lang="es" aria-pressed="false" lang="es" title="Español">ES</button>
+      </div>
+      <select class="lang-select" data-i18n-aria="ui.lang" aria-label="Lingvo">
+        <option value="eo">EO</option><option value="fr">FR</option><option value="en">EN</option><option value="es">ES</option>
+      </select>
+      <details class="menu">
+        <summary data-i18n-aria="ui.menu" aria-label="Menuo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links">
+        <a href="index.html" data-i18n="nav.home">Hejmo</a>
+        <a href="format.html" aria-current="page" data-i18n="nav.format">Formato</a>
+        <a href="languages.html" data-i18n="nav.langs">Programlingvoj</a>
+        <a href="developer.html" data-i18n="nav.dev">Kunhavigi</a>
+        <a href="production.html" data-i18n="nav.prod">Produktado</a>
+        <a href="faq.html" data-i18n="nav.faq">Demandoj</a>
+        <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener">GitHub</a>
+        </div>
+      </details>
+    </header>
+    <div class="wrap page-head">
+      <p class="crumb"><a href="index.html#docs" data-i18n="crumb.docs">Dokumentaro</a></p>
+      <h1 data-i18n="page.title">Formato de Dockan</h1>
+      <p data-i18n="page.lead">Kiel priskribi bildon: Dockanfile, simpla Dockerfile, lokaj bazoj kaj la malnova formato .dockan.</p>
     </div>
-  </header>
-  <main>
-    <h1>Dockan Format</h1>
-    <p class="lead">Dockanfile, simple Dockerfile support, local bases, and the legacy `.dockan` folder format.</p>
-
-    <section>
-      <h2>Recommended Format: Dockanfile</h2>
-      <pre><code>FROM scratch
+  </div>
+  <div class="wrap layout">
+    <nav class="toc" aria-labelledby="toc-title">
+      <h2 id="toc-title" data-i18n="toc.title">En ĉi tiu paĝo</h2>
+      <ol>
+        <li><a href="#dockanfile" data-i18n="dockanfile.t">Dockanfile, la rekomendita formato</a></li>
+        <li><a href="#instructions" data-i18n="instructions.t">Subtenataj instrukcioj</a></li>
+        <li><a href="#bases" data-i18n="bases.t">Lokaj bazoj</a></li>
+        <li><a href="#legacy" data-i18n="legacy.t">La malnova formato .dockan</a></li>
+      </ol>
+    </nav>
+    <main id="main">
+      <article>
+<section id="dockanfile">
+<h2 data-i18n="dockanfile.t">Dockanfile, la rekomendita formato</h2>
+<p data-i18n="dockanfile.0">Dockanfile aspektas kiel Dockerfile, sed ĉio restas sur via maŝino.</p>
+<div class="code"><pre><code>FROM scratch
 LABEL org.opencontainers.image.title=MyApp
 WORKDIR /app
 COPY . /app
 RUN chmod +x ./start.sh
-CMD ./start.sh</code></pre>
-      <pre><code>dockan build -t myapp:latest .
-dockan run myapp:latest</code></pre>
-    </section>
-
-    <section>
-      <h2>Supported Instructions</h2>
-      <ul>
-        <li><code>FROM</code>, <code>COPY</code>, <code>ADD</code>, <code>RUN</code>, <code>CMD</code>, <code>ENTRYPOINT</code></li>
-        <li><code>ENV</code>, <code>WORKDIR</code>, <code>EXPOSE</code>, <code>VOLUME</code>, <code>LABEL</code>, <code>ARG</code></li>
-        <li><code>USER</code>, <code>SHELL</code>, <code>STOPSIGNAL</code>, <code>HEALTHCHECK</code></li>
-      </ul>
-      <p>Dockan also supports `.dockerignore`, simple multi-stage builds, `COPY --from=...`, and Docker exec-form commands such as <code>CMD ["node", "server.js"]</code>.</p>
-    </section>
-
-    <section>
-      <h2>Local Bases</h2>
-      <pre><code>dockan base import alpine:local ./alpine-rootfs
-dockan base import ubuntu:local ./ubuntu-rootfs.tar.gz</code></pre>
-      <pre><code>FROM alpine:local
+CMD ./start.sh</code></pre></div>
+<p data-i18n="dockanfile.2">Konstrui kaj ruli:</p>
+<div class="code"><pre><code>dockan build -t myapp:latest .
+dockan run myapp:latest</code></pre></div>
+<p data-i18n-html="dockanfile.4">Dockan unue legas <code>Dockanfile</code>. Se ĝi ne ekzistas, ĝi legas simplan lokan <code>Dockerfile</code>.</p>
+</section>
+<section id="instructions">
+<h2 data-i18n="instructions.t">Subtenataj instrukcioj</h2>
+<ul><li><code>FROM</code>, <code>COPY</code>, <code>ADD</code>, <code>RUN</code>, <code>CMD</code>, <code>ENTRYPOINT</code>, <code>ENV</code>, <code>WORKDIR</code></li><li><code>EXPOSE</code>, <code>VOLUME</code>, <code>LABEL</code>, <code>ARG</code>, <code>USER</code>, <code>SHELL</code>, <code>STOPSIGNAL</code>, <code>HEALTHCHECK</code></li></ul>
+<p data-i18n="instructions.1">Dockan ankaŭ komprenas:</p>
+<ul><li data-i18n-html="instructions.2.0">la dosieron <code>.dockerignore</code></li><li data-i18n-html="instructions.2.1">simplajn plurŝtupajn konstruojn per <code>FROM ... AS ...</code> kaj <code>COPY --from=...</code></li><li data-i18n-html="instructions.2.2">komandojn en Docker-formo, ekzemple <code>CMD ["node", "server.js"]</code></li><li data-i18n-html="instructions.2.3">lokajn bazojn importitajn per <code>dockan base import</code></li></ul>
+<p class="note" data-i18n-html="instructions.3">Uzu <code>LABEL</code> anstataŭ la malnova instrukcio <code>META</code>, kiu ekzistis nur en Dockan.</p>
+</section>
+<section id="bases">
+<h2 data-i18n="bases.t">Lokaj bazoj</h2>
+<p data-i18n="bases.0">Importu bazon el dosierujo aŭ el arkivo:</p>
+<div class="code"><pre><code>dockan base import alpine:local ./alpine-rootfs
+dockan base import ubuntu:local ./ubuntu-rootfs.tar.gz</code></pre></div>
+<p data-i18n="bases.2">Poste uzu ĝin:</p>
+<div class="code"><pre><code>FROM alpine:local
 COPY app.sh /app.sh
-CMD ./app.sh</code></pre>
-    </section>
-
-    <section>
-      <h2>Legacy .dockan Folder</h2>
-      <pre><code>myapp.dockan/
+CMD ./app.sh</code></pre></div>
+<p data-i18n-html="bases.4">Vi povas ankaŭ elŝuti normajn bildojn rekte el Docker Hub, GHCR aŭ Quay, ekzemple <code>dockan pull alpine:latest</code>, aŭ fiksi ilin per ilia haketaĵo: <code>dockan pull alpine@sha256:...</code>.</p>
+</section>
+<section id="legacy">
+<h2 data-i18n="legacy.t">La malnova formato .dockan</h2>
+<p data-i18n="legacy.0">La malnova dosieruja formato ankoraŭ funkcias por tre simplaj aplikaĵoj:</p>
+<div class="code"><pre><code>myapp.dockan/
   meta.conf
   build.sh
   start.sh
   rootfs/
   hooks/
   volumes/
-  logs/</code></pre>
-      <p>For new projects, prefer `Dockanfile`.</p>
-    </section>
-  </main>
+  logs/</code></pre></div>
+<ul><li data-i18n-html="legacy.2.0"><code>meta.conf</code>: la metadatumoj</li><li data-i18n-html="legacy.2.1"><code>build.sh</code>: nedeviga konstruskripto</li><li data-i18n-html="legacy.2.2"><code>start.sh</code>: la enirpunkto</li><li data-i18n-html="legacy.2.3"><code>rootfs/</code>: la dosieroj de la aplikaĵo</li><li data-i18n-html="legacy.2.4"><code>hooks/</code>: skriptoj rulataj antaŭ aŭ post iuj agoj</li><li data-i18n-html="legacy.2.5"><code>volumes/</code>: lokaj daŭraj datumoj</li><li data-i18n-html="legacy.2.6"><code>logs/</code>: la protokoloj de rulado</li></ul>
+<p class="note" data-i18n-html="legacy.3">Por novaj projektoj, preferu <code>Dockanfile</code>.</p>
+</section>
+      </article>
+    </main>
+  </div>
   <footer>
-    Dockan - AGPL-3.0-or-later - <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" target="_blank" rel="noopener">GitHub</a>
+    <div class="wrap">
+      <a class="brand" href="index.html"><img src="dockan-logo.svg" alt="" width="28" height="28"><span>Dockan</span></a>
+      <span data-i18n="foot.license">Libera programaro sub la permesilo AGPL-3.0-or-later.</span>
+      <a href="https://github.com/Dockan-Conteneurisation-libre/Dockan" rel="noopener" data-i18n="foot.source">Fontkodo sur GitHub</a>
+    </div>
   </footer>
+  <script type="application/json" id="i18n-common">
+{
+ "eo": {
+  "ui.skip": "Iri al la enhavo",
+  "ui.nav": "Ĉefa navigado",
+  "ui.lang": "Lingvo",
+  "ui.menu": "Menuo",
+  "ui.copy": "Kopii",
+  "ui.copied": "Kopiita",
+  "ui.selected": "Elektita",
+  "nav.home": "Hejmo",
+  "nav.format": "Formato",
+  "nav.langs": "Programlingvoj",
+  "nav.dev": "Kunhavigi",
+  "nav.prod": "Produktado",
+  "nav.faq": "Demandoj",
+  "crumb.docs": "Dokumentaro",
+  "toc.title": "En ĉi tiu paĝo",
+  "foot.license": "Libera programaro sub la permesilo AGPL-3.0-or-later.",
+  "foot.source": "Fontkodo sur GitHub"
+ },
+ "fr": {
+  "ui.skip": "Aller au contenu",
+  "ui.nav": "Navigation principale",
+  "ui.lang": "Langue",
+  "ui.menu": "Menu",
+  "ui.copy": "Copier",
+  "ui.copied": "Copié",
+  "ui.selected": "Sélectionné",
+  "nav.home": "Accueil",
+  "nav.format": "Format",
+  "nav.langs": "Langages",
+  "nav.dev": "Partager",
+  "nav.prod": "Production",
+  "nav.faq": "Questions",
+  "crumb.docs": "Documentation",
+  "toc.title": "Sur cette page",
+  "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
+  "foot.source": "Code source sur GitHub"
+ },
+ "en": {
+  "ui.skip": "Skip to content",
+  "ui.nav": "Main navigation",
+  "ui.lang": "Language",
+  "ui.menu": "Menu",
+  "ui.copy": "Copy",
+  "ui.copied": "Copied",
+  "ui.selected": "Selected",
+  "nav.home": "Home",
+  "nav.format": "Format",
+  "nav.langs": "Languages",
+  "nav.dev": "Share",
+  "nav.prod": "Production",
+  "nav.faq": "FAQ",
+  "crumb.docs": "Documentation",
+  "toc.title": "On this page",
+  "foot.license": "Free software under the AGPL-3.0-or-later license.",
+  "foot.source": "Source code on GitHub"
+ },
+ "es": {
+  "ui.skip": "Ir al contenido",
+  "ui.nav": "Navegación principal",
+  "ui.lang": "Idioma",
+  "ui.menu": "Menú",
+  "ui.copy": "Copiar",
+  "ui.copied": "Copiado",
+  "ui.selected": "Seleccionado",
+  "nav.home": "Inicio",
+  "nav.format": "Formato",
+  "nav.langs": "Lenguajes",
+  "nav.dev": "Compartir",
+  "nav.prod": "Producción",
+  "nav.faq": "Preguntas",
+  "crumb.docs": "Documentación",
+  "toc.title": "En esta página",
+  "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
+  "foot.source": "Código fuente en GitHub"
+ }
+}
+  </script>
+  <script type="application/json" id="i18n-data">
+{
+ "fr": {
+  "dockanfile.0": "Un Dockanfile ressemble à un Dockerfile, mais tout reste sur votre machine.",
+  "dockanfile.2": "Construire puis lancer :",
+  "dockanfile.4": "Dockan lit d’abord <code>Dockanfile</code>. S’il n’existe pas, il lit un <code>Dockerfile</code> local simple.",
+  "dockanfile.t": "Dockanfile, le format recommandé",
+  "instructions.1": "Dockan comprend aussi :",
+  "instructions.2.0": "le fichier <code>.dockerignore</code>",
+  "instructions.2.1": "les constructions multi-étapes simples avec <code>FROM ... AS ...</code> et <code>COPY --from=...</code>",
+  "instructions.2.2": "les commandes au format Docker, par exemple <code>CMD [\"node\", \"server.js\"]</code>",
+  "instructions.2.3": "les bases locales importées avec <code>dockan base import</code>",
+  "instructions.3": "Utilisez <code>LABEL</code> plutôt que l’ancienne instruction <code>META</code>, propre à Dockan.",
+  "instructions.t": "Instructions prises en charge",
+  "bases.0": "Importez une base depuis un dossier ou une archive :",
+  "bases.2": "Puis utilisez-la :",
+  "bases.4": "Vous pouvez aussi récupérer des images standard sur Docker Hub, GHCR ou Quay, par exemple <code>dockan pull alpine:latest</code>, ou les épingler par leur empreinte : <code>dockan pull alpine@sha256:...</code>.",
+  "bases.t": "Bases locales",
+  "legacy.0": "L’ancien format en dossier fonctionne encore pour les applications très simples :",
+  "legacy.2.0": "<code>meta.conf</code> : les métadonnées",
+  "legacy.2.1": "<code>build.sh</code> : script de construction facultatif",
+  "legacy.2.2": "<code>start.sh</code> : le point d’entrée",
+  "legacy.2.3": "<code>rootfs/</code> : les fichiers de l’application",
+  "legacy.2.4": "<code>hooks/</code> : scripts lancés avant ou après certaines actions",
+  "legacy.2.5": "<code>volumes/</code> : données persistantes locales",
+  "legacy.2.6": "<code>logs/</code> : les journaux d’exécution",
+  "legacy.3": "Pour un nouveau projet, préférez <code>Dockanfile</code>.",
+  "legacy.t": "L’ancien format .dockan",
+  "page.title": "Format Dockan",
+  "page.lead": "Comment décrire une image : Dockanfile, Dockerfile simple, bases locales et l’ancien format .dockan."
+ },
+ "en": {
+  "dockanfile.0": "A Dockanfile looks like a Dockerfile, but everything stays on your machine.",
+  "dockanfile.2": "Build, then run:",
+  "dockanfile.4": "Dockan reads <code>Dockanfile</code> first. If there is none, it reads a simple local <code>Dockerfile</code>.",
+  "dockanfile.t": "Dockanfile, the recommended format",
+  "instructions.1": "Dockan also understands:",
+  "instructions.2.0": "the <code>.dockerignore</code> file",
+  "instructions.2.1": "simple multi-stage builds with <code>FROM ... AS ...</code> and <code>COPY --from=...</code>",
+  "instructions.2.2": "Docker exec-form commands, for example <code>CMD [\"node\", \"server.js\"]</code>",
+  "instructions.2.3": "local bases imported with <code>dockan base import</code>",
+  "instructions.3": "Use <code>LABEL</code> instead of the old Dockan-only <code>META</code> instruction.",
+  "instructions.t": "Supported instructions",
+  "bases.0": "Import a base from a folder or an archive:",
+  "bases.2": "Then use it:",
+  "bases.4": "You can also pull standard images from Docker Hub, GHCR or Quay, for example <code>dockan pull alpine:latest</code>, or pin them by digest: <code>dockan pull alpine@sha256:...</code>.",
+  "bases.t": "Local bases",
+  "legacy.0": "The old folder format still works for very simple apps:",
+  "legacy.2.0": "<code>meta.conf</code>: metadata",
+  "legacy.2.1": "<code>build.sh</code>: optional build script",
+  "legacy.2.2": "<code>start.sh</code>: the entry point",
+  "legacy.2.3": "<code>rootfs/</code>: the application files",
+  "legacy.2.4": "<code>hooks/</code>: scripts run before or after some actions",
+  "legacy.2.5": "<code>volumes/</code>: local persistent data",
+  "legacy.2.6": "<code>logs/</code>: run logs",
+  "legacy.3": "For new projects, prefer <code>Dockanfile</code>.",
+  "legacy.t": "The legacy .dockan format",
+  "page.title": "Dockan format",
+  "page.lead": "How to describe an image: Dockanfile, simple Dockerfile, local bases and the legacy .dockan format."
+ },
+ "es": {
+  "dockanfile.0": "Un Dockanfile se parece a un Dockerfile, pero todo se queda en tu máquina.",
+  "dockanfile.2": "Construir y ejecutar:",
+  "dockanfile.4": "Dockan lee primero <code>Dockanfile</code>. Si no existe, lee un <code>Dockerfile</code> local sencillo.",
+  "dockanfile.t": "Dockanfile, el formato recomendado",
+  "instructions.1": "Dockan también entiende:",
+  "instructions.2.0": "el archivo <code>.dockerignore</code>",
+  "instructions.2.1": "compilaciones multietapa sencillas con <code>FROM ... AS ...</code> y <code>COPY --from=...</code>",
+  "instructions.2.2": "comandos en formato Docker, por ejemplo <code>CMD [\"node\", \"server.js\"]</code>",
+  "instructions.2.3": "bases locales importadas con <code>dockan base import</code>",
+  "instructions.3": "Usa <code>LABEL</code> en lugar de la antigua instrucción <code>META</code>, propia de Dockan.",
+  "instructions.t": "Instrucciones admitidas",
+  "bases.0": "Importa una base desde una carpeta o un archivo comprimido:",
+  "bases.2": "Luego úsala:",
+  "bases.4": "También puedes descargar imágenes estándar de Docker Hub, GHCR o Quay, por ejemplo <code>dockan pull alpine:latest</code>, o fijarlas por su huella: <code>dockan pull alpine@sha256:...</code>.",
+  "bases.t": "Bases locales",
+  "legacy.0": "El antiguo formato de carpeta sigue funcionando para aplicaciones muy sencillas:",
+  "legacy.2.0": "<code>meta.conf</code>: los metadatos",
+  "legacy.2.1": "<code>build.sh</code>: script de construcción opcional",
+  "legacy.2.2": "<code>start.sh</code>: el punto de entrada",
+  "legacy.2.3": "<code>rootfs/</code>: los archivos de la aplicación",
+  "legacy.2.4": "<code>hooks/</code>: scripts que se ejecutan antes o después de algunas acciones",
+  "legacy.2.5": "<code>volumes/</code>: datos persistentes locales",
+  "legacy.2.6": "<code>logs/</code>: los registros de ejecución",
+  "legacy.3": "Para proyectos nuevos, prefiere <code>Dockanfile</code>.",
+  "legacy.t": "El antiguo formato .dockan",
+  "page.title": "Formato Dockan",
+  "page.lead": "Cómo describir una imagen: Dockanfile, Dockerfile sencillo, bases locales y el antiguo formato .dockan."
+ }
+}
+  </script>
+  <script src="assets/doc.js"></script>
 </body>
 </html>
