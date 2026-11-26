@@ -213,6 +213,7 @@ func cleanHostEnvForContainer(hostEnv []string) []string {
 	for _, item := range hostEnv {
 		key, _, _ := strings.Cut(item, "=")
 		if key == "DOCKAN_RUN_COMMAND" ||
+			key == runIDEnv ||
 			key == "DOCKAN_ENTRYPOINT" ||
 			key == "DOCKAN_RESTART" ||
 			key == "DOCKAN_MEMORY" ||

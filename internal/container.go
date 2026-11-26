@@ -14,14 +14,16 @@ import (
 )
 
 type Container struct {
-	Name    string
-	Image   string
-	Path    string
-	PID     int
-	Status  string
-	Ports   string
-	Network string
-	Created string
+	Name     string
+	Image    string
+	Path     string
+	PID      int
+	PIDStart uint64
+	RunID    string
+	Status   string
+	Ports    string
+	Network  string
+	Created  string
 }
 
 func ContainersDir() string {
@@ -100,7 +102,11 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.Stdin = nil
-	cmd.Env = imageEnv(img, opts)
+	runID, err := newRunID()
+	if err != nil {
+		return err
+	}
+	cmd.Env = append(imageEnv(img, opts), runIDEnv+"="+runID)
 	cmd.SysProcAttr = detachedSysProcAttr(bridgeNetwork)
 	if err := cmd.Start(); err != nil {
 		return err
@@ -145,6 +151,8 @@ func StartDetachedContainer(imagePath, imageRef string, opts RunOptions) error {
 		"image":      imageRef,
 		"imagePath":  imagePath,
 		"pid":        strconv.Itoa(cmd.Process.Pid),
+		"pidStart":   strconv.FormatUint(recordedStartTime(cmd.Process.Pid), 10),
+		"runId":      runID,
 		"status":     "running",
 		"isolation":  isolation,
 		"ports":      strings.Join(opts.Ports, ","),
@@ -330,8 +338,10 @@ func LoadContainersFromRoot(root string) ([]Container, error) {
 			continue
 		}
 		pid, _ := strconv.Atoi(meta["pid"])
+		pidStart, _ := strconv.ParseUint(meta["pidStart"], 10, 64)
 		status := meta["status"]
-		if pid > 0 && !processRunning(pid) && status == "running" {
+		if pid > 0 && status == "running" && !processRunning(pid) &&
+			!containerAlive(Container{PID: pid, PIDStart: pidStart, RunID: meta["runId"]}) {
 			status = "exited"
 			meta["status"] = status
 			_ = CleanupPortProxies(meta)
@@ -360,13 +370,21 @@ func StopContainer(name string) error {
 	if err != nil {
 		return err
 	}
-	if c.PID <= 0 || !containerRunning(c.PID) {
+	// A container recorded as stopped by an older Dockan has no start time:
+	// its pid may name an unrelated process by now, so it is never signalled.
+	var scope *containerScope
+	if c.PIDStart != 0 || c.Status == "running" {
+		if scope, err = captureContainerScope(c); err != nil {
+			return fmt.Errorf("arrêt de %s: %w", name, err)
+		}
+	}
+	if scope == nil || len(scope.members) == 0 {
 		meta["status"] = "exited"
 		_ = CleanupPortProxies(meta)
 		_ = CleanupContainerNetwork(meta)
 		return WriteMeta(filepath.Join(c.Path, "meta.conf"), meta)
 	}
-	if err := terminateContainerGroup(c.PID); err != nil {
+	if err := terminateScope(scope); err != nil {
 		return fmt.Errorf("arrêt de %s: %w", name, err)
 	}
 	meta["status"] = "stopped"
@@ -386,7 +404,7 @@ func RemoveContainer(name string) error {
 	if err != nil {
 		return err
 	}
-	if c.PID > 0 && containerRunning(c.PID) {
+	if containerAlive(c) {
 		return fmt.Errorf("conteneur en cours: stoppez-le d'abord")
 	}
 	meta, _ := ParseMeta(filepath.Join(c.Path, "meta.conf"))
@@ -423,7 +441,7 @@ func InspectContainer(name string) error {
 	if err != nil {
 		return err
 	}
-	if c.PID > 0 && !processRunning(c.PID) && meta["status"] == "running" {
+	if meta["status"] == "running" && !containerAlive(c) {
 		meta["status"] = "exited"
 	}
 	var keys []string
@@ -567,15 +585,18 @@ func loadContainer(name string) (Container, map[string]string, error) {
 		return Container{}, nil, fmt.Errorf("conteneur introuvable: %s", name)
 	}
 	pid, _ := strconv.Atoi(meta["pid"])
+	pidStart, _ := strconv.ParseUint(meta["pidStart"], 10, 64)
 	return Container{
-		Name:    name,
-		Image:   meta["image"],
-		Path:    containerDir,
-		PID:     pid,
-		Status:  meta["status"],
-		Ports:   meta["ports"],
-		Network: meta["network"],
-		Created: meta["created"],
+		Name:     name,
+		Image:    meta["image"],
+		Path:     containerDir,
+		PID:      pid,
+		PIDStart: pidStart,
+		RunID:    meta["runId"],
+		Status:   meta["status"],
+		Ports:    meta["ports"],
+		Network:  meta["network"],
+		Created:  meta["created"],
 	}, meta, nil
 }
 
@@ -609,98 +630,6 @@ func processRunning(pid int) bool {
 		}
 	}
 	return true
-}
-
-// containerRunning reports whether the container leader or any process of
-// its group is still alive. The leader (the sandbox launcher) can exit on
-// SIGTERM while the workload, PID 1 of its own namespace, ignores it.
-func containerRunning(pid int) bool {
-	return processRunning(pid) || processGroupAlive(pid)
-}
-
-// processGroupAlive reports whether a non-zombie process belongs to the
-// process group pgid, by scanning /proc.
-func processGroupAlive(pgid int) bool {
-	entries, err := os.ReadDir("/proc")
-	if err != nil {
-		return syscall.Kill(-pgid, 0) == nil
-	}
-	for _, entry := range entries {
-		pid, err := strconv.Atoi(entry.Name())
-		if err != nil {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "stat"))
-		if err != nil {
-			continue // the process exited while scanning
-		}
-		state, group, ok := parseProcStatGroup(string(data))
-		if ok && group == pgid && state != "Z" {
-			return true
-		}
-	}
-	return false
-}
-
-// parseProcStatGroup extracts the state and process group from a
-// /proc/<pid>/stat line. The command name may contain spaces and
-// parentheses, so fields are read after its closing parenthesis.
-func parseProcStatGroup(stat string) (string, int, bool) {
-	end := strings.LastIndexByte(stat, ')')
-	if end < 0 {
-		return "", 0, false
-	}
-	fields := strings.Fields(stat[end+1:])
-	if len(fields) < 3 {
-		return "", 0, false
-	}
-	group, err := strconv.Atoi(fields[2])
-	if err != nil {
-		return "", 0, false
-	}
-	return fields[0], group, true
-}
-
-// terminateContainerGroup sends SIGTERM to the container group, waits up to
-// two seconds, then sends SIGKILL to whatever is left of the group.
-func terminateContainerGroup(pid int) error {
-	if err := signalContainerProcess(pid, syscall.SIGTERM); err != nil && err != syscall.ESRCH {
-		return err
-	}
-	if waitContainerExit(pid, 2*time.Second) {
-		return nil
-	}
-	if err := signalContainerProcess(pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
-		return err
-	}
-	if waitContainerExit(pid, 2*time.Second) {
-		return nil
-	}
-	return fmt.Errorf("processus toujours actifs dans le groupe %d après SIGKILL", pid)
-}
-
-func waitContainerExit(pid int, timeout time.Duration) bool {
-	for deadline := time.Now().Add(timeout); containerRunning(pid); {
-		if time.Now().After(deadline) {
-			return false
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-	return true
-}
-
-func signalContainerProcess(pid int, sig syscall.Signal) error {
-	if pid <= 0 {
-		return nil
-	}
-	groupErr := syscall.Kill(-pid, sig)
-	if groupErr == nil {
-		return nil
-	}
-	if groupErr == syscall.EPERM {
-		return fmt.Errorf("droits insuffisants pour signaler le conteneur (groupe %d): %w", pid, groupErr)
-	}
-	return syscall.Kill(pid, sig)
 }
 
 func generatedContainerName(img *Image) string {

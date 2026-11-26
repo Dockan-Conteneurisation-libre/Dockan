@@ -2,11 +2,9 @@ package internal
 
 import (
 	"errors"
-	"os/exec"
 	"path/filepath"
 	"syscall"
 	"testing"
-	"time"
 )
 
 func TestResolveIsolationAutoRefusesSilentNone(t *testing.T) {
@@ -69,30 +67,5 @@ func TestDetachedSysProcAttrStartsNewSession(t *testing.T) {
 	attr = detachedSysProcAttr(true)
 	if !attr.Setsid || attr.Cloneflags != syscall.CLONE_NEWNET {
 		t.Fatalf("bridge attr = %+v, want Setsid and CLONE_NEWNET", attr)
-	}
-}
-
-// A background container must stay in the process group that "dockan stop"
-// signals: nothing may survive a group kill.
-func TestDetachedSessionIsKilledAsAGroup(t *testing.T) {
-	cmd := exec.Command("sh", "-c", "sleep 60 & wait")
-	cmd.SysProcAttr = detachedSysProcAttr(false)
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("start: %v", err)
-	}
-	pid := cmd.Process.Pid
-	time.Sleep(200 * time.Millisecond)
-	if err := signalContainerProcess(pid, syscall.SIGTERM); err != nil {
-		t.Fatalf("signalContainerProcess: %v", err)
-	}
-	if err := cmd.Wait(); err == nil {
-		t.Fatal("container shell must be terminated by the group signal")
-	}
-	// Orphaned members are reaped asynchronously by init: poll briefly.
-	for deadline := time.Now().Add(3 * time.Second); syscall.Kill(-pid, 0) == nil; {
-		if time.Now().After(deadline) {
-			t.Fatal("a process of the container group survived the stop signal")
-		}
-		time.Sleep(50 * time.Millisecond)
 	}
 }
