@@ -11,6 +11,11 @@
   <meta property="og:title" content="Dockan: ujoj por Linukso, sen demono">
   <meta property="og:description" content="Elŝutu, kontrolu kaj rulu bildojn el Docker Hub kiel ordinarajn procezojn. Neniu fona servo. Libera programaro AGPL-3.0.">
   <meta property="og:url" content="https://dockan-conteneurisation-libre.github.io/Dockan/">
+  <meta property="og:image" content="https://dockan-conteneurisation-libre.github.io/Dockan/assets/og-dockan.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Dockan">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0e2a1e">
   <style>
     :root {
@@ -81,7 +86,7 @@
       padding: 0;
       border-radius: 0;
       font: inherit;
-      overflow-wrap: normal;
+      overflow-wrap: inherit;
     }
 
     .skip {
@@ -1121,7 +1126,7 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     <section id="docs">
       <div class="wrap">
         <h2 data-i18n="docs.title">Dokumentaro</h2>
-        <p class="section-lead" data-i18n="docs.lead">La detalaj gvidiloj estas nuntempe en la angla.</p>
+        <p class="section-lead" data-i18n="docs.lead">Detalaj gvidiloj por ĉiu paŝo, en la samaj kvar lingvoj.</p>
         <div class="links">
           <a href="./format.html"><h3 data-i18n="docs.format.t">Formato de Dockan</h3><p data-i18n="docs.format.d">Dockanfile, simpla Dockerfile, lokaj bazoj kaj la malnova formato .dockan.</p></a>
           <a href="./exemples/python.html"><h3 data-i18n="docs.python.t">Ekzemplo en Python</h3><p data-i18n="docs.python.d">Krei kaj ruli malgrandan Python-aplikaĵon kun loka bazo.</p></a>
@@ -1129,6 +1134,7 @@ sudo ./restore-prod-storage.sh</code></pre></div>
           <a href="./developer.html"><h3 data-i18n="docs.dev.t">Kunhavigi aplikaĵon</h3><p data-i18n="docs.dev.d">Paki aplikaĵon, por ke administrantoj rulu ĝin kiel Linuksan servon.</p></a>
           <a href="./production.html"><h3 data-i18n="docs.prod.t">Gvidilo por produktado</h3><p data-i18n="docs.prod.d">Ĝisdatigoj, malfaro, ŝarĝotestoj, izolado kaj ponto kun NAT.</p></a>
           <a href="./faq.html"><h3 data-i18n="docs.faq.t">Oftaj demandoj</h3><p data-i18n="docs.faq.d">Root, Dockerfile, reto, dependaĵoj, grafikaj aplikaĵoj, VPS kaj Raspberry Pi.</p></a>
+          <a href="./exemples/export.html"><h3 data-i18n="docs.export.t">Eksporti kaj importi</h3><p data-i18n="docs.export.d">Etikedi bildojn, importi lokajn bazojn kaj movi aplikaĵojn inter maŝinoj.</p></a>
         </div>
       </div>
     </section>
@@ -1294,7 +1300,7 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "eco.store": "Un catalogue d’applications prêtes à installer avec Dockan.",
     "eco.win": "Un portage natif pour Windows avec HCS et HNS, documenté à part.",
     "docs.title": "Documentation",
-    "docs.lead": "Les guides détaillés sont pour l’instant en anglais.",
+    "docs.lead": "Des guides détaillés pour chaque étape, dans les mêmes quatre langues.",
     "docs.format.t": "Format Dockan",
     "docs.format.d": "Dockanfile, Dockerfile simple, bases locales et l’ancien format .dockan.",
     "docs.python.t": "Exemple en Python",
@@ -1307,6 +1313,8 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "docs.prod.d": "Mises à jour, retour arrière, tests de charge, isolation et pont avec NAT.",
     "docs.faq.t": "Questions fréquentes",
     "docs.faq.d": "Root, Dockerfile, réseau, dépendances, applications graphiques, VPS et Raspberry Pi.",
+    "docs.export.t": "Exporter et importer",
+    "docs.export.d": "Étiqueter des images, importer des bases locales et déplacer des applications entre machines.",
     "foot.license": "Logiciel libre sous licence AGPL-3.0-or-later.",
     "foot.source": "Code source sur GitHub"
   },
@@ -1460,7 +1468,7 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "eco.store": "A catalog of ready-made apps you can install with Dockan.",
     "eco.win": "A native Windows port with HCS and HNS, documented separately.",
     "docs.title": "Documentation",
-    "docs.lead": "The detailed guides are in English for now.",
+    "docs.lead": "Detailed guides for every step, in the same four languages.",
     "docs.format.t": "Dockan format",
     "docs.format.d": "Dockanfile, simple Dockerfile, local bases and the legacy .dockan format.",
     "docs.python.t": "Python example",
@@ -1473,6 +1481,8 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "docs.prod.d": "Updates, rollback, load tests, isolation and bridge with NAT.",
     "docs.faq.t": "FAQ",
     "docs.faq.d": "Root, Dockerfile, networking, dependencies, desktop apps, VPS and Raspberry Pi.",
+    "docs.export.t": "Export and import",
+    "docs.export.d": "Tag images, import local bases and move apps between machines.",
     "foot.license": "Free software under the AGPL-3.0-or-later license.",
     "foot.source": "Source code on GitHub"
   },
@@ -1626,7 +1636,7 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "eco.store": "Un catálogo de aplicaciones listas para instalar con Dockan.",
     "eco.win": "Una versión nativa para Windows con HCS y HNS, documentada aparte.",
     "docs.title": "Documentación",
-    "docs.lead": "Por ahora, las guías detalladas están en inglés.",
+    "docs.lead": "Guías detalladas para cada paso, en los mismos cuatro idiomas.",
     "docs.format.t": "Formato Dockan",
     "docs.format.d": "Dockanfile, Dockerfile sencillo, bases locales y el antiguo formato .dockan.",
     "docs.python.t": "Ejemplo en Python",
@@ -1639,6 +1649,8 @@ sudo ./restore-prod-storage.sh</code></pre></div>
     "docs.prod.d": "Actualizaciones, vuelta atrás, pruebas de carga, aislamiento y puente con NAT.",
     "docs.faq.t": "Preguntas frecuentes",
     "docs.faq.d": "Root, Dockerfile, red, dependencias, aplicaciones gráficas, VPS y Raspberry Pi.",
+    "docs.export.t": "Exportar e importar",
+    "docs.export.d": "Etiquetar imágenes, importar bases locales y mover aplicaciones entre máquinas.",
     "foot.license": "Software libre bajo la licencia AGPL-3.0-or-later.",
     "foot.source": "Código fuente en GitHub"
   }
